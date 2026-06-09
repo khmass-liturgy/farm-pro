@@ -1,1 +1,1181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>농장 투약관리 시스템</title>
+<style>
+  :root {
+    --bg: #f5f6fa;
+    --bg-card: #ffffff;
+    --bg-sidebar: #1e2d40;
+    --bg-sidebar-hover: #2a3f58;
+    --bg-sidebar-active: #2e6da4;
+    --text-primary: #1a2332;
+    --text-secondary: #5a6a7e;
+    --text-muted: #8fa0b3;
+    --text-sidebar: #b8cce0;
+    --text-sidebar-active: #ffffff;
+    --border: #e0e6ef;
+    --border-focus: #2e6da4;
+    --accent: #2e6da4;
+    --accent-light: #e8f2fc;
+    --accent-dark: #1e4f82;
+    --green: #1a8754;
+    --green-bg: #e8f7ef;
+    --red: #c0392b;
+    --red-bg: #fdecea;
+    --amber: #b86a00;
+    --amber-bg: #fff3e0;
+    --purple: #6b3fa0;
+    --purple-bg: #f2ecfb;
+    --teal: #0e6b5e;
+    --teal-bg: #e0f4f1;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.07);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; background: var(--bg); color: var(--text-primary); display: flex; height: 100vh; overflow: hidden; font-size: 14px; }
 
+  /* 사이드바 */
+  #sidebar {
+    width: 220px; min-width: 220px; background: var(--bg-sidebar);
+    display: flex; flex-direction: column; height: 100vh; overflow-y: auto;
+  }
+  .sidebar-logo {
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .sidebar-logo h1 { font-size: 15px; font-weight: 700; color: #fff; line-height: 1.3; }
+  .sidebar-logo span { font-size: 11px; color: var(--text-sidebar); margin-top: 2px; display: block; }
+  .sidebar-section { padding: 14px 12px 6px; }
+  .sidebar-section-label { font-size: 10px; font-weight: 700; color: #6a88a8; letter-spacing: 0.08em; text-transform: uppercase; padding: 0 6px; margin-bottom: 4px; }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: var(--radius-sm);
+    cursor: pointer; color: var(--text-sidebar);
+    font-size: 13px; font-weight: 500; transition: all 0.15s;
+    margin-bottom: 2px;
+  }
+  .sidebar-item:hover { background: var(--bg-sidebar-hover); color: #fff; }
+  .sidebar-item.active { background: var(--bg-sidebar-active); color: #fff; }
+  .sidebar-item .icon { font-size: 16px; opacity: 0.85; }
+
+  /* 메인 */
+  #main { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  .topbar {
+    background: var(--bg-card); border-bottom: 1px solid var(--border);
+    padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
+    min-height: 54px;
+  }
+  .topbar-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+  .topbar-actions { display: flex; gap: 8px; }
+  .content { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* 버튼 */
+  .btn {
+    padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+    cursor: pointer; border: 1.5px solid transparent; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+  .btn-outline { background: transparent; color: var(--accent); border-color: var(--accent); }
+  .btn-outline:hover { background: var(--accent-light); }
+  .btn-danger { background: transparent; color: var(--red); border-color: var(--red); }
+  .btn-danger:hover { background: var(--red-bg); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-green { background: var(--green); color: #fff; border-color: var(--green); }
+  .btn-green:hover { background: #14704a; border-color: #14704a; }
+
+  /* 카드 */
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 20px;
+  }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .card-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+
+  /* 그리드 */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+  /* 입력 폼 */
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 8px 12px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 13px; color: var(--text-primary);
+    font-family: inherit; transition: border-color 0.15s; background: var(--bg-card);
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none; border-color: var(--border-focus);
+  }
+  .form-group textarea { resize: vertical; min-height: 70px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  /* 테이블 */
+  .tbl-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table th {
+    background: var(--bg); padding: 10px 12px; text-align: left;
+    font-size: 11px; font-weight: 700; color: var(--text-secondary);
+    border-bottom: 1.5px solid var(--border); white-space: nowrap;
+  }
+  table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  table tr:last-child td { border-bottom: none; }
+  table tr:hover td { background: #f9fbff; }
+
+  /* 배지 */
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; white-space: nowrap;
+  }
+  .badge-blue { background: var(--accent-light); color: var(--accent-dark); }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); }
+  .badge-red { background: var(--red-bg); color: var(--red); }
+  .badge-purple { background: var(--purple-bg); color: var(--purple); }
+  .badge-teal { background: var(--teal-bg); color: var(--teal); }
+
+  /* 모달 */
+  .modal-bg {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(20, 30, 48, 0.45); z-index: 1000; align-items: center; justify-content: center;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--bg-card); border-radius: var(--radius); padding: 28px 28px 24px;
+    width: 680px; max-width: 95vw; max-height: 90vh; overflow-y: auto;
+    box-shadow: var(--shadow-md);
+  }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .modal-title { font-size: 16px; font-weight: 700; }
+  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); padding: 4px; line-height: 1; }
+  .modal-close:hover { color: var(--red); }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+  /* 투약 스케줄 테이블 */
+  .schedule-table { font-size: 12px; }
+  .schedule-table th { font-size: 11px; padding: 7px 8px; }
+  .schedule-table td { padding: 6px 8px; }
+  .day-header { background: var(--bg); font-weight: 700; color: var(--accent); }
+
+  /* 검색/필터 바 */
+  .search-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
+  .search-input {
+    flex: 1; padding: 8px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 13px; font-family: inherit;
+  }
+  .search-input:focus { outline: none; border-color: var(--border-focus); }
+
+  /* 대시보드 통계 카드 */
+  .stat-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; box-shadow: var(--shadow);
+  }
+  .stat-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; }
+  .stat-value { font-size: 26px; font-weight: 700; color: var(--text-primary); }
+  .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* 투약일정 뷰 */
+  .schedule-grid {
+    display: grid; grid-template-columns: 60px repeat(7, 1fr); gap: 1px;
+    background: var(--border); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden;
+    font-size: 12px;
+  }
+  .schedule-cell {
+    background: var(--bg-card); padding: 6px 8px; min-height: 44px;
+  }
+  .schedule-cell.head {
+    background: var(--bg); font-weight: 700; font-size: 11px; color: var(--text-secondary);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .schedule-cell.day-num {
+    background: var(--bg); font-weight: 700; color: var(--accent); font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .drug-pill {
+    display: inline-block; background: var(--accent-light); color: var(--accent-dark);
+    padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: 600; margin: 1px;
+    white-space: nowrap;
+  }
+  .vaccine-pill {
+    display: inline-block; background: var(--green-bg); color: var(--green);
+    padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: 600; margin: 1px;
+    white-space: nowrap;
+  }
+
+  /* 탭 */
+  .tab-bar { display: flex; gap: 2px; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+  .tab {
+    padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -2px; color: var(--text-secondary);
+    transition: all 0.15s;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab:hover:not(.active) { color: var(--text-primary); background: var(--bg); }
+
+  .page { display: none; }
+  .page.active { display: block; }
+  .mb-16 { margin-bottom: 16px; }
+  .mt-16 { margin-top: 16px; }
+  .text-muted { color: var(--text-muted); font-size: 12px; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  .flex-between { display: flex; align-items: center; justify-content: space-between; }
+  .flex-gap { display: flex; align-items: center; gap: 8px; }
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+  .empty-state .icon-big { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+  .empty-state p { font-size: 14px; }
+
+  /* 투약 프로그램 상세 */
+  .program-day-row { display: grid; grid-template-columns: 60px 1fr 1fr 1fr; gap: 0; border-bottom: 1px solid var(--border); }
+  .program-day-row:last-child { border-bottom: none; }
+  .program-cell { padding: 7px 10px; font-size: 12px; }
+  .program-cell.num { background: var(--bg); font-weight: 700; color: var(--accent); display: flex; align-items: center; justify-content: center; }
+  .program-cell.head { background: var(--bg); font-weight: 700; font-size: 11px; color: var(--text-secondary); padding: 8px 10px; }
+  .notes-area { font-size: 11px; color: var(--text-secondary); font-style: italic; padding: 4px 10px; background: #fffef5; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<!-- 사이드바 -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <h1>🐔 투약관리 시스템</h1>
+    <span>Poultry Farm Manager</span>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">메인</div>
+    <div class="sidebar-item active" onclick="showPage('dashboard')">
+      <span class="icon">📊</span> 대시보드
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">농장 관리</div>
+    <div class="sidebar-item" onclick="showPage('farms')">
+      <span class="icon">🏘️</span> 농장 등록/관리
+    </div>
+    <div class="sidebar-item" onclick="showPage('programs')">
+      <span class="icon">📋</span> 투약 프로그램
+    </div>
+    <div class="sidebar-item" onclick="showPage('schedule')">
+      <span class="icon">📅</span> 투약 일정
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">데이터</div>
+    <div class="sidebar-item" onclick="showPage('drugs')">
+      <span class="icon">💊</span> 약품 등록
+    </div>
+    <div class="sidebar-item" onclick="showPage('vaccines')">
+      <span class="icon">💉</span> 백신 관리
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">시스템</div>
+    <div class="sidebar-item" onclick="showPage('backup')">
+      <span class="icon">💾</span> 백업/복원
+    </div>
+  </div>
+</nav>
+
+<!-- 메인 -->
+<div id="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">대시보드</div>
+    <div class="topbar-actions" id="topbar-actions"></div>
+  </div>
+  <div class="content" id="content">
+
+    <!-- 대시보드 -->
+    <div id="page-dashboard" class="page active">
+      <div class="grid-4 mb-16" id="dash-stats"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">최근 등록 농장</div></div>
+          <div id="dash-recent-farms"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">등록된 약품 현황</div></div>
+          <div id="dash-drugs"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 농장 관리 -->
+    <div id="page-farms" class="page">
+      <div class="search-bar">
+        <input class="search-input" id="farm-search" placeholder="🔍  농장명, 주소, 농장주 검색..." oninput="renderFarms()">
+        <select id="farm-filter-type" onchange="renderFarms()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+          <option value="">전체 축종</option>
+          <option value="육계">육계</option>
+          <option value="삼계">삼계</option>
+          <option value="토종닭">토종닭</option>
+          <option value="오리">오리</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>농장명</th><th>농장주</th><th>축종</th><th>주소</th><th>연락처</th><th>입추수수</th><th>담당 수의사</th><th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="farm-tbody"></tbody>
+          </table>
+        </div>
+        <div id="farm-empty" class="empty-state" style="display:none">
+          <div class="icon-big">🏘️</div>
+          <p>등록된 농장이 없습니다. 농장을 추가해주세요.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 투약 프로그램 -->
+    <div id="page-programs" class="page">
+      <div class="search-bar">
+        <input class="search-input" id="prog-search" placeholder="🔍  프로그램명, 농장명 검색..." oninput="renderPrograms()">
+        <select id="prog-filter-farm" onchange="renderPrograms()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+          <option value="">전체 농장</option>
+        </select>
+      </div>
+      <div id="prog-list"></div>
+    </div>
+
+    <!-- 투약 일정 -->
+    <div id="page-schedule" class="page">
+      <div class="search-bar">
+        <select id="sched-farm-select" onchange="loadScheduleForFarm()" style="padding:8px 14px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card); flex:1;">
+          <option value="">농장을 선택하세요</option>
+        </select>
+        <select id="sched-prog-select" onchange="renderScheduleView()" style="padding:8px 14px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card); flex:1;">
+          <option value="">투약 프로그램 선택</option>
+        </select>
+      </div>
+      <div id="schedule-view"></div>
+    </div>
+
+    <!-- 약품 관리 -->
+    <div id="page-drugs" class="page">
+      <div class="search-bar">
+        <input class="search-input" id="drug-search" placeholder="🔍  약품명, 성분명 검색..." oninput="renderDrugs()">
+        <select id="drug-filter-type" onchange="renderDrugs()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+          <option value="">전체 분류</option>
+          <option value="항생제">항생제</option>
+          <option value="콕시듐제">콕시듐제</option>
+          <option value="영양제">영양제</option>
+          <option value="소독제">소독제</option>
+          <option value="성장촉진제">성장촉진제</option>
+          <option value="대사촉진제">대사촉진제</option>
+          <option value="기타">기타</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>약품명</th><th>분류</th><th>성분명</th><th>용량/투약방법</th><th>휴약기간</th><th>적응증</th><th>비고</th><th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="drug-tbody"></tbody>
+          </table>
+        </div>
+        <div id="drug-empty" class="empty-state" style="display:none">
+          <div class="icon-big">💊</div>
+          <p>등록된 약품이 없습니다. 약품을 추가해주세요.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 백신 관리 -->
+    <div id="page-vaccines" class="page">
+      <div class="search-bar">
+        <input class="search-input" id="vacc-search" placeholder="🔍  백신명, 대상질병 검색..." oninput="renderVaccines()">
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>백신명</th><th>대상질병</th><th>투여방법</th><th>권장 일령</th><th>희석방법</th><th>비고</th><th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="vacc-tbody"></tbody>
+          </table>
+        </div>
+        <div id="vacc-empty" class="empty-state" style="display:none">
+          <div class="icon-big">💉</div>
+          <p>등록된 백신이 없습니다. 백신을 추가해주세요.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 백업/복원 -->
+    <div id="page-backup" class="page">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">💾 데이터 백업</div></div>
+          <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">현재 등록된 모든 데이터(농장, 투약프로그램, 약품, 백신)를 JSON 파일로 저장합니다.</p>
+          <button class="btn btn-primary" onclick="backupData()">📥 JSON 파일로 백업</button>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📂 데이터 복원</div></div>
+          <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">이전에 백업한 JSON 파일을 불러와 데이터를 복원합니다. 기존 데이터는 덮어씌워집니다.</p>
+          <input type="file" id="restore-file" accept=".json" style="display:none" onchange="restoreData(event)">
+          <button class="btn btn-outline" onclick="document.getElementById('restore-file').click()">📤 JSON 파일 복원</button>
+        </div>
+      </div>
+      <div class="card mt-16">
+        <div class="card-header"><div class="card-title">🗑️ 데이터 초기화</div></div>
+        <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">모든 데이터를 삭제합니다. 이 작업은 되돌릴 수 없습니다. 반드시 백업 후 진행하세요.</p>
+        <button class="btn btn-danger" onclick="clearAllData()">⚠️ 전체 데이터 초기화</button>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- 모달: 농장 등록/편집 -->
+<div class="modal-bg" id="modal-farm">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-farm-title">농장 등록</div>
+      <button class="modal-close" onclick="closeModal('modal-farm')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>농장명 *</label><input id="f-name" placeholder="예) 진흥농장"></div>
+      <div class="form-group"><label>농장주 *</label><input id="f-owner" placeholder="예) 임준명"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>축종 *</label>
+        <select id="f-type">
+          <option value="육계">육계</option><option value="삼계">삼계</option>
+          <option value="토종닭">토종닭</option><option value="오리">오리</option><option value="기타">기타</option>
+        </select>
+      </div>
+      <div class="form-group"><label>입추수수 (마리)</label><input id="f-count" type="number" placeholder="예) 30000"></div>
+    </div>
+    <div class="form-group"><label>주소 *</label><input id="f-address" placeholder="예) 경기도 파주시 솔아래길 79-6"></div>
+    <div class="form-row">
+      <div class="form-group"><label>연락처</label><input id="f-phone" placeholder="예) 010-1234-5678"></div>
+      <div class="form-group"><label>담당 수의사</label><input id="f-vet" placeholder="예) 최동명 수의사"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>수의사 연락처</label><input id="f-vet-phone" placeholder="예) 010-9150-8844"></div>
+      <div class="form-group"><label>동수</label><input id="f-houses" type="number" placeholder="예) 4"></div>
+    </div>
+    <div class="form-group"><label>중점 관리사항</label><input id="f-focus" placeholder="예) 콕시듐증, 괴사성장염 예방"></div>
+    <div class="form-group"><label>비고</label><textarea id="f-notes" placeholder="추가 정보를 입력하세요"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-farm')">취소</button>
+      <button class="btn btn-primary" onclick="saveFarm()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 모달: 약품 등록/편집 -->
+<div class="modal-bg" id="modal-drug">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-drug-title">약품 등록</div>
+      <button class="modal-close" onclick="closeModal('modal-drug')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>약품명 *</label><input id="d-name" placeholder="예) 엔로플록사신"></div>
+      <div class="form-group"><label>분류 *</label>
+        <select id="d-type">
+          <option value="항생제">항생제</option><option value="콕시듐제">콕시듐제</option>
+          <option value="영양제">영양제</option><option value="소독제">소독제</option>
+          <option value="성장촉진제">성장촉진제</option><option value="대사촉진제">대사촉진제</option><option value="기타">기타</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>성분명</label><input id="d-ingredient" placeholder="예) Enrofloxacin"></div>
+      <div class="form-group"><label>제조사</label><input id="d-maker" placeholder="예) 동방아그로"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>표준 용량/방법</label><input id="d-dose" placeholder="예) 물 200L당 400cc, 5-6시간 투약"></div>
+      <div class="form-group"><label>휴약기간</label><input id="d-withdrawal" placeholder="예) 12일"></div>
+    </div>
+    <div class="form-group"><label>적응증</label><input id="d-indication" placeholder="예) 대장균증, 호흡기질환 치료"></div>
+    <div class="form-group"><label>비고/주의사항</label><textarea id="d-notes" placeholder="주의사항을 입력하세요"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-drug')">취소</button>
+      <button class="btn btn-primary" onclick="saveDrug()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 모달: 백신 등록/편집 -->
+<div class="modal-bg" id="modal-vaccine">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-vacc-title">백신 등록</div>
+      <button class="modal-close" onclick="closeModal('modal-vaccine')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>백신명 *</label><input id="v-name" placeholder="예) 뉴캐슬+감보로 혼합백신"></div>
+      <div class="form-group"><label>대상 질병 *</label><input id="v-disease" placeholder="예) 뉴캐슬병, 감보로병(IBD)"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>투여방법</label>
+        <select id="v-method">
+          <option value="음수백신">음수백신</option><option value="분무백신">분무백신</option>
+          <option value="점안">점안</option><option value="근육주사">근육주사</option><option value="기타">기타</option>
+        </select>
+      </div>
+      <div class="form-group"><label>권장 일령</label><input id="v-age" placeholder="예) 9-11일령"></div>
+    </div>
+    <div class="form-group"><label>희석 방법</label><input id="v-dilution" placeholder="예) 중화제(탈지분유) 물 100리터에 1병"></div>
+    <div class="form-group"><label>비고</label><textarea id="v-notes" placeholder="추가 정보를 입력하세요"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-vaccine')">취소</button>
+      <button class="btn btn-primary" onclick="saveVaccine()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 모달: 투약 프로그램 등록/편집 -->
+<div class="modal-bg" id="modal-program">
+  <div class="modal" style="width:800px; max-width:97vw;">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-prog-title">투약 프로그램 등록</div>
+      <button class="modal-close" onclick="closeModal('modal-program')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>프로그램명 *</label><input id="p-name" placeholder="예) 진흥농장 육계 30일 프로그램"></div>
+      <div class="form-group"><label>농장 선택 *</label>
+        <select id="p-farm"><option value="">농장 선택</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>사육 기간 (일령)</label><input id="p-duration" type="number" value="30" min="1" max="60" onchange="generateDayRows()"></div>
+      <div class="form-group"><label>중점 관리사항</label><input id="p-focus" placeholder="예) 콕시듐증, 괴사성장염 예방"></div>
+    </div>
+    <hr class="divider">
+    <div style="font-size:13px; font-weight:700; margin-bottom:10px; color:var(--text-primary);">일령별 투약 계획</div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%; font-size:12px; border-collapse:collapse;">
+        <thead>
+          <tr style="background:var(--bg);">
+            <th style="padding:8px; text-align:center; width:55px; border:1px solid var(--border);">일령</th>
+            <th style="padding:8px; text-align:center; border:1px solid var(--border);">약품투약</th>
+            <th style="padding:8px; text-align:center; border:1px solid var(--border);">백신사항</th>
+            <th style="padding:8px; text-align:center; border:1px solid var(--border);">중요사항/비고</th>
+          </tr>
+        </thead>
+        <tbody id="day-rows-body"></tbody>
+      </table>
+    </div>
+    <div class="form-group mt-16"><label>투약 관리 포인트</label>
+      <textarea id="p-notes" style="min-height:80px" placeholder="예) * 항생제 음수량 5-6시간 이상, * 음수백신 중화제 사용 2-3시간 단수 후 백신"></textarea>
+    </div>
+    <div class="form-group"><label>사료 첨가사항</label>
+      <textarea id="p-feed-notes" placeholder="예) 에드비타골드 2kg/톤, 항곰팡이제(마이코픽스) 1kg/톤 첨가"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-program')">취소</button>
+      <button class="btn btn-primary" onclick="saveProgram()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 모달: 투약 프로그램 상세보기 -->
+<div class="modal-bg" id="modal-prog-view">
+  <div class="modal" style="width:860px; max-width:97vw;">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-prog-view-title">투약 프로그램 상세</div>
+      <button class="modal-close" onclick="closeModal('modal-prog-view')">✕</button>
+    </div>
+    <div id="modal-prog-view-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-prog-view')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DB_KEYS = { farms: 'fms_farms', drugs: 'fms_drugs', vaccines: 'fms_vaccines', programs: 'fms_programs' };
+
+function load(key) {
+  try { return JSON.parse(localStorage.getItem(DB_KEYS[key]) || '[]'); } catch { return []; }
+}
+function save(key, data) {
+  localStorage.setItem(DB_KEYS[key], JSON.stringify(data));
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+let editingId = { farm: null, drug: null, vaccine: null, program: null };
+
+// ─── 네비게이션 ───────────────────────────────────────────────────────────────
+const PAGE_TITLES = {
+  dashboard: '대시보드',
+  farms: '농장 등록/관리',
+  programs: '투약 프로그램',
+  schedule: '투약 일정',
+  drugs: '약품 등록',
+  vaccines: '백신 관리',
+  backup: '백업 / 복원'
+};
+const PAGE_ACTIONS = {
+  farms: `<button class="btn btn-primary" onclick="openFarmModal()">+ 농장 추가</button>`,
+  programs: `<button class="btn btn-primary" onclick="openProgramModal()">+ 프로그램 추가</button>`,
+  drugs: `<button class="btn btn-primary" onclick="openDrugModal()">+ 약품 추가</button>`,
+  vaccines: `<button class="btn btn-primary" onclick="openVaccineModal()">+ 백신 추가</button>`,
+};
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.sidebar-item').forEach(i => {
+    if (i.getAttribute('onclick') && i.getAttribute('onclick').includes("'" + name + "'")) i.classList.add('active');
+  });
+  document.getElementById('topbar-title').textContent = PAGE_TITLES[name] || name;
+  document.getElementById('topbar-actions').innerHTML = PAGE_ACTIONS[name] || '';
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'farms') renderFarms();
+  if (name === 'programs') { populateFarmFilter(); renderPrograms(); }
+  if (name === 'schedule') populateScheduleSelects();
+  if (name === 'drugs') renderDrugs();
+  if (name === 'vaccines') renderVaccines();
+}
+
+// ─── 모달 ───────────────────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ─── 대시보드 ─────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const farms = load('farms'), drugs = load('drugs'), vaccines = load('vaccines'), programs = load('programs');
+  document.getElementById('dash-stats').innerHTML = [
+    `<div class="stat-card"><div class="stat-label">등록 농장</div><div class="stat-value">${farms.length}</div><div class="stat-sub">개 농장</div></div>`,
+    `<div class="stat-card"><div class="stat-label">투약 프로그램</div><div class="stat-value">${programs.length}</div><div class="stat-sub">개 프로그램</div></div>`,
+    `<div class="stat-card"><div class="stat-label">등록 약품</div><div class="stat-value">${drugs.length}</div><div class="stat-sub">종</div></div>`,
+    `<div class="stat-card"><div class="stat-label">등록 백신</div><div class="stat-value">${vaccines.length}</div><div class="stat-sub">종</div></div>`,
+  ].join('');
+
+  const farmRows = farms.slice(-5).reverse().map(f =>
+    `<tr><td><strong>${f.name}</strong></td><td>${f.owner}</td><td><span class="badge badge-blue">${f.type}</span></td><td style="color:var(--text-secondary)">${f.address}</td></tr>`
+  ).join('') || `<tr><td colspan="4" class="text-muted" style="text-align:center;padding:20px">등록된 농장이 없습니다</td></tr>`;
+  document.getElementById('dash-recent-farms').innerHTML = `<div class="tbl-wrap"><table><thead><tr><th>농장명</th><th>농장주</th><th>축종</th><th>주소</th></tr></thead><tbody>${farmRows}</tbody></table></div>`;
+
+  const drugTypeColors = { '항생제':'badge-blue', '콕시듐제':'badge-green', '영양제':'badge-amber', '소독제':'badge-teal', '성장촉진제':'badge-purple', '대사촉진제':'badge-pink', '기타':'badge-red' };
+  const drugRows = drugs.slice(0,8).map(d =>
+    `<tr><td><strong>${d.name}</strong></td><td><span class="badge ${drugTypeColors[d.type]||'badge-blue'}">${d.type}</span></td><td style="color:var(--text-secondary)">${d.withdrawal||'-'}</td></tr>`
+  ).join('') || `<tr><td colspan="3" class="text-muted" style="text-align:center;padding:20px">등록된 약품이 없습니다</td></tr>`;
+  document.getElementById('dash-drugs').innerHTML = `<div class="tbl-wrap"><table><thead><tr><th>약품명</th><th>분류</th><th>휴약기간</th></tr></thead><tbody>${drugRows}</tbody></table></div>`;
+}
+
+// ─── 농장 관리 ────────────────────────────────────────────────────────────
+function openFarmModal(id) {
+  editingId.farm = id || null;
+  const farm = id ? load('farms').find(f => f.id === id) : null;
+  document.getElementById('modal-farm-title').textContent = id ? '농장 편집' : '농장 등록';
+  ['name','owner','type','address','phone','vet','vet-phone','houses','focus','notes'].forEach(k => {
+    const el = document.getElementById('f-'+k);
+    if (el) el.value = farm ? (farm[k.replace('-','_')] || '') : '';
+  });
+  if (farm) document.getElementById('f-type').value = farm.type || '육계';
+  openModal('modal-farm');
+}
+
+function saveFarm() {
+  const name = document.getElementById('f-name').value.trim();
+  const owner = document.getElementById('f-owner').value.trim();
+  const address = document.getElementById('f-address').value.trim();
+  if (!name || !owner || !address) { alert('농장명, 농장주, 주소는 필수 입력 항목입니다.'); return; }
+  const farms = load('farms');
+  const data = {
+    id: editingId.farm || uid(), name, owner,
+    type: document.getElementById('f-type').value,
+    count: document.getElementById('f-count').value,
+    address,
+    phone: document.getElementById('f-phone').value.trim(),
+    vet: document.getElementById('f-vet').value.trim(),
+    vet_phone: document.getElementById('f-vetphone') ? document.getElementById('f-vetphone').value.trim() : document.getElementById('f-vet-phone').value.trim(),
+    houses: document.getElementById('f-houses').value,
+    focus: document.getElementById('f-focus').value.trim(),
+    notes: document.getElementById('f-notes').value.trim(),
+  };
+  if (editingId.farm) {
+    const i = farms.findIndex(f => f.id === editingId.farm);
+    if (i >= 0) farms[i] = data;
+  } else farms.push(data);
+  save('farms', farms);
+  closeModal('modal-farm');
+  renderFarms();
+}
+
+function deleteFarm(id) {
+  if (!confirm('이 농장을 삭제하시겠습니까?')) return;
+  save('farms', load('farms').filter(f => f.id !== id));
+  renderFarms();
+}
+
+function renderFarms() {
+  const q = (document.getElementById('farm-search')?.value||'').toLowerCase();
+  const ft = document.getElementById('farm-filter-type')?.value||'';
+  let farms = load('farms').filter(f =>
+    (!q || f.name.includes(q) || f.address.includes(q) || f.owner.includes(q)) &&
+    (!ft || f.type === ft)
+  );
+  const badgeMap = { '육계':'badge-blue', '삼계':'badge-green', '토종닭':'badge-amber', '오리':'badge-teal', '기타':'badge-purple' };
+  const tbody = document.getElementById('farm-tbody');
+  const empty = document.getElementById('farm-empty');
+  if (!farms.length) { tbody.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display='none';
+  tbody.innerHTML = farms.map(f => `
+    <tr>
+      <td><strong>${f.name}</strong></td>
+      <td>${f.owner}</td>
+      <td><span class="badge ${badgeMap[f.type]||'badge-blue'}">${f.type}</span></td>
+      <td style="color:var(--text-secondary)">${f.address}</td>
+      <td>${f.phone||'-'}</td>
+      <td>${f.count ? Number(f.count).toLocaleString()+'수' : '-'}</td>
+      <td>${f.vet||'-'}</td>
+      <td><div class="flex-gap">
+        <button class="btn btn-outline btn-sm" onclick="openFarmModal('${f.id}')">편집</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteFarm('${f.id}')">삭제</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+// ─── 약품 관리 ────────────────────────────────────────────────────────────
+function openDrugModal(id) {
+  editingId.drug = id || null;
+  const drug = id ? load('drugs').find(d => d.id === id) : null;
+  document.getElementById('modal-drug-title').textContent = id ? '약품 편집' : '약품 등록';
+  ['name','type','ingredient','maker','dose','withdrawal','indication','notes'].forEach(k => {
+    const el = document.getElementById('d-'+k);
+    if(el) el.value = drug ? (drug[k]||'') : '';
+  });
+  if(drug) document.getElementById('d-type').value = drug.type||'항생제';
+  openModal('modal-drug');
+}
+function saveDrug() {
+  const name = document.getElementById('d-name').value.trim();
+  if (!name) { alert('약품명은 필수입니다.'); return; }
+  const drugs = load('drugs');
+  const data = {
+    id: editingId.drug || uid(), name,
+    type: document.getElementById('d-type').value,
+    ingredient: document.getElementById('d-ingredient').value.trim(),
+    maker: document.getElementById('d-maker').value.trim(),
+    dose: document.getElementById('d-dose').value.trim(),
+    withdrawal: document.getElementById('d-withdrawal').value.trim(),
+    indication: document.getElementById('d-indication').value.trim(),
+    notes: document.getElementById('d-notes').value.trim(),
+  };
+  if (editingId.drug) { const i=drugs.findIndex(d=>d.id===editingId.drug); if(i>=0) drugs[i]=data; }
+  else drugs.push(data);
+  save('drugs', drugs);
+  closeModal('modal-drug');
+  renderDrugs();
+}
+function deleteDrug(id) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  save('drugs', load('drugs').filter(d => d.id !== id));
+  renderDrugs();
+}
+function renderDrugs() {
+  const q = (document.getElementById('drug-search')?.value||'').toLowerCase();
+  const ft = document.getElementById('drug-filter-type')?.value||'';
+  let drugs = load('drugs').filter(d =>
+    (!q || d.name.toLowerCase().includes(q) || (d.ingredient||'').toLowerCase().includes(q)) &&
+    (!ft || d.type === ft)
+  );
+  const tbody = document.getElementById('drug-tbody');
+  const empty = document.getElementById('drug-empty');
+  const typeColors = { '항생제':'badge-blue', '콕시듐제':'badge-green', '영양제':'badge-amber', '소독제':'badge-teal', '성장촉진제':'badge-purple', '대사촉진제':'badge-red', '기타':'badge-red' };
+  if (!drugs.length) { tbody.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display='none';
+  tbody.innerHTML = drugs.map(d => `
+    <tr>
+      <td><strong>${d.name}</strong></td>
+      <td><span class="badge ${typeColors[d.type]||'badge-blue'}">${d.type}</span></td>
+      <td style="color:var(--text-secondary)">${d.ingredient||'-'}</td>
+      <td>${d.dose||'-'}</td>
+      <td>${d.withdrawal ? '<span class="badge badge-red">'+d.withdrawal+'</span>' : '-'}</td>
+      <td>${d.indication||'-'}</td>
+      <td style="color:var(--text-secondary)">${d.notes||'-'}</td>
+      <td><div class="flex-gap">
+        <button class="btn btn-outline btn-sm" onclick="openDrugModal('${d.id}')">편집</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteDrug('${d.id}')">삭제</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+// ─── 백신 관리 ────────────────────────────────────────────────────────────
+function openVaccineModal(id) {
+  editingId.vaccine = id || null;
+  const v = id ? load('vaccines').find(x => x.id === id) : null;
+  document.getElementById('modal-vacc-title').textContent = id ? '백신 편집' : '백신 등록';
+  ['name','disease','method','age','dilution','notes'].forEach(k => {
+    const el = document.getElementById('v-'+k);
+    if(el) el.value = v ? (v[k]||'') : '';
+  });
+  if(v) document.getElementById('v-method').value = v.method||'음수백신';
+  openModal('modal-vaccine');
+}
+function saveVaccine() {
+  const name = document.getElementById('v-name').value.trim();
+  if (!name) { alert('백신명은 필수입니다.'); return; }
+  const vaccines = load('vaccines');
+  const data = {
+    id: editingId.vaccine || uid(), name,
+    disease: document.getElementById('v-disease').value.trim(),
+    method: document.getElementById('v-method').value,
+    age: document.getElementById('v-age').value.trim(),
+    dilution: document.getElementById('v-dilution').value.trim(),
+    notes: document.getElementById('v-notes').value.trim(),
+  };
+  if (editingId.vaccine) { const i=vaccines.findIndex(x=>x.id===editingId.vaccine); if(i>=0) vaccines[i]=data; }
+  else vaccines.push(data);
+  save('vaccines', vaccines);
+  closeModal('modal-vaccine');
+  renderVaccines();
+}
+function deleteVaccine(id) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  save('vaccines', load('vaccines').filter(v => v.id !== id));
+  renderVaccines();
+}
+function renderVaccines() {
+  const q = (document.getElementById('vacc-search')?.value||'').toLowerCase();
+  let vaccines = load('vaccines').filter(v =>
+    !q || v.name.toLowerCase().includes(q) || (v.disease||'').toLowerCase().includes(q)
+  );
+  const tbody = document.getElementById('vacc-tbody');
+  const empty = document.getElementById('vacc-empty');
+  const methodColors = { '음수백신':'badge-blue', '분무백신':'badge-green', '점안':'badge-amber', '근육주사':'badge-red', '기타':'badge-purple' };
+  if (!vaccines.length) { tbody.innerHTML=''; empty.style.display=''; return; }
+  empty.style.display='none';
+  tbody.innerHTML = vaccines.map(v => `
+    <tr>
+      <td><strong>${v.name}</strong></td>
+      <td>${v.disease||'-'}</td>
+      <td><span class="badge ${methodColors[v.method]||'badge-blue'}">${v.method}</span></td>
+      <td>${v.age||'-'}</td>
+      <td>${v.dilution||'-'}</td>
+      <td style="color:var(--text-secondary)">${v.notes||'-'}</td>
+      <td><div class="flex-gap">
+        <button class="btn btn-outline btn-sm" onclick="openVaccineModal('${v.id}')">편집</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteVaccine('${v.id}')">삭제</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+// ─── 투약 프로그램 ─────────────────────────────────────────────────────────
+function populateFarmSelect(selectId, val) {
+  const farms = load('farms');
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = '<option value="">농장 선택</option>' + farms.map(f =>
+    `<option value="${f.id}"${f.id===val?' selected':''}>${f.name} (${f.owner})</option>`
+  ).join('');
+}
+function populateFarmFilter() {
+  const farms = load('farms');
+  const sel = document.getElementById('prog-filter-farm');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">전체 농장</option>' + farms.map(f =>
+    `<option value="${f.id}"${f.id===cur?' selected':''}>${f.name}</option>`
+  ).join('');
+}
+
+function openProgramModal(id) {
+  editingId.program = id || null;
+  const prog = id ? load('programs').find(p => p.id === id) : null;
+  document.getElementById('modal-prog-title').textContent = id ? '투약 프로그램 편집' : '투약 프로그램 등록';
+  populateFarmSelect('p-farm', prog?.farmId || '');
+  document.getElementById('p-name').value = prog?.name || '';
+  document.getElementById('p-duration').value = prog?.duration || 30;
+  document.getElementById('p-focus').value = prog?.focus || '';
+  document.getElementById('p-notes').value = prog?.notes || '';
+  document.getElementById('p-feed-notes').value = prog?.feedNotes || '';
+  generateDayRows(prog?.days);
+  openModal('modal-program');
+}
+
+function generateDayRows(existingDays) {
+  const n = parseInt(document.getElementById('p-duration').value) || 30;
+  const tbody = document.getElementById('day-rows-body');
+  tbody.innerHTML = '';
+  for (let i = 1; i <= n; i++) {
+    const ex = existingDays ? existingDays.find(d => d.day === i) : null;
+    tbody.innerHTML += `
+      <tr>
+        <td style="text-align:center; font-weight:700; color:var(--accent); background:var(--bg); border:1px solid var(--border);">${i}</td>
+        <td style="border:1px solid var(--border);"><input type="text" id="day-drug-${i}" value="${ex?.drug||''}" placeholder="예) 엔로+베타맥스" style="width:100%;border:none;padding:5px 8px;font-size:12px;font-family:inherit;background:transparent"></td>
+        <td style="border:1px solid var(--border);"><input type="text" id="day-vaccine-${i}" value="${ex?.vaccine||''}" placeholder="예) 뉴캐슬 음수백신" style="width:100%;border:none;padding:5px 8px;font-size:12px;font-family:inherit;background:transparent"></td>
+        <td style="border:1px solid var(--border);"><input type="text" id="day-note-${i}" value="${ex?.note||''}" placeholder="예) 콕시듐 주의구간" style="width:100%;border:none;padding:5px 8px;font-size:12px;font-family:inherit;background:transparent"></td>
+      </tr>`;
+  }
+}
+
+function saveProgram() {
+  const name = document.getElementById('p-name').value.trim();
+  const farmId = document.getElementById('p-farm').value;
+  if (!name || !farmId) { alert('프로그램명과 농장 선택은 필수입니다.'); return; }
+  const n = parseInt(document.getElementById('p-duration').value) || 30;
+  const days = [];
+  for (let i = 1; i <= n; i++) {
+    const drug = document.getElementById('day-drug-'+i)?.value.trim() || '';
+    const vaccine = document.getElementById('day-vaccine-'+i)?.value.trim() || '';
+    const note = document.getElementById('day-note-'+i)?.value.trim() || '';
+    if (drug || vaccine || note) days.push({ day: i, drug, vaccine, note });
+  }
+  const farms = load('farms');
+  const farmName = farms.find(f => f.id === farmId)?.name || '';
+  const programs = load('programs');
+  const data = {
+    id: editingId.program || uid(), name, farmId, farmName,
+    duration: n,
+    focus: document.getElementById('p-focus').value.trim(),
+    notes: document.getElementById('p-notes').value.trim(),
+    feedNotes: document.getElementById('p-feed-notes').value.trim(),
+    days,
+    createdAt: editingId.program ? (programs.find(p=>p.id===editingId.program)?.createdAt||new Date().toISOString()) : new Date().toISOString()
+  };
+  if (editingId.program) { const i=programs.findIndex(p=>p.id===editingId.program); if(i>=0) programs[i]=data; }
+  else programs.push(data);
+  save('programs', programs);
+  closeModal('modal-program');
+  populateFarmFilter();
+  renderPrograms();
+}
+
+function deleteProgram(id) {
+  if (!confirm('이 투약 프로그램을 삭제하시겠습니까?')) return;
+  save('programs', load('programs').filter(p => p.id !== id));
+  renderPrograms();
+}
+
+function viewProgram(id) {
+  const prog = load('programs').find(p => p.id === id);
+  if (!prog) return;
+  const farm = load('farms').find(f => f.id === prog.farmId);
+  let rows = '';
+  for (let i = 1; i <= prog.duration; i++) {
+    const d = prog.days.find(x => x.day === i);
+    const hasData = d && (d.drug||d.vaccine||d.note);
+    rows += `<tr style="background:${hasData?'':'var(--bg)'}">
+      <td style="text-align:center;font-weight:700;color:var(--accent);background:var(--bg);width:55px">${i}</td>
+      <td>${d?.drug ? `<span class="drug-pill">${d.drug}</span>` : '<span style="color:var(--text-muted)">-</span>'}</td>
+      <td>${d?.vaccine ? `<span class="vaccine-pill">${d.vaccine}</span>` : '<span style="color:var(--text-muted)">-</span>'}</td>
+      <td style="color:var(--text-secondary);font-size:12px">${d?.note||''}</td>
+    </tr>`;
+  }
+  document.getElementById('modal-prog-view-title').textContent = prog.name;
+  document.getElementById('modal-prog-view-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="background:var(--bg);border-radius:8px;padding:12px">
+        <div style="font-size:11px;color:var(--text-secondary);font-weight:700;margin-bottom:4px">농장</div>
+        <div style="font-size:14px;font-weight:700">${prog.farmName}</div>
+        ${farm ? `<div style="font-size:12px;color:var(--text-secondary)">${farm.owner} · ${farm.address}</div>` : ''}
+      </div>
+      <div style="background:var(--bg);border-radius:8px;padding:12px">
+        <div style="font-size:11px;color:var(--text-secondary);font-weight:700;margin-bottom:4px">사육 기간</div>
+        <div style="font-size:14px;font-weight:700">${prog.duration}일령</div>
+        ${prog.focus ? `<div style="font-size:12px;color:var(--text-secondary)">${prog.focus}</div>` : ''}
+      </div>
+      <div style="background:var(--bg);border-radius:8px;padding:12px">
+        <div style="font-size:11px;color:var(--text-secondary);font-weight:700;margin-bottom:4px">투약 일수</div>
+        <div style="font-size:14px;font-weight:700">${prog.days.length}일</div>
+        <div style="font-size:12px;color:var(--text-secondary)">투약 계획 있는 날</div>
+      </div>
+    </div>
+    <div style="overflow-x:auto;border:1px solid var(--border);border-radius:8px">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="background:var(--bg)">
+            <th style="padding:9px 10px;text-align:center;border-bottom:1.5px solid var(--border);width:55px">일령</th>
+            <th style="padding:9px 10px;border-bottom:1.5px solid var(--border)">약품투약</th>
+            <th style="padding:9px 10px;border-bottom:1.5px solid var(--border)">백신사항</th>
+            <th style="padding:9px 10px;border-bottom:1.5px solid var(--border)">중요사항</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    ${prog.notes ? `<div style="margin-top:14px;padding:12px;background:var(--accent-light);border-radius:8px;font-size:12px;color:var(--accent-dark)">
+      <strong>투약 관리 포인트:</strong> ${prog.notes}</div>` : ''}
+    ${prog.feedNotes ? `<div style="margin-top:8px;padding:12px;background:var(--green-bg);border-radius:8px;font-size:12px;color:var(--green)">
+      <strong>사료 첨가사항:</strong> ${prog.feedNotes}</div>` : ''}
+  `;
+  openModal('modal-prog-view');
+}
+
+function renderPrograms() {
+  const q = (document.getElementById('prog-search')?.value||'').toLowerCase();
+  const ff = document.getElementById('prog-filter-farm')?.value||'';
+  let progs = load('programs').filter(p =>
+    (!q || p.name.toLowerCase().includes(q) || (p.farmName||'').toLowerCase().includes(q)) &&
+    (!ff || p.farmId === ff)
+  );
+  const container = document.getElementById('prog-list');
+  if (!progs.length) {
+    container.innerHTML = `<div class="empty-state"><div class="icon-big">📋</div><p>등록된 투약 프로그램이 없습니다. 프로그램을 추가해주세요.</p></div>`;
+    return;
+  }
+  container.innerHTML = progs.map(p => {
+    const drugDays = p.days.filter(d=>d.drug).length;
+    const vaccDays = p.days.filter(d=>d.vaccine).length;
+    return `
+    <div class="card mb-16">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${p.name}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">🏘️ ${p.farmName}${p.focus?' · '+p.focus:''}</div>
+        </div>
+        <div class="flex-gap">
+          <button class="btn btn-outline btn-sm" onclick="viewProgram('${p.id}')">📋 상세보기</button>
+          <button class="btn btn-outline btn-sm" onclick="openProgramModal('${p.id}')">편집</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProgram('${p.id}')">삭제</button>
+        </div>
+      </div>
+      <div class="flex-gap" style="margin-bottom:12px;gap:16px">
+        <span><span style="color:var(--text-secondary);font-size:12px">사육기간 </span><strong>${p.duration}일령</strong></span>
+        <span><span class="badge badge-blue">약품 ${drugDays}일</span></span>
+        <span><span class="badge badge-green">백신 ${vaccDays}일</span></span>
+      </div>
+      <div style="overflow-x:auto;border:1px solid var(--border);border-radius:8px">
+        <table class="schedule-table" style="border-collapse:collapse;font-size:12px;min-width:600px">
+          <thead><tr style="background:var(--bg)">
+            <th style="padding:7px 10px;border-bottom:1px solid var(--border);width:50px;text-align:center">일령</th>
+            <th style="padding:7px 10px;border-bottom:1px solid var(--border)">약품투약</th>
+            <th style="padding:7px 10px;border-bottom:1px solid var(--border)">백신사항</th>
+            <th style="padding:7px 10px;border-bottom:1px solid var(--border)">비고</th>
+          </tr></thead>
+          <tbody>${p.days.map(d=>`
+            <tr>
+              <td style="text-align:center;font-weight:700;color:var(--accent);background:var(--bg);padding:5px 8px">${d.day}</td>
+              <td style="padding:5px 8px">${d.drug?`<span class="drug-pill">${d.drug}</span>`:''}</td>
+              <td style="padding:5px 8px">${d.vaccine?`<span class="vaccine-pill">${d.vaccine}</span>`:''}</td>
+              <td style="padding:5px 8px;color:var(--text-secondary);font-size:11px">${d.note||''}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── 투약 일정 뷰 ──────────────────────────────────────────────────────────
+function populateScheduleSelects() {
+  const farms = load('farms');
+  const sel = document.getElementById('sched-farm-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">농장을 선택하세요</option>' + farms.map(f =>
+    `<option value="${f.id}">${f.name} (${f.owner})</option>`
+  ).join('');
+}
+
+function loadScheduleForFarm() {
+  const farmId = document.getElementById('sched-farm-select').value;
+  const progs = load('programs').filter(p => p.farmId === farmId);
+  const sel = document.getElementById('sched-prog-select');
+  sel.innerHTML = '<option value="">투약 프로그램 선택</option>' + progs.map(p =>
+    `<option value="${p.id}">${p.name}</option>`
+  ).join('');
+  document.getElementById('schedule-view').innerHTML = '';
+}
+
+function renderScheduleView() {
+  const progId = document.getElementById('sched-prog-select').value;
+  if (!progId) { document.getElementById('schedule-view').innerHTML=''; return; }
+  const prog = load('programs').find(p => p.id === progId);
+  if (!prog) return;
+  const farm = load('farms').find(f => f.id === prog.farmId);
+
+  let rows = '';
+  for (let i = 1; i <= prog.duration; i++) {
+    const d = prog.days.find(x => x.day === i);
+    const hasData = d && (d.drug || d.vaccine || d.note);
+    rows += `<div class="program-day-row" style="background:${hasData?'var(--bg-card)':'var(--bg)'}">
+      <div class="program-cell num">${i}일</div>
+      <div class="program-cell">${d?.drug ? d.drug.split('+').map(x=>`<span class="drug-pill">${x.trim()}</span>`).join(' ') : ''}</div>
+      <div class="program-cell">${d?.vaccine ? `<span class="vaccine-pill">💉 ${d.vaccine}</span>` : ''}</div>
+      <div class="program-cell" style="color:var(--text-secondary);font-size:11px">${d?.note||''}</div>
+    </div>`;
+  }
+
+  document.getElementById('schedule-view').innerHTML = `
+    <div class="card mb-16">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${prog.name}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">
+            🏘️ ${prog.farmName}${farm?' · '+farm.address:''} &nbsp;|&nbsp; 총 ${prog.duration}일령 프로그램
+          </div>
+        </div>
+      </div>
+      ${prog.focus ? `<div style="padding:8px 12px;background:var(--amber-bg);border-radius:6px;font-size:12px;color:var(--amber);margin-bottom:14px">⚠️ <strong>중점 관리사항:</strong> ${prog.focus}</div>` : ''}
+      <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
+        <div class="program-day-row" style="background:var(--bg)">
+          <div class="program-cell head" style="text-align:center">일령</div>
+          <div class="program-cell head">💊 약품투약</div>
+          <div class="program-cell head">💉 백신사항</div>
+          <div class="program-cell head">⚠️ 중요사항</div>
+        </div>
+        ${rows}
+      </div>
+      ${prog.notes ? `<div style="margin-top:12px;padding:12px;background:var(--accent-light);border-radius:8px;font-size:12px;color:var(--accent-dark)">
+        <strong>투약 관리 포인트:</strong><br>${prog.notes}</div>` : ''}
+      ${prog.feedNotes ? `<div style="margin-top:8px;padding:12px;background:var(--green-bg);border-radius:8px;font-size:12px;color:var(--green)">
+        <strong>사료 첨가사항:</strong><br>${prog.feedNotes}</div>` : ''}
+    </div>`;
+}
+
+// ─── 백업/복원 ────────────────────────────────────────────────────────────
+function backupData() {
+  const data = {};
+  Object.keys(DB_KEYS).forEach(k => { data[k] = load(k); });
+  data._meta = { version: '1.0', exportedAt: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '농장투약관리_백업_' + new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','') + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function restoreData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!confirm(`백업 파일을 복원하면 현재 데이터가 덮어씌워집니다.\n내보낸 날짜: ${data._meta?.exportedAt||'알 수 없음'}\n\n계속하시겠습니까?`)) return;
+      Object.keys(DB_KEYS).forEach(k => { if (data[k]) save(k, data[k]); });
+      alert('복원 완료! 대시보드로 이동합니다.');
+      showPage('dashboard');
+    } catch { alert('올바른 백업 파일이 아닙니다.'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function clearAllData() {
+  if (!confirm('⚠️ 모든 데이터가 삭제됩니다. 반드시 백업 후 진행하세요.\n\n정말로 삭제하시겠습니까?')) return;
+  Object.values(DB_KEYS).forEach(k => localStorage.removeItem(k));
+  alert('데이터가 초기화되었습니다.');
+  showPage('dashboard');
+}
+
+// ─── 초기화 ───────────────────────────────────────────────────────────────
+renderDashboard();
+</script>
+</body>
+</html>
