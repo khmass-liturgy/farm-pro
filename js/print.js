@@ -1,0 +1,98 @@
+// ─── A4 인쇄 ─────────────────────────────────────────────────────────────
+function printProgram(id) {
+  const prog = load('programs').find(p => p.id === id);
+  if (!prog) return;
+  const farm = load('farms').find(f => f.id === prog.farmId);
+  const today = new Date().toLocaleDateString('ko-KR');
+
+  let tableRows = '';
+  for (let i = 1; i <= prog.duration; i++) {
+    const d = prog.days.find(x => x.day === i);
+    tableRows += `<tr>
+      <td class="day-no">${i}</td>
+      <td class="drug-cell">${dayDrugLabel(d)}</td>
+      <td class="vacc-cell">${dayVaccineLabel(d)}</td>
+      <td>${d?.note || ''}</td>
+    </tr>`;
+  }
+
+  const feedItems = prog.feedItems || [];
+  let feedTableHTML = '';
+  if (feedItems.length) {
+    const fRows = feedItems.map(it => `<tr><td>${it.name}</td><td>${it.dose||'-'}</td><td>${it.period||'-'}</td></tr>`).join('');
+    feedTableHTML = `<table class="print-feed-table">
+      <thead><tr><th>제품명</th><th>첨가량</th><th>첨가 시기</th></tr></thead>
+      <tbody>${fRows}</tbody>
+    </table>`;
+  } else if (prog.feedMemo) {
+    feedTableHTML = `<p>${prog.feedMemo}</p>`;
+  } else {
+    feedTableHTML = '<p style="color:#999">-</p>';
+  }
+
+  const html = `
+  <div class="print-page">
+    <div class="print-header">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end">
+        <h1>🐔 투약관리 프로그램</h1>
+        <div style="font-size:7.5pt;color:#666">출력일: ${today}</div>
+      </div>
+      <div class="ph-meta">
+        <span>프로그램명: <strong>${prog.name}</strong></span>
+        <span>농장: <strong>${prog.farmName}</strong></span>
+        ${farm ? `<span>농장주: <strong>${farm.owner}</strong></span>` : ''}
+        ${farm?.phone ? `<span>연락처: <strong>${farm.phone}</strong></span>` : ''}
+      </div>
+    </div>
+
+    <div class="print-info-grid">
+      <div class="print-info-cell"><div class="lbl">주소</div><div class="val">${farm?.address||'-'}</div></div>
+      <div class="print-info-cell"><div class="lbl">축종</div><div class="val">${farm?.type||'-'}</div></div>
+      <div class="print-info-cell"><div class="lbl">입추수수</div><div class="val">${farm?.count ? Number(farm.count).toLocaleString()+'수' : '-'}</div></div>
+      <div class="print-info-cell"><div class="lbl">사육기간</div><div class="val">${prog.duration}일령</div></div>
+      <div class="print-info-cell"><div class="lbl">동수</div><div class="val">${farm?.houses ? farm.houses+'동' : '-'}</div></div>
+      <div class="print-info-cell"><div class="lbl">담당수의사</div><div class="val">${farm?.vet||'-'}</div></div>
+      <div class="print-info-cell"><div class="lbl">수의사 연락처</div><div class="val">${farm?.vet_phone||'-'}</div></div>
+      <div class="print-info-cell"><div class="lbl">입추예정일</div><div class="val" style="color:#aaa">　</div></div>
+    </div>
+
+    ${prog.focus ? `<div class="print-focus">⚠️ 중점관리사항: ${prog.focus}</div>` : ''}
+
+    <div class="print-section-title">일령별 투약 계획</div>
+    <table class="print-table">
+      <colgroup><col style="width:22pt"><col style="width:30%"><col style="width:22%"><col></colgroup>
+      <thead>
+        <tr>
+          <th>일령</th><th>약품투약</th><th>백신사항</th><th>중요사항 / 비고</th>
+        </tr>
+      </thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+
+    <div class="print-bottom">
+      <div class="print-box">
+        <div class="print-box-title">💊 투약 관리 포인트</div>
+        <p>${prog.notes || '-'}</p>
+      </div>
+      <div class="print-box">
+        <div class="print-box-title">🌾 사료 첨가제</div>
+        ${feedTableHTML}
+        ${prog.feedMemo ? `<p style="margin-top:4pt;font-size:7.5pt;color:#555">📝 ${prog.feedMemo}</p>` : ''}
+      </div>
+    </div>
+
+    <div class="print-sign">
+      <div class="print-sign-box">농 장 주</div>
+      <div class="print-sign-box">담당 수의사</div>
+      <div class="print-sign-box">확 인</div>
+    </div>
+
+    <div style="margin-top:6pt;font-size:7pt;color:#aaa;text-align:center">
+      ※ 본 프로그램은 기본 프로그램으로 질병 상황에 따라 수의사와 상의 후 조정될 수 있습니다.
+    </div>
+  </div>`;
+
+  document.getElementById('print-area').innerHTML = html;
+  closeModal('modal-prog-view');
+  setTimeout(() => window.print(), 200);
+}
