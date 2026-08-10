@@ -43,6 +43,9 @@
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-label">데이터</div>
+    <div class="sidebar-item" onclick="showPage('drugsearch')">
+      <span class="icon">🔎</span> 동물약품 검색
+    </div>
     <div class="sidebar-item" onclick="showPage('drugs')">
       <span class="icon">💊</span> 약품 등록
     </div>
@@ -308,6 +311,26 @@
           <p>등록된 사료첨가제가 없습니다. 제품을 추가해주세요.</p>
         </div>
       </div>
+    </div>
+
+    <!-- 동물약품 검색 (QIA 동물용의약품통합정보시스템 실시간 조회) -->
+    <div id="page-drugsearch" class="page">
+      <div class="tab-bar">
+        <div class="tab active" id="dsearch-mode-name" onclick="setDsearchMode('name')">제품명</div>
+        <div class="tab" id="dsearch-mode-entp" onclick="setDsearchMode('entp')">업체명</div>
+        <div class="tab" id="dsearch-mode-ingr" onclick="setDsearchMode('ingr')">성분명</div>
+      </div>
+      <div class="search-bar">
+        <input class="search-input" id="dsearch-q" placeholder="제품명을 입력하세요 (예: 이보멕)" onkeydown="if(event.key==='Enter')searchDrugQia()">
+        <select id="dsearch-kind" onchange="searchDrugQia()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+          <option value="">전체</option>
+          <option value="A0">의약품</option>
+          <option value="B0">의약외품</option>
+        </select>
+        <button class="btn btn-primary" onclick="searchDrugQia()">검색</button>
+      </div>
+      <p class="text-muted mb-16">농림축산검역본부(QIA) 동물용의약품통합정보시스템 공식 데이터를 실시간으로 조회합니다 · 오타나 초성이 섞여도 비슷한 이름을 찾아드려요 (예: '이버ㅁㅌ')</p>
+      <div id="dsearch-result"></div>
     </div>
 
     <!-- 인쇄 전용 영역 -->
@@ -626,6 +649,7 @@
 <script src="js/auth.js"></script>
 <script src="js/farms.js"></script>
 <script src="js/masterdata.js"></script>
+<script src="js/drugSearch.js"></script>
 <script src="js/programs.js"></script>
 <script src="js/batches.js"></script>
 <script src="js/medicationLog.js"></script>

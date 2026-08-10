@@ -8,6 +8,7 @@ const PAGE_TITLES = {
   'medication-log': '투약 이력',
   schedule: '투약 일정',
   reports: '통계/리포트',
+  drugsearch: '동물약품 검색',
   drugs: '약품 등록',
   vaccines: '백신 관리',
   feeds: '사료첨가제 관리',
