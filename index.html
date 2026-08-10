@@ -210,7 +210,7 @@
           <table>
             <thead>
               <tr>
-                <th>발급번호</th><th>발급일</th><th>농장명</th><th>농장주</th><th>제품명</th><th>처방일수</th><th>판매수량</th><th>관리</th>
+                <th>발급번호</th><th>발급일</th><th>농장명</th><th>농장주</th><th>품목</th><th>품목수</th><th>관리</th>
               </tr>
             </thead>
             <tbody id="rx-tbody"></tbody>
@@ -758,19 +758,12 @@
         <option value="individual">개별처방 (개체)</option>
       </select>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label>제품 *</label>
-        <select id="rx-product" onchange="onRxProductChange()"><option value="">제품 선택</option></select>
-      </div>
-      <div class="form-group"><label>유통기한 <span class="text-muted">(선택)</span></label><input id="rx-expiry-date" type="date"></div>
+    <hr class="divider">
+    <div class="flex-between mb-16">
+      <div style="font-size:13px; font-weight:700;">처방 품목 <span class="text-muted">(최대 4개)</span></div>
     </div>
-    <div class="text-muted mb-16" id="rx-product-summary">제품을 선택하면 성분/용법/휴약기간이 자동으로 채워집니다.</div>
-    <div class="form-row">
-      <div class="form-group"><label>처방일수 *</label><input id="rx-days" type="number" min="1" placeholder="예) 3" oninput="updateRxDosePreview()"></div>
-      <div class="form-group"><label>판매수량 *</label><input id="rx-quantity" type="number" min="0" step="0.01" placeholder="예) 12" oninput="updateRxDosePreview()"></div>
-    </div>
-    <div class="text-muted mb-16" id="rx-dose-preview">1회투여량(용량) = 판매수량 ÷ 처방일수</div>
-    <div class="form-group"><label>비고 <span class="text-muted">(선택, 비워두면 제품의 사용목적이 표시됩니다)</span></label><textarea id="rx-note" placeholder="예) 대장균증치료"></textarea></div>
+    <div id="rx-items-wrap"></div>
+    <button class="btn btn-outline btn-sm" id="rx-add-item-btn" onclick="addRxItemSlot()" style="margin-bottom:16px">+ 품목 추가</button>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-prescription')">취소</button>
       <button class="btn btn-primary" onclick="saveRxPrescription()">저장</button>

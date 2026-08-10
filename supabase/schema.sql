@@ -171,6 +171,10 @@ create table if not exists prescription_products (
   updated_at timestamptz not null default now()
 );
 
+-- items 원소 형태: { productId:uuid|null, productName:text, ingredient:text,
+--   usageMethod:text, purpose:text, withdrawalDays:int|null, days:int,
+--   quantity:number, expiryDate:date|null, note:text|null }
+-- 원본 서식의 처방내역/판매내역 표가 4행이므로 한 처방전에 최대 4개 품목을 담는다.
 create table if not exists prescriptions (
   id uuid primary key default gen_random_uuid(),
   issue_no bigint generated always as identity,
@@ -185,16 +189,7 @@ create table if not exists prescriptions (
   animal_type_snapshot text,
   head_count_snapshot int,
   barn_range_snapshot text,
-  product_id uuid references prescription_products(id) on delete set null,
-  product_name_snapshot text not null,
-  ingredient_snapshot text,
-  usage_method_snapshot text,
-  purpose_snapshot text,
-  withdrawal_days_snapshot int,
-  days int not null,
-  quantity numeric not null,
-  expiry_date date,
-  note text,
+  items jsonb not null default '[]'::jsonb,
   issued_by_email text,
   created_at timestamptz not null default now()
 );
@@ -202,9 +197,32 @@ create table if not exists prescriptions (
 create index if not exists idx_prescriptions_farm_id on prescriptions(farm_id);
 create index if not exists idx_prescriptions_issue_date on prescriptions(issue_date);
 
--- 기존 배포본에 이미 prescriptions 테이블이 있을 경우를 위한 컬럼 추가
--- (유효기간 = 발급일로부터 1년, DB가 항상 자동으로 계산/저장)
+-- 기존 배포본에 이미 prescriptions 테이블이 있을 경우를 위한 컬럼 추가/마이그레이션
+-- (유효기간 = 발급일로부터 1년, DB가 항상 자동으로 계산/저장 / 품목을 단일 컬럼에서
+--  items 배열로 옮겨 한 처방전에 여러 제품을 담을 수 있게 함)
 alter table prescriptions add column if not exists valid_until date generated always as ((issue_date + interval '1 year')::date) stored;
+alter table prescriptions add column if not exists items jsonb not null default '[]'::jsonb;
+do $$
+begin
+  if exists (select 1 from information_schema.columns where table_name = 'prescriptions' and column_name = 'product_name_snapshot') then
+    update prescriptions set items = jsonb_build_array(jsonb_build_object(
+        'productId', product_id, 'productName', product_name_snapshot, 'ingredient', ingredient_snapshot,
+        'usageMethod', usage_method_snapshot, 'purpose', purpose_snapshot, 'withdrawalDays', withdrawal_days_snapshot,
+        'days', days, 'quantity', quantity, 'expiryDate', expiry_date, 'note', note
+      ))
+      where items = '[]'::jsonb and product_name_snapshot is not null;
+    alter table prescriptions drop column product_id;
+    alter table prescriptions drop column product_name_snapshot;
+    alter table prescriptions drop column ingredient_snapshot;
+    alter table prescriptions drop column usage_method_snapshot;
+    alter table prescriptions drop column purpose_snapshot;
+    alter table prescriptions drop column withdrawal_days_snapshot;
+    alter table prescriptions drop column days;
+    alter table prescriptions drop column quantity;
+    alter table prescriptions drop column expiry_date;
+    alter table prescriptions drop column note;
+  end if;
+end $$;
 
 -- 처방전용 제품 마스터 초기 데이터 (이미 같은 이름의 제품이 있으면 건너뜀)
 insert into prescription_products (name, ingredient, withdrawal_days, purpose, dose_amount, category, usage_method)

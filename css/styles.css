@@ -303,13 +303,14 @@ body { display: block !important; height: auto !important; overflow: visible !im
 .print-sign { display: grid; grid-template-columns: repeat(3,1fr); gap: 6pt; margin-top: 8pt; }
 .print-sign-box { border: 0.5pt solid #aaa; text-align: center; padding: 4pt 0 20pt; font-size: 7.5pt; color: #444; }
 
-/* 처방전 (수의사법 시행규칙 별지 제10호서식) — 원본 엑셀 서식의 실제 열너비(A~U)/
-   행높이 비율을 그대로 옮긴 21열 CSS Grid. 각 rx-cell은 원본의 병합 셀 범위와 1:1 대응. */
+/* 처방전 (수의사법 시행규칙 별지 제10호서식) — 원본 엑셀 서식의 실제 열너비(A~U) 비율은
+   그대로 두되, 행 높이는 구간별로 균일하게 재설계했다(가독성 우선). 처방내역/판매내역
+   표는 각 4행(품목 최대 4개)까지 지원. 각 rx-cell은 원본의 병합 셀 범위에 대응한다. */
 .rx-grid {
   position: relative; width: 100%;
   display: grid;
   grid-template-columns: 6.875fr 2.625fr 9fr 9fr 9fr 3.25fr 3.625fr 9fr 9fr 9fr 2.25fr 2.875fr 2.625fr 9fr 6.125fr 3.5fr 7.125fr 10.875fr 11fr 5.75fr 7fr;
-  grid-template-rows: 17.25pt 32.25pt 6pt 30pt 17.25pt 10.5pt 21.95pt 21.95pt 21.95pt 24.75pt 21.95pt 21.95pt 21.95pt 25.5pt 8.25pt 23.25pt 25.5pt 54.95pt 12.75pt 21pt 20.1pt 20.1pt 20.1pt 7.5pt 33.75pt 16.9pt 17.25pt;
+  grid-template-rows: 14pt 28pt 6pt 20pt 16pt 8pt 20pt 20pt 20pt 20pt 20pt 20pt 20pt 20pt 8pt 20pt 18pt 18pt 18pt 18pt 8pt 16pt 16pt 16pt 16pt 6pt 20pt 18pt 18pt 18pt 18pt 14pt;
   font-size: 6.6pt; line-height: 1.15;
 }
 .rx-cell { border: 0.5pt solid #888; padding: 2pt 4pt; display: flex; align-items: center; overflow: hidden; min-width: 0; min-height: 0; word-break: break-word; }
