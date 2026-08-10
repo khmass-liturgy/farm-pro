@@ -6,6 +6,24 @@ function populateScheduleSelects() {
   sel.innerHTML = '<option value="">농장을 선택하세요</option>' + farms.map(f =>
     `<option value="${f.id}">${f.name} (${f.owner})</option>`
   ).join('');
+  renderScheduleAlerts();
+}
+
+// 전체 농장 대상, 앞으로 DUE_SOON_HORIZON_DAYS일 이내 투약/백신 예정 알림
+function renderScheduleAlerts() {
+  const el = document.getElementById('schedule-alerts');
+  if (!el) return;
+  const alerts = computeDueSoonAlerts();
+  if (!alerts.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="card mb-16">
+    <div class="card-header"><div class="card-title">⏰ ${DUE_SOON_HORIZON_DAYS}일 이내 투약/백신 예정 알림</div></div>
+    ${alerts.map(a => `<div class="alert-row ${a.level}" onclick="jumpToFarmSchedule('${a.farmId}')" style="cursor:pointer">${a.text}</div>`).join('')}
+  </div>`;
+}
+
+function jumpToFarmSchedule(farmId) {
+  document.getElementById('sched-farm-select').value = farmId;
+  loadScheduleForFarm();
 }
 
 function loadScheduleForFarm() {
@@ -25,12 +43,20 @@ function renderScheduleView() {
   if (!prog) return;
   const farm = load('farms').find(f => f.id === prog.farmId);
 
+  // 이 프로그램을 쓰는 사육중인 계군(배치)의 입추일 기준으로 현재 일령을 계산해
+  // 오늘(today)/7일 이내(upcoming) 예정 항목을 강조 표시한다.
+  const activeBatch = load('batches').find(b => b.programId === progId && b.status === 'active');
+  const dayAge = activeBatch ? computeDayAge(activeBatch.placementDate) : null;
+
   let rows = '';
   for (let i = 1; i <= prog.duration; i++) {
     const d = prog.days.find(x => x.day === i);
     const hasData = d && ((d.drugs && d.drugs.length) || d.vaccine || d.note);
-    rows += `<div class="program-day-row" style="background:${hasData?'var(--bg-card)':'var(--bg)'}">
-      <div class="program-cell num">${i}일</div>
+    const isToday = dayAge != null && i === dayAge;
+    const isUpcoming = dayAge != null && i > dayAge && i <= dayAge + DUE_SOON_HORIZON_DAYS;
+    const rowClass = isToday ? 'today' : (isUpcoming ? 'upcoming' : '');
+    rows += `<div class="program-day-row ${rowClass}" style="${rowClass ? '' : 'background:' + (hasData ? 'var(--bg-card)' : 'var(--bg)')}">
+      <div class="program-cell num">${i}일${isToday ? ' (오늘)' : ''}</div>
       <div class="program-cell">${(d && d.drugs && d.drugs.length) ? dayDrugPillsHtml(d) : ''}</div>
       <div class="program-cell">${(d && d.vaccine) ? dayVaccinePillHtml(d) : ''}</div>
       <div class="program-cell" style="color:var(--text-secondary);font-size:11px">${d?.note||''}</div>

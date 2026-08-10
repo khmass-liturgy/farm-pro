@@ -3,7 +3,7 @@ function openFarmModal(id) {
   editingId.farm = id || null;
   const farm = id ? load('farms').find(f => f.id === id) : null;
   document.getElementById('modal-farm-title').textContent = id ? '농장 편집' : '농장 등록';
-  ['name','owner','type','address','phone','vet','vet-phone','houses','focus','notes'].forEach(k => {
+  ['name','owner','type','address','phone','vet','vet-phone','houses','focus','notes','owner-birth','barn-range'].forEach(k => {
     const el = document.getElementById('f-'+k);
     if (el) el.value = farm ? (farm[k.replace('-','_')] || '') : '';
   });
@@ -27,6 +27,8 @@ async function saveFarm() {
     houses: document.getElementById('f-houses').value,
     focus: document.getElementById('f-focus').value.trim(),
     notes: document.getElementById('f-notes').value.trim(),
+    owner_birth: document.getElementById('f-owner-birth').value || null,
+    barn_range: document.getElementById('f-barn-range').value.trim(),
   };
   try {
     if (editingId.farm) await updateRow('farms', editingId.farm, data);

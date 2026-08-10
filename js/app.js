@@ -6,10 +6,12 @@ const PAGE_TITLES = {
   batches: '입추(사육배치) 관리',
   'batch-detail': '입추 상세',
   'medication-log': '투약 이력',
+  prescriptions: '처방전 발급',
   schedule: '투약 일정',
   reports: '통계/리포트',
   drugsearch: '동물약품 검색',
   drugs: '약품 등록',
+  'rx-products': '처방전용 제품',
   vaccines: '백신 관리',
   feeds: '사료첨가제 관리',
   backup: '백업 / 복원',
@@ -18,7 +20,9 @@ const PAGE_ACTIONS = {
   farms: `<button class="btn btn-primary" onclick="openFarmModal()">+ 농장 추가</button>`,
   programs: `<button class="btn btn-primary" onclick="openProgramModal()">+ 프로그램 추가</button>`,
   batches: `<button class="btn btn-primary" onclick="openBatchModal()">+ 입추 등록</button>`,
+  prescriptions: `<button class="btn btn-primary" onclick="openRxPrescriptionModal()">+ 처방전 발급</button>`,
   drugs: `<button class="btn btn-primary" onclick="openDrugModal()">+ 약품 추가</button>`,
+  'rx-products': `<button class="btn btn-primary" onclick="openRxProductModal()">+ 제품 추가</button>`,
   vaccines: `<button class="btn btn-primary" onclick="openVaccineModal()">+ 백신 추가</button>`,
   feeds: `<button class="btn btn-primary" onclick="openFeedModal()">+ 사료첨가제 추가</button>`,
 };
@@ -41,9 +45,11 @@ function showPage(name) {
   if (name === 'batches') renderBatches();
   if (name === 'batch-detail') renderBatchDetail();
   if (name === 'medication-log') populateMedLogFilters();
+  if (name === 'prescriptions') { populateRxFarmFilter(); renderPrescriptions(); }
   if (name === 'schedule') populateScheduleSelects();
   if (name === 'reports') renderReports();
   if (name === 'drugs') renderDrugs();
+  if (name === 'rx-products') renderRxProducts();
   if (name === 'vaccines') renderVaccines();
   if (name === 'feeds') renderFeeds();
 }

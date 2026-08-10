@@ -34,6 +34,9 @@
     <div class="sidebar-item" onclick="showPage('medication-log')">
       <span class="icon">📝</span> 투약 이력
     </div>
+    <div class="sidebar-item" onclick="showPage('prescriptions')">
+      <span class="icon">🧾</span> 처방전 발급
+    </div>
     <div class="sidebar-item" onclick="showPage('schedule')">
       <span class="icon">📅</span> 투약 일정
     </div>
@@ -48,6 +51,9 @@
     </div>
     <div class="sidebar-item" onclick="showPage('drugs')">
       <span class="icon">💊</span> 약품 등록
+    </div>
+    <div class="sidebar-item" onclick="showPage('rx-products')">
+      <span class="icon">🧪</span> 처방전용 제품
     </div>
     <div class="sidebar-item" onclick="showPage('vaccines')">
       <span class="icon">💉</span> 백신 관리
@@ -191,8 +197,35 @@
       </div>
     </div>
 
+    <!-- 처방전 발급 -->
+    <div id="page-prescriptions" class="page">
+      <div class="search-bar">
+        <input class="search-input" id="rx-search" placeholder="🔍  농장명, 제품명 검색..." oninput="renderPrescriptions()">
+        <select id="rx-filter-farm" onchange="renderPrescriptions()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+          <option value="">전체 농장</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>발급번호</th><th>발급일</th><th>농장명</th><th>농장주</th><th>제품명</th><th>처방일수</th><th>판매수량</th><th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="rx-tbody"></tbody>
+          </table>
+        </div>
+        <div id="rx-empty" class="empty-state" style="display:none">
+          <div class="icon-big">🧾</div>
+          <p>발급된 처방전이 없습니다. 처방전을 발급해주세요.</p>
+        </div>
+      </div>
+    </div>
+
     <!-- 투약 일정 -->
     <div id="page-schedule" class="page">
+      <div id="schedule-alerts"></div>
       <div class="search-bar">
         <select id="sched-farm-select" onchange="loadScheduleForFarm()" style="padding:8px 14px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card); flex:1;">
           <option value="">농장을 선택하세요</option>
@@ -252,6 +285,29 @@
         <div id="drug-empty" class="empty-state" style="display:none">
           <div class="icon-big">💊</div>
           <p>등록된 약품이 없습니다. 약품을 추가해주세요.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 처방전용 제품 -->
+    <div id="page-rx-products" class="page">
+      <div class="search-bar">
+        <input class="search-input" id="rxp-search" placeholder="🔍  제품명, 성분명 검색..." oninput="renderRxProducts()">
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>제품명</th><th>성분</th><th>휴약기간</th><th>사용목적</th><th>사용량</th><th>분류</th><th>용법</th><th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="rxp-tbody"></tbody>
+          </table>
+        </div>
+        <div id="rxp-empty" class="empty-state" style="display:none">
+          <div class="icon-big">🧪</div>
+          <p>등록된 처방전용 제품이 없습니다. 제품을 추가해주세요.</p>
         </div>
       </div>
     </div>
@@ -394,6 +450,10 @@
       <div class="form-group"><label>수의사 연락처</label><input id="f-vet-phone" placeholder="예) 010-9150-8844"></div>
       <div class="form-group"><label>동수</label><input id="f-houses" type="number" placeholder="예) 4"></div>
     </div>
+    <div class="form-row">
+      <div class="form-group"><label>농장주 생년월일 <span class="text-muted">(처방전 발급용)</span></label><input id="f-owner-birth" type="date"></div>
+      <div class="form-group"><label>축사번호 <span class="text-muted">(처방전 발급용, 예: 1-3)</span></label><input id="f-barn-range" placeholder="예) 1-3"></div>
+    </div>
     <div class="form-group"><label>중점 관리사항</label><input id="f-focus" placeholder="예) 콕시듐증, 괴사성장염 예방"></div>
     <div class="form-group"><label>비고</label><textarea id="f-notes" placeholder="추가 정보를 입력하세요"></textarea></div>
     <div class="modal-footer">
@@ -433,6 +493,41 @@
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-drug')">취소</button>
       <button class="btn btn-primary" onclick="saveDrug()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 모달: 처방전용 제품 등록/편집 -->
+<div class="modal-bg" id="modal-rxproduct">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-rxp-title">처방전용 제품 등록</div>
+      <button class="modal-close" onclick="closeModal('modal-rxproduct')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>제품명 *</label><input id="rxp-name" placeholder="예) 독시돈액"></div>
+      <div class="form-group"><label>성분</label><input id="rxp-ingredient" placeholder="예) Doxycydine hyclate Hydrate"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>휴약기간(일)</label><input id="rxp-withdrawal-days" type="number" placeholder="예) 10"></div>
+      <div class="form-group"><label>사용목적</label><input id="rxp-purpose" placeholder="예) 대장균증치료"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>사용량</label><input id="rxp-dose-amount" placeholder="예) 1L"></div>
+      <div class="form-group"><label>분류</label>
+        <select id="rxp-category">
+          <option value="액상">액상</option><option value="수용산">수용산</option><option value="백신">백신</option><option value="기타">기타</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>용법</label>
+      <select id="rxp-usage-method">
+        <option value="음수">음수</option><option value="근육">근육</option><option value="점안">점안</option><option value="분무">분무</option><option value="기타">기타</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-rxproduct')">취소</button>
+      <button class="btn btn-primary" onclick="saveRxProduct()">저장</button>
     </div>
   </div>
 </div>
@@ -519,7 +614,7 @@
       </div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>사육 기간 (일령)</label><input id="p-duration" type="number" value="30" min="1" max="60" onchange="generateDayRows()"></div>
+      <div class="form-group"><label>사육 기간 (일령) <span class="text-muted">(산란계 등 장기 프로그램은 500까지)</span></label><input id="p-duration" type="number" value="30" min="1" max="500" onchange="generateDayRows()"></div>
       <div class="form-group"><label>중점 관리사항</label><input id="p-focus" placeholder="예) 콕시듐증, 괴사성장염 예방"></div>
     </div>
     <hr class="divider">
@@ -643,16 +738,58 @@
   </div>
 </div>
 
+<!-- 모달: 처방전 발급 -->
+<div class="modal-bg" id="modal-prescription">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">처방전 발급</div>
+      <button class="modal-close" onclick="closeModal('modal-prescription')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>농장 *</label>
+        <select id="rx-farm" onchange="onRxFarmChange()"><option value="">농장 선택</option></select>
+      </div>
+      <div class="form-group"><label>발급일 *</label><input id="rx-issue-date" type="date"></div>
+    </div>
+    <div class="text-muted mb-16" id="rx-farm-summary">농장을 선택하면 농장주/전화번호/축종/마릿수 정보가 자동으로 채워집니다.</div>
+    <div class="form-group"><label>처방 구분</label>
+      <select id="rx-scope">
+        <option value="group">군별처방 (사육군 전체)</option>
+        <option value="individual">개별처방 (개체)</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>제품 *</label>
+        <select id="rx-product" onchange="onRxProductChange()"><option value="">제품 선택</option></select>
+      </div>
+      <div class="form-group"><label>유통기한 <span class="text-muted">(선택)</span></label><input id="rx-expiry-date" type="date"></div>
+    </div>
+    <div class="text-muted mb-16" id="rx-product-summary">제품을 선택하면 성분/용법/휴약기간이 자동으로 채워집니다.</div>
+    <div class="form-row">
+      <div class="form-group"><label>처방일수 *</label><input id="rx-days" type="number" min="1" placeholder="예) 3" oninput="updateRxDosePreview()"></div>
+      <div class="form-group"><label>판매수량 *</label><input id="rx-quantity" type="number" min="0" step="0.01" placeholder="예) 12" oninput="updateRxDosePreview()"></div>
+    </div>
+    <div class="text-muted mb-16" id="rx-dose-preview">1회투여량(용량) = 판매수량 ÷ 처방일수</div>
+    <div class="form-group"><label>비고 <span class="text-muted">(선택, 비워두면 제품의 사용목적이 표시됩니다)</span></label><textarea id="rx-note" placeholder="예) 대장균증치료"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-prescription')">취소</button>
+      <button class="btn btn-primary" onclick="saveRxPrescription()">저장</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <script src="js/supabaseClient.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/farms.js"></script>
 <script src="js/masterdata.js"></script>
+<script src="js/rxProducts.js"></script>
 <script src="js/drugSearch.js"></script>
 <script src="js/programs.js"></script>
 <script src="js/batches.js"></script>
 <script src="js/medicationLog.js"></script>
+<script src="js/prescriptions.js"></script>
 <script src="js/schedule.js"></script>
 <script src="js/dashboard.js"></script>
 <script src="js/reports.js"></script>

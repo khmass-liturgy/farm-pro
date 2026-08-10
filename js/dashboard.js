@@ -5,8 +5,10 @@ function parseWithdrawalDays(text) {
   return m ? parseInt(m[1], 10) : null;
 }
 
-// 활성 입추 배치 중, 오늘/1~2일 내 투약 계획이 있는데 아직 기록되지 않은 항목
-function computeDueSoonAlerts() {
+// 활성 입추 배치 중, 오늘부터 DUE_SOON_HORIZON_DAYS일 이내에 투약/백신 계획이 있는데
+// 아직 기록되지 않은 항목. 계군(배치)의 입추일을 기준으로 일령을 계산해 알려준다.
+const DUE_SOON_HORIZON_DAYS = 7;
+function computeDueSoonAlerts(horizonDays = DUE_SOON_HORIZON_DAYS) {
   const batches = load('batches').filter(b => b.status === 'active');
   const farms = load('farms');
   const programs = load('programs');
@@ -18,7 +20,7 @@ function computeDueSoonAlerts() {
     if (!prog) return;
     const dayAge = computeDayAge(b.placementDate);
     const farm = farms.find(f => f.id === b.farmId);
-    for (let offset = 0; offset <= 2; offset++) {
+    for (let offset = 0; offset <= horizonDays; offset++) {
       const day = dayAge + offset;
       if (day < 1 || day > prog.duration) continue;
       const d = prog.days.find(x => x.day === day);
@@ -32,6 +34,7 @@ function computeDueSoonAlerts() {
           ? `${farm?.name||''} — 오늘(${day}일령) 투약 예정: ${label} (미기록)`
           : `${farm?.name||''} — ${offset}일 후(${day}일령) 투약 예정: ${label}`,
         batchId: b.id,
+        farmId: b.farmId, day, offset,
       });
     }
   });

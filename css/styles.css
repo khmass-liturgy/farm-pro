@@ -242,6 +242,8 @@ table tr:hover td { background: #f9fbff; }
 .day-plan-row.today { background: var(--accent-light); }
 .day-plan-row.future { opacity: 0.55; }
 .day-plan-row:last-child { border-bottom: none; }
+.program-day-row.today { background: var(--accent-light); }
+.program-day-row.upcoming { background: var(--amber-bg); }
 .progress-bar-track { background: var(--bg); border-radius: 20px; height: 8px; overflow: hidden; }
 .progress-bar-fill { background: var(--accent); height: 100%; border-radius: 20px; }
 .usage-bar-track { background: var(--bg); border-radius: 4px; height: 18px; overflow: hidden; flex: 1; }
@@ -300,6 +302,23 @@ body { display: block !important; height: auto !important; overflow: visible !im
 .print-feed-table td { border: 0.5pt solid #bbb; padding: 3pt 4pt; }
 .print-sign { display: grid; grid-template-columns: repeat(3,1fr); gap: 6pt; margin-top: 8pt; }
 .print-sign-box { border: 0.5pt solid #aaa; text-align: center; padding: 4pt 0 20pt; font-size: 7.5pt; color: #444; }
+
+/* 처방전 (수의사법 시행규칙 별지 제10호서식) */
+.rx-topline { font-size: 7pt; color: #444; margin-bottom: 2pt; }
+.rx-title { font-size: 18pt; font-weight: 900; text-align: center; letter-spacing: 10pt; margin: 2pt 0 8pt; }
+.rx-meta-row { display: flex; justify-content: space-between; align-items: flex-end; font-size: 8pt; margin-bottom: 4pt; }
+.rx-validity { border: 0.5pt solid #888; padding: 4pt 6pt; font-size: 7.5pt; margin-bottom: 8pt; display: flex; justify-content: space-between; gap: 10pt; }
+.rx-section-title { font-size: 8.5pt; font-weight: 700; background: #1e2d40 !important; color: #fff !important; padding: 3pt 6pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 8pt 0 0; }
+.rx-info-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-bottom: 0; }
+.rx-form-table { width: 100%; border-collapse: collapse; font-size: 7.8pt; table-layout: fixed; }
+.rx-form-table td { border: 0.5pt solid #888; padding: 3pt 5pt; vertical-align: middle; }
+.rx-label { background: #f0f4fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: 700; color: #333; width: 26%; white-space: nowrap; }
+.rx-value { font-weight: 600; }
+.rx-scope-row td { background: #fffbe6 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: 700; text-align: center; }
+.rx-table { width: 100%; border-collapse: collapse; font-size: 7.8pt; margin-top: 0; }
+.rx-table th { background: #e8f0f8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; border: 0.5pt solid #888; padding: 4pt; text-align: center; font-weight: 700; }
+.rx-table td { border: 0.5pt solid #888; padding: 4pt; text-align: center; }
+.rx-footer-note { text-align: center; font-size: 7pt; color: #888; margin-top: 8pt; }
 .no-print { display: none !important; }
 }
 #print-area { display: none; }
