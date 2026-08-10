@@ -303,22 +303,33 @@ body { display: block !important; height: auto !important; overflow: visible !im
 .print-sign { display: grid; grid-template-columns: repeat(3,1fr); gap: 6pt; margin-top: 8pt; }
 .print-sign-box { border: 0.5pt solid #aaa; text-align: center; padding: 4pt 0 20pt; font-size: 7.5pt; color: #444; }
 
-/* 처방전 (수의사법 시행규칙 별지 제10호서식) */
-.rx-topline { font-size: 7pt; color: #444; margin-bottom: 2pt; }
-.rx-title { font-size: 18pt; font-weight: 900; text-align: center; letter-spacing: 10pt; margin: 2pt 0 8pt; }
-.rx-meta-row { display: flex; justify-content: space-between; align-items: flex-end; font-size: 8pt; margin-bottom: 4pt; }
-.rx-validity { border: 0.5pt solid #888; padding: 4pt 6pt; font-size: 7.5pt; margin-bottom: 8pt; display: flex; justify-content: space-between; gap: 10pt; }
-.rx-section-title { font-size: 8.5pt; font-weight: 700; background: #1e2d40 !important; color: #fff !important; padding: 3pt 6pt; -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 8pt 0 0; }
-.rx-info-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-bottom: 0; }
-.rx-form-table { width: 100%; border-collapse: collapse; font-size: 7.8pt; table-layout: fixed; }
-.rx-form-table td { border: 0.5pt solid #888; padding: 3pt 5pt; vertical-align: middle; }
-.rx-label { background: #f0f4fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: 700; color: #333; width: 26%; white-space: nowrap; }
-.rx-value { font-weight: 600; }
-.rx-scope-row td { background: #fffbe6 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: 700; text-align: center; }
-.rx-table { width: 100%; border-collapse: collapse; font-size: 7.8pt; margin-top: 0; }
-.rx-table th { background: #e8f0f8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; border: 0.5pt solid #888; padding: 4pt; text-align: center; font-weight: 700; }
-.rx-table td { border: 0.5pt solid #888; padding: 4pt; text-align: center; }
-.rx-footer-note { text-align: center; font-size: 7pt; color: #888; margin-top: 8pt; }
+/* 처방전 (수의사법 시행규칙 별지 제10호서식) — 원본 엑셀 서식의 실제 열너비(A~U)/
+   행높이 비율을 그대로 옮긴 21열 CSS Grid. 각 rx-cell은 원본의 병합 셀 범위와 1:1 대응. */
+.rx-grid {
+  position: relative; width: 100%;
+  display: grid;
+  grid-template-columns: 6.875fr 2.625fr 9fr 9fr 9fr 3.25fr 3.625fr 9fr 9fr 9fr 2.25fr 2.875fr 2.625fr 9fr 6.125fr 3.5fr 7.125fr 10.875fr 11fr 5.75fr 7fr;
+  grid-template-rows: 17.25pt 32.25pt 6pt 30pt 17.25pt 10.5pt 21.95pt 21.95pt 21.95pt 24.75pt 21.95pt 21.95pt 21.95pt 25.5pt 8.25pt 23.25pt 25.5pt 54.95pt 12.75pt 21pt 20.1pt 20.1pt 20.1pt 7.5pt 33.75pt 16.9pt 17.25pt;
+  font-size: 6.6pt; line-height: 1.15;
+}
+.rx-cell { border: 0.5pt solid #888; padding: 2pt 4pt; display: flex; align-items: center; overflow: hidden; min-width: 0; min-height: 0; word-break: break-word; }
+.rx-cell.topline { border: none; font-size: 6.5pt; color: #444; align-items: flex-end; }
+.rx-cell.title { border: none; font-size: 16pt; font-weight: 900; justify-content: center; letter-spacing: 8pt; }
+.rx-cell.label { background: #f0f4fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: 700; color: #333; justify-content: center; text-align: center; }
+.rx-cell.value { font-weight: 600; }
+.rx-cell.value.center { justify-content: center; text-align: center; }
+.rx-cell.value.strong { font-weight: 800; }
+.rx-cell.value.pre { white-space: pre-line; }
+.rx-cell.note { font-size: 6.3pt; color: #444; justify-content: center; text-align: center; }
+.rx-cell.tight { font-size: 6pt; line-height: 1.15; text-align: center; }
+.rx-cell.vmid { flex-direction: column; justify-content: center; }
+.rx-cell.header { background: #e8f0f8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: 700; justify-content: center; text-align: center; }
+.rx-cell.section-title { border: none; background: #1e2d40 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 8pt; font-weight: 700; padding-left: 6pt; }
+.rx-cell.footer { border: none; justify-content: center; font-size: 6.5pt; color: #888; }
+.rx-cell.stamp-anchor { position: relative; overflow: visible; z-index: 1; }
+.rx-stamp { position: absolute; pointer-events: none; z-index: 2; }
+.rx-stamp-hospital { width: 22mm; height: 22mm; top: 50%; left: 55%; transform: translate(-30%, -50%); opacity: 0.92; }
+.rx-stamp-pharmacist { width: 13mm; height: 13mm; top: 50%; left: 70%; transform: translate(-20%, -50%); opacity: 0.92; }
 .no-print { display: none !important; }
 }
 #print-area { display: none; }

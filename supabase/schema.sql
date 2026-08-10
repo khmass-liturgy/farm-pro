@@ -175,6 +175,7 @@ create table if not exists prescriptions (
   id uuid primary key default gen_random_uuid(),
   issue_no bigint generated always as identity,
   issue_date date not null default current_date,
+  valid_until date generated always as ((issue_date + interval '1 year')::date) stored,
   scope text not null default 'group' check (scope in ('individual','group')),
   farm_id uuid references farms(id) on delete set null,
   farm_name_snapshot text not null,
@@ -200,6 +201,10 @@ create table if not exists prescriptions (
 
 create index if not exists idx_prescriptions_farm_id on prescriptions(farm_id);
 create index if not exists idx_prescriptions_issue_date on prescriptions(issue_date);
+
+-- 기존 배포본에 이미 prescriptions 테이블이 있을 경우를 위한 컬럼 추가
+-- (유효기간 = 발급일로부터 1년, DB가 항상 자동으로 계산/저장)
+alter table prescriptions add column if not exists valid_until date generated always as ((issue_date + interval '1 year')::date) stored;
 
 -- 처방전용 제품 마스터 초기 데이터 (이미 같은 이름의 제품이 있으면 건너뜀)
 insert into prescription_products (name, ingredient, withdrawal_days, purpose, dose_amount, category, usage_method)

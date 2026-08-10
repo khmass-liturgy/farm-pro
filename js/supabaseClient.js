@@ -143,7 +143,7 @@ const TABLES = {
     },
     fromRow(r) {
       return {
-        id: r.id, issueNo: r.issue_no, issueDate: r.issue_date, scope: r.scope,
+        id: r.id, issueNo: r.issue_no, issueDate: r.issue_date, validUntil: r.valid_until, scope: r.scope,
         farmId: r.farm_id, farmName: r.farm_name_snapshot,
         owner: r.owner_snapshot, phone: r.phone_snapshot, ownerBirth: r.owner_birth_snapshot,
         animalType: r.animal_type_snapshot, headCount: r.head_count_snapshot, barnRange: r.barn_range_snapshot,
