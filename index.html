@@ -472,7 +472,13 @@
       <button class="modal-close" onclick="closeModal('modal-drug')">✕</button>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>약품명 *</label><input id="d-name" placeholder="예) 엔로플록사신"></div>
+      <div class="form-group">
+        <label>약품명 *</label>
+        <div class="flex-gap">
+          <input id="d-name" placeholder="예) 엔로플록사신" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();searchDrugForRegister();}">
+          <button type="button" class="btn btn-outline btn-sm" onclick="searchDrugForRegister()">🔍 QIA검색</button>
+        </div>
+      </div>
       <div class="form-group"><label>분류 *</label>
         <select id="d-type">
           <option value="항생제">항생제</option><option value="콕시듐제">콕시듐제</option>
@@ -482,6 +488,7 @@
         </select>
       </div>
     </div>
+    <div id="d-name-search-results"></div>
     <div class="form-row">
       <div class="form-group"><label>성분명</label><input id="d-ingredient" placeholder="예) Enrofloxacin"></div>
       <div class="form-group"><label>제조사</label><input id="d-maker" placeholder="예) 동방아그로"></div>

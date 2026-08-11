@@ -11,6 +11,7 @@ function openDrugModal(id) {
   document.getElementById('d-dose-basis').value = '';
   document.getElementById('d-dose-amount').value = '';
   document.getElementById('d-dose').dataset.autoValue = ''; // 선택기가 마지막으로 채운 값(수동 입력과 구분용)
+  document.getElementById('d-name-search-results').innerHTML = '';
   openModal('modal-drug');
 }
 // 표준 용법/용량 선택 시 "표준 용량/방법" 입력칸을 채워준다(직접 수정 가능한 보조 선택기).

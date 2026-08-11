@@ -194,6 +194,51 @@ async function loadMoreDrugQia() {
   }
 }
 
+// ─── 약품 등록 모달 내 QIA 검색 (약품명 검색 → 성분명/제조사 자동 입력) ────
+let drugRegisterSearchRows = [];
+
+async function searchDrugForRegister() {
+  const q = document.getElementById('d-name').value.trim();
+  const box = document.getElementById('d-name-search-results');
+  if (!q) { box.innerHTML = '<div class="text-muted mb-16">약품명을 입력한 뒤 검색하세요.</div>'; return; }
+  box.innerHTML = '<div class="text-muted mb-16">QIA에서 검색 중...</div>';
+  try {
+    const params = new URLSearchParams({ page: '1', searchDivision: 'detail', itemName: q });
+    const res = await fetch(QIA_BASE + '/searchMedicine?' + params.toString());
+    if (!res.ok) throw new Error('QIA 서버 오류 (' + res.status + ')');
+    const { rows } = parseQiaHtml(await res.text());
+    drugRegisterSearchRows = rows.slice(0, 8);
+    renderDrugRegisterSearchResults();
+  } catch (e) {
+    box.innerHTML = `<div class="text-muted mb-16" style="color:var(--red)">검색 실패: ${e.message}</div>`;
+  }
+}
+
+function renderDrugRegisterSearchResults() {
+  const box = document.getElementById('d-name-search-results');
+  if (!drugRegisterSearchRows.length) { box.innerHTML = '<div class="text-muted mb-16">검색 결과가 없습니다. 약품명을 다르게 입력해보세요.</div>'; return; }
+  box.innerHTML = `
+    <div class="mb-16" style="border:1px solid var(--border); border-radius:8px; overflow:hidden">
+      ${drugRegisterSearchRows.map((r, i) => `
+        <div onclick="applyDrugSearchResult(${i})"
+          style="padding:8px 12px; border-bottom:1px solid var(--border); cursor:pointer; font-size:12px"
+          onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+          <strong>${r.제품명}</strong> <span class="text-muted">· ${r.업체명 || '-'}</span><br>
+          <span class="text-muted">${r.주성분 || '-'}</span>
+        </div>`).join('')}
+    </div>
+    <div class="text-muted mb-16">위 결과를 클릭하면 약품명/성분명/제조사가 자동으로 채워집니다.</div>`;
+}
+
+function applyDrugSearchResult(idx) {
+  const r = drugRegisterSearchRows[idx];
+  if (!r) return;
+  document.getElementById('d-name').value = r.제품명 || '';
+  document.getElementById('d-ingredient').value = r.주성분 || '';
+  document.getElementById('d-maker').value = r.업체명 || '';
+  document.getElementById('d-name-search-results').innerHTML = '';
+}
+
 function renderDsearchResult() {
   const result = document.getElementById('dsearch-result');
   if (!dsearchRows.length) { result.innerHTML = '<div class="empty-state"><p>검색 결과가 없습니다</p></div>'; return; }
