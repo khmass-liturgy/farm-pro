@@ -84,11 +84,12 @@ function openVaccineModal(id) {
   editingId.vaccine = id || null;
   const v = id ? load('vaccines').find(x => x.id === id) : null;
   document.getElementById('modal-vacc-title').textContent = id ? '백신 편집' : '백신 등록';
-  ['name','disease','method','age','dilution','notes'].forEach(k => {
+  ['name','disease','method','age','dilution','maker','ingredient','notes'].forEach(k => {
     const el = document.getElementById('v-'+k);
     if(el) el.value = v ? (v[k]||'') : '';
   });
   if(v) document.getElementById('v-method').value = v.method||'음수백신';
+  document.getElementById('v-name-search-results').innerHTML = '';
   openModal('modal-vaccine');
 }
 async function saveVaccine() {
@@ -100,6 +101,8 @@ async function saveVaccine() {
     method: document.getElementById('v-method').value,
     age: document.getElementById('v-age').value.trim(),
     dilution: document.getElementById('v-dilution').value.trim(),
+    maker: document.getElementById('v-maker').value.trim(),
+    ingredient: document.getElementById('v-ingredient').value.trim(),
     notes: document.getElementById('v-notes').value.trim(),
   };
   try {
@@ -127,6 +130,8 @@ function renderVaccines() {
   tbody.innerHTML = vaccines.map(v => `
     <tr>
       <td><strong>${v.name}</strong></td>
+      <td>${v.maker||'-'}</td>
+      <td style="color:var(--text-secondary)">${v.ingredient||'-'}</td>
       <td>${v.disease||'-'}</td>
       <td><span class="badge ${methodColors[v.method]||'badge-blue'}">${v.method}</span></td>
       <td>${v.age||'-'}</td>

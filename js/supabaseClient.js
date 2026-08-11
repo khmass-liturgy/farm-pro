@@ -42,7 +42,10 @@ const TABLES = {
   vaccines: {
     table: 'vaccines', orderBy: 'created_at', ascending: true,
     toRow(o) {
-      return { name: o.name, disease: o.disease || null, method: o.method, age: o.age || null, dilution: o.dilution || null, notes: o.notes || null };
+      return {
+        name: o.name, disease: o.disease || null, method: o.method, age: o.age || null, dilution: o.dilution || null,
+        maker: o.maker || null, ingredient: o.ingredient || null, notes: o.notes || null,
+      };
     },
     fromRow(r) { return { ...r }; },
   },

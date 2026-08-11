@@ -62,10 +62,16 @@ create table if not exists vaccines (
   method text not null default '음수백신',
   age text,
   dilution text,
+  maker text,
+  ingredient text,
   notes text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- 기존 배포본에 이미 vaccines 테이블이 있을 경우를 위한 컬럼 추가
+alter table vaccines add column if not exists maker text;
+alter table vaccines add column if not exists ingredient text;
 
 create table if not exists feeds (
   id uuid primary key default gen_random_uuid(),

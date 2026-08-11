@@ -323,7 +323,7 @@
           <table>
             <thead>
               <tr>
-                <th>백신명</th><th>대상질병</th><th>투여방법</th><th>권장 일령</th><th>희석방법</th><th>비고</th><th>관리</th>
+                <th>백신명</th><th>제조회사</th><th>성분</th><th>대상질병</th><th>투여방법</th><th>권장 일령</th><th>희석방법</th><th>비고</th><th>관리</th>
               </tr>
             </thead>
             <tbody id="vacc-tbody"></tbody>
@@ -582,8 +582,19 @@
       <button class="modal-close" onclick="closeModal('modal-vaccine')">✕</button>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>백신명 *</label><input id="v-name" placeholder="예) 뉴캐슬+감보로 혼합백신"></div>
+      <div class="form-group">
+        <label>백신명 *</label>
+        <div class="flex-gap">
+          <input id="v-name" placeholder="예) 뉴캐슬+감보로 혼합백신" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();searchVaccineForRegister();}">
+          <button type="button" class="btn btn-outline btn-sm" onclick="searchVaccineForRegister()">🔍 QIA검색</button>
+        </div>
+      </div>
       <div class="form-group"><label>대상 질병 *</label><input id="v-disease" placeholder="예) 뉴캐슬병, 감보로병(IBD)"></div>
+    </div>
+    <div id="v-name-search-results"></div>
+    <div class="form-row">
+      <div class="form-group"><label>제조회사</label><input id="v-maker" placeholder="예) 베링거인겔하임"></div>
+      <div class="form-group"><label>성분</label><input id="v-ingredient" placeholder="예) 뉴캐슬병 생독 바이러스"></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label>투여방법</label>
