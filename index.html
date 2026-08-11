@@ -487,7 +487,28 @@
       <div class="form-group"><label>제조사</label><input id="d-maker" placeholder="예) 동방아그로"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>표준 용량/방법</label><input id="d-dose" placeholder="예) 물 200L당 400cc, 5-6시간 투약"></div>
+      <div class="form-group"><label>표준 용법 <span class="text-muted">(선택하면 아래 칸에 채워짐)</span></label>
+        <select id="d-dose-basis" onchange="applyDoseSelects()">
+          <option value="">선택 안함</option>
+          <option value="물 200리터당">물 200리터당</option>
+          <option value="물 500리터당">물 500리터당</option>
+          <option value="1톤당">1톤당</option>
+          <option value="수당">수당</option>
+        </select>
+      </div>
+      <div class="form-group"><label>표준 용량</label>
+        <select id="d-dose-amount" onchange="applyDoseSelects()">
+          <option value="">선택 안함</option>
+          <option value="0.2cc">0.2cc</option>
+          <option value="0.5cc">0.5cc</option>
+          <option value="200cc">200cc</option>
+          <option value="500cc">500cc</option>
+          <option value="1L">1L</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>표준 용량/방법 <span class="text-muted">(직접 수정 가능)</span></label><input id="d-dose" placeholder="예) 물 200리터당 200cc, 5-6시간 투약"></div>
       <div class="form-group"><label>휴약기간</label>
         <select id="d-withdrawal">
           <option value="">없음</option>

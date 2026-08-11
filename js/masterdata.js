@@ -8,7 +8,16 @@ function openDrugModal(id) {
     if(el) el.value = drug ? (drug[k]||'') : '';
   });
   if(drug) document.getElementById('d-type').value = drug.type||'항생제';
+  document.getElementById('d-dose-basis').value = '';
+  document.getElementById('d-dose-amount').value = '';
   openModal('modal-drug');
+}
+// 표준 용법/용량 선택 시 "표준 용량/방법" 입력칸을 채워준다(직접 수정 가능한 보조 선택기).
+function applyDoseSelects() {
+  const basis = document.getElementById('d-dose-basis').value;
+  const amount = document.getElementById('d-dose-amount').value;
+  if (!basis && !amount) return;
+  document.getElementById('d-dose').value = [basis, amount].filter(Boolean).join(' ');
 }
 async function saveDrug() {
   const name = document.getElementById('d-name').value.trim();
