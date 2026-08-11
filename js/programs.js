@@ -110,6 +110,19 @@ function dayDrugPillsHtml(d) {
 function dayVaccinePillHtml(d) {
   return d?.vaccine ? `<span class="vaccine-pill">💉 ${d.vaccine.name}</span>` : '<span style="color:var(--text-muted)">-</span>';
 }
+// 입추일 기준 일령 N일차의 실제 날짜 (day=1이 입추일). UTC로만 계산해 로컬 타임존에 따른
+// 하루 밀림 없이 안전하게 문자열 그대로 더한다.
+function programDayDate(placementDate, day) {
+  if (!placementDate) return '';
+  const [y, m, d] = placementDate.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + (day - 1))).toISOString().slice(0, 10);
+}
+function programDayDateShort(placementDate, day) {
+  const iso = programDayDate(placementDate, day);
+  if (!iso) return '';
+  const [, m, d] = iso.split('-');
+  return `${Number(m)}/${Number(d)}`;
+}
 
 // ─── 투약 프로그램 ─────────────────────────────────────────────────────────
 function populateFarmSelect(selectId, val) {
@@ -137,6 +150,7 @@ function openProgramModal(id) {
   populateFarmSelect('p-farm', prog?.farmId || '');
   document.getElementById('p-name').value = prog?.name || '';
   document.getElementById('p-duration').value = prog?.duration || 30;
+  document.getElementById('p-placement-date').value = prog?.placementDate || '';
   document.getElementById('p-focus').value = prog?.focus || '';
   document.getElementById('p-notes').value = prog?.notes || '';
   document.getElementById('p-feed-memo').value = prog?.feedMemo || '';
@@ -280,10 +294,12 @@ function generateDayRows(existingDays) {
     }
 
     const isCustomV = !!(exVaccine && !exVaccine.vaccineId);
+    const placementDate = document.getElementById('p-placement-date').value;
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="text-align:center;font-weight:700;color:var(--accent);background:var(--bg);border:1px solid var(--border);vertical-align:top;padding-top:10px">${i}</td>
+      <td id="day-date-${i}" style="text-align:center;color:var(--text-secondary);font-size:11px;background:var(--bg);border:1px solid var(--border);vertical-align:top;padding-top:10px">${programDayDateShort(placementDate, i)}</td>
       <td style="border:1px solid var(--border);padding:6px 8px;vertical-align:top">
         <div id="day-drug-slots-${i}" data-slots="${initialCount}">${slotsHtml}</div>
         <button onclick="addDrugSlot(${i})"
@@ -307,6 +323,17 @@ function generateDayRows(existingDays) {
           style="width:100%;border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px;font-family:inherit;resize:vertical;min-height:48px">${exNote}</textarea>
       </td>`;
     tbody.appendChild(tr);
+  }
+}
+
+// 입추일만 바뀌었을 때 표 전체를 다시 그리지 않고(입력 중이던 약품/백신 선택이 날아감)
+// 날짜 칸만 갱신한다.
+function updateProgramDayDates() {
+  const placementDate = document.getElementById('p-placement-date').value;
+  const n = parseInt(document.getElementById('p-duration').value) || 30;
+  for (let i = 1; i <= n; i++) {
+    const cell = document.getElementById(`day-date-${i}`);
+    if (cell) cell.textContent = programDayDateShort(placementDate, i);
   }
 }
 
@@ -352,6 +379,7 @@ async function saveProgram() {
   const data = {
     name, farmId, farmName,
     duration: n,
+    placementDate: document.getElementById('p-placement-date').value || null,
     focus: document.getElementById('p-focus').value.trim(),
     notes: document.getElementById('p-notes').value.trim(),
     feedItems: collectFeedSlots(),
@@ -408,6 +436,7 @@ function viewProgram(id) {
     const hasData = d && ((d.drugs && d.drugs.length) || d.vaccine || d.note);
     rows += `<tr style="background:${hasData?'':'var(--bg)'}">
       <td style="text-align:center;font-weight:700;color:var(--accent);background:var(--bg);width:55px">${i}</td>
+      <td style="text-align:center;color:var(--text-secondary);font-size:12px;width:60px">${programDayDateShort(prog.placementDate, i)}</td>
       <td>${dayDrugPillsHtml(d)}</td>
       <td>${dayVaccinePillHtml(d)}</td>
       <td style="color:var(--text-secondary);font-size:12px">${d?.note||''}</td>
@@ -423,7 +452,7 @@ function viewProgram(id) {
       </div>
       <div style="background:var(--bg);border-radius:8px;padding:12px">
         <div style="font-size:11px;color:var(--text-secondary);font-weight:700;margin-bottom:4px">사육 기간</div>
-        <div style="font-size:14px;font-weight:700">${prog.duration}일령</div>
+        <div style="font-size:14px;font-weight:700">${prog.duration}일령${prog.placementDate ? ' · 입추일 '+prog.placementDate : ''}</div>
         ${prog.focus ? `<div style="font-size:12px;color:var(--text-secondary)">${prog.focus}</div>` : ''}
       </div>
       <div style="background:var(--bg);border-radius:8px;padding:12px">
@@ -437,6 +466,7 @@ function viewProgram(id) {
         <thead>
           <tr style="background:var(--bg)">
             <th style="padding:9px 10px;text-align:center;border-bottom:1.5px solid var(--border);width:55px">일령</th>
+            <th style="padding:9px 10px;text-align:center;border-bottom:1.5px solid var(--border);width:60px">날짜</th>
             <th style="padding:9px 10px;border-bottom:1.5px solid var(--border)">약품투약</th>
             <th style="padding:9px 10px;border-bottom:1.5px solid var(--border)">백신사항</th>
             <th style="padding:9px 10px;border-bottom:1.5px solid var(--border)">중요사항</th>

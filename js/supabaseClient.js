@@ -64,14 +64,15 @@ const TABLES = {
     toRow(o) {
       return {
         farm_id: o.farmId || null, farm_name_snapshot: o.farmName || null,
-        name: o.name, duration: Number(o.duration) || 30, focus: o.focus || null, notes: o.notes || null,
+        name: o.name, duration: Number(o.duration) || 30, placement_date: o.placementDate || null,
+        focus: o.focus || null, notes: o.notes || null,
         feed_memo: o.feedMemo || null, feed_items: o.feedItems || [], days: o.days || [],
       };
     },
     fromRow(r) {
       return {
         id: r.id, farmId: r.farm_id, farmName: r.farm_name_snapshot,
-        name: r.name, duration: r.duration, focus: r.focus, notes: r.notes,
+        name: r.name, duration: r.duration, placementDate: r.placement_date, focus: r.focus, notes: r.notes,
         feedMemo: r.feed_memo, feedItems: r.feed_items || [], days: r.days || [],
         createdAt: r.created_at,
       };

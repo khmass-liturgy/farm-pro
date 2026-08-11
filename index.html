@@ -669,21 +669,24 @@
     </div>
     <div class="form-row">
       <div class="form-group"><label>사육 기간 (일령) <span class="text-muted">(산란계 등 장기 프로그램은 500까지)</span></label><input id="p-duration" type="number" value="30" min="1" max="500" onchange="generateDayRows()"></div>
-      <div class="form-group"><label>중점 관리사항</label><input id="p-focus" placeholder="예) 콕시듐증, 괴사성장염 예방"></div>
+      <div class="form-group"><label>입추일 <span class="text-muted">(선택, 입력하면 일령별 날짜가 자동 계산됨)</span></label><input id="p-placement-date" type="date" onchange="updateProgramDayDates()"></div>
     </div>
+    <div class="form-group"><label>중점 관리사항</label><input id="p-focus" placeholder="예) 콕시듐증, 괴사성장염 예방"></div>
     <hr class="divider">
     <div style="font-size:13px; font-weight:700; margin-bottom:10px; color:var(--text-primary);">일령별 투약 계획</div>
     <div style="overflow-x:auto;">
       <table style="width:100%; font-size:12px; border-collapse:collapse; table-layout:fixed;">
         <colgroup>
           <col style="width:50px">
-          <col style="width:38%">
-          <col style="width:28%">
+          <col style="width:80px">
+          <col style="width:34%">
+          <col style="width:25%">
           <col style="width:auto">
         </colgroup>
         <thead>
           <tr style="background:var(--bg);">
             <th style="padding:8px; text-align:center; border:1px solid var(--border);">일령</th>
+            <th style="padding:8px; text-align:center; border:1px solid var(--border);">날짜</th>
             <th style="padding:8px; text-align:center; border:1px solid var(--border);">💊 약품투약 <span style="font-weight:400;color:var(--text-muted)">(+ 버튼으로 추가)</span></th>
             <th style="padding:8px; text-align:center; border:1px solid var(--border);">💉 백신사항</th>
             <th style="padding:8px; text-align:center; border:1px solid var(--border);">⚠️ 중요사항/비고 <span style="font-weight:400;color:var(--text-muted)">(약품선택시 자동입력)</span></th>

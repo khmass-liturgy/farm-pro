@@ -289,6 +289,7 @@ body { display: block !important; height: auto !important; overflow: visible !im
 .print-table td { border: 0.5pt solid #bbb; padding: 3pt 4pt; vertical-align: top; line-height: 1.4; }
 .print-table tr:nth-child(even) td { background: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .print-table td.day-no { text-align: center; font-weight: 700; color: #1e4f82; background: #f0f4fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; width: 22pt; }
+.print-table td.day-date { text-align: center; color: #666; font-size: 7pt; width: 30pt; }
 .print-table td.drug-cell { width: 30%; }
 .print-table td.vacc-cell { width: 22%; }
 

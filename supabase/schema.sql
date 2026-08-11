@@ -100,6 +100,7 @@ create table if not exists programs (
   farm_name_snapshot text,
   name text not null,
   duration int not null default 30,
+  placement_date date,
   focus text,
   notes text,
   feed_memo text,
@@ -110,6 +111,9 @@ create table if not exists programs (
 );
 
 create index if not exists idx_programs_farm_id on programs(farm_id);
+
+-- 기존 배포본에 이미 programs 테이블이 있을 경우를 위한 컬럼 추가
+alter table programs add column if not exists placement_date date;
 
 -- ─────────────────────────────────────────────────────────────────────────
 -- 입추(사육배치) 관리 — 신규
