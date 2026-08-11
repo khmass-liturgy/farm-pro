@@ -261,6 +261,10 @@ table tr:hover td { background: #f9fbff; }
 .login-error.show { display: block; }
 
 /* ── 인쇄 전용 ─────────────────────────────────────────────────── */
+/* 인쇄 용지를 A4로 고정한다. 이게 없으면 브라우저/프린터의 기본 용지(레터 등)를
+   따르게 되어, 210mm×297mm(A4) 기준으로 맞춘 서식(특히 처방전)이 다른 크기 용지에
+   맞춰 축소/여백 재배치되면서 비율이 어긋나거나 다음 페이지로 밀려날 수 있다. */
+@page { size: A4; margin: 10mm; }
 @media print {
 body { display: block !important; height: auto !important; overflow: visible !important; background: #fff !important; font-size: 10pt !important; font-family: 'Malgun Gothic', sans-serif !important; }
 #sidebar, .topbar, .modal-bg { display: none !important; }
