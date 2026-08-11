@@ -52,7 +52,7 @@ function renderFarms() {
     (!q || f.name.includes(q) || f.address.includes(q) || f.owner.includes(q)) &&
     (!ft || f.type === ft)
   );
-  const badgeMap = { '육계':'badge-blue', '삼계':'badge-green', '토종닭':'badge-amber', '오리':'badge-teal', '기타':'badge-purple' };
+  const badgeMap = { '육계':'badge-blue', '삼계':'badge-green', '산란계':'badge-red', '토종닭':'badge-amber', '오리':'badge-teal', '기타':'badge-purple' };
   const tbody = document.getElementById('farm-tbody');
   const empty = document.getElementById('farm-empty');
   if (!farms.length) { tbody.innerHTML=''; empty.style.display=''; return; }
