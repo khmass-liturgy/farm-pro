@@ -328,7 +328,7 @@ body { display: block !important; height: auto !important; overflow: visible !im
 .rx-td.value.center { text-align: center; }
 .rx-td.value.strong { font-weight: 800; }
 .rx-td.value.pre { white-space: pre-line; }
-.rx-td.note { border: none; font-size: 6.8pt; }
+.rx-td.note { border: none; font-size: 6.8pt; white-space: nowrap; }
 .rx-td.tight { font-size: 6.6pt; line-height: 1.15; text-align: center; }
 .rx-td.header { font-weight: 700; text-align: center; }
 .rx-td.section-title { background: #b2b2b2 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: 700; text-align: center; }
