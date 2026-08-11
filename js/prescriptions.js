@@ -236,10 +236,30 @@ function rxFormatDateKo(dateStr) {
   return `${y}년 ${Number(m)}월 ${Number(d)}일`;
 }
 
-// 실제 처방전 PDF를 좌표 단위로 측정해 그대로 옮긴 15열×31행 CSS Grid 좌표.
-// rx-cell(col1,col2,row1,row2)는 그 좌표에 해당하는 그리드 영역에 라벨/값 한 칸을 그려준다.
+// 실제 처방전 PDF를 좌표 단위로 측정해 그대로 옮긴 15열(퍼센트) × 31행(pt) 표 좌표.
+// CSS Grid는 각 셀이 테두리를 따로 그리다 보니 인접 셀 경계에서 두께가 겹치거나
+// 서브픽셀 반올림으로 선이 비는 문제가 있었다(특히 인쇄 해상도에서). 진짜 <table>의
+// border-collapse는 이 문제를 브라우저가 표준적으로 해결해주므로 표로 다시 그린다.
+const RX_COL_WIDTHS_PCT = [7.083, 2.710, 2.710, 8.801, 3.737, 11.248, 2.336, 2.953, 5.419, 6.316, 3.625, 7.343, 11.211, 11.342, 13.173];
+const RX_ROW_HEIGHTS_PT = [24, 34, 27.5, 25.3, 20, 20.1, 20, 22.7, 20.1, 20, 20, 23.3, 7.5, 21.3, 23.3, 50.2, 50.4, 50.2, 50.3, 11.6, 19.3, 18.3, 18.3, 18.4, 6.8, 30.9, 15.3, 15.4, 15.4, 15.3, 20];
+
 function rxCell(cls, c1, c2, r1, r2, content) {
-  return `<div class="rx-cell ${cls}" style="grid-column:${c1}/${c2};grid-row:${r1}/${r2}">${content}</div>`;
+  return { cls, c1, c2, r1, r2, content };
+}
+
+function renderRxTable(cellDefs) {
+  const byRow = {};
+  cellDefs.forEach(c => { (byRow[c.r1] = byRow[c.r1] || []).push(c); });
+  const colgroup = '<colgroup>' + RX_COL_WIDTHS_PCT.map(w => `<col style="width:${w}%">`).join('') + '</colgroup>';
+  const rowsHtml = RX_ROW_HEIGHTS_PT.map((h, idx) => {
+    const r = idx + 1;
+    const rowCells = (byRow[r] || []).sort((a, b) => a.c1 - b.c1);
+    const tds = rowCells.map(c =>
+      `<td class="rx-td ${c.cls}" colspan="${c.c2 - c.c1}" rowspan="${c.r2 - c.r1}">${c.content}</td>`
+    ).join('');
+    return `<tr style="height:${h}pt">${tds}</tr>`;
+  }).join('');
+  return `<table class="rx-table">${colgroup}${rowsHtml}</table>`;
 }
 
 function printPrescription(id) {
@@ -269,10 +289,10 @@ function printPrescription(id) {
     rxCell('note strong', 5, 9, 4, 5, `발급일부터 1년간 (~ ${validUntil})`),
     rxCell('note', 12, 16, 4, 5, '처방전 유효기간 내에 구매해야 합니다.'),
 
-    rxCell('label tight vmid', 1, 2, 5, 9, `개별<br>처방<br>[${indivMark}]`),
+    rxCell('label tight', 1, 2, 5, 9, `개별<br>처방<br>[${indivMark}]`),
     rxCell('label', 2, 5, 5, 6, '동물의 이름'),
     rxCell('value', 5, 8, 5, 6, ''),
-    rxCell('label tight vmid', 9, 12, 5, 9, '동물의<br>소유자[■]<br>관리인[ ]'),
+    rxCell('label tight', 9, 12, 5, 9, '동물의<br>소유자[■]<br>관리인[ ]'),
     rxCell('label', 13, 14, 5, 6, '성명'),
     rxCell('value', 14, 16, 5, 6, rx.owner || '-'),
     rxCell('label', 2, 5, 6, 7, '동물의 종류'),
@@ -288,11 +308,11 @@ function printPrescription(id) {
     rxCell('label', 13, 14, 8, 9, '농장명'),
     rxCell('value', 14, 16, 8, 9, rx.farmName),
 
-    rxCell('label tight vmid', 1, 2, 9, 12, `군별<br>처방<br>[${groupMark}]`),
+    rxCell('label tight', 1, 2, 9, 12, `군별<br>처방<br>[${groupMark}]`),
     rxCell('label', 2, 5, 9, 10, '축사번호'),
     rxCell('value', 5, 7, 9, 10, rx.barnRange || '-'),
     rxCell('label center', 7, 8, 9, 10, '동'),
-    rxCell('label tight vmid', 9, 12, 9, 12, '동물병원[■]<br>축산농장[ ]'),
+    rxCell('label tight', 9, 12, 9, 12, '동물병원[■]<br>축산농장[ ]'),
     rxCell('label', 13, 14, 9, 10, '명칭'),
     rxCell('value', 14, 16, 9, 10, RX_CLINIC.name),
     rxCell('label', 2, 5, 10, 11, '동물의 종류'),
@@ -374,9 +394,9 @@ function printPrescription(id) {
     }),
 
     rxCell('footer', 1, 16, 31, 32, '210㎜×297㎜(일반용지 60g/㎡(재활용품))'),
-  ].join('');
+  ];
 
-  const html = `<div class="print-page"><div class="rx-grid">${cells}</div></div>`;
+  const html = `<div class="print-page">${renderRxTable(cells)}</div>`;
 
   document.getElementById('print-area').innerHTML = html;
   closeModal('modal-prescription');
