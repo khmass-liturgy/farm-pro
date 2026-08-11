@@ -486,19 +486,20 @@
       <div class="form-group"><label>성분명</label><input id="d-ingredient" placeholder="예) Enrofloxacin"></div>
       <div class="form-group"><label>제조사</label><input id="d-maker" placeholder="예) 동방아그로"></div>
     </div>
+    <div class="text-muted mb-16" style="margin-top:-6px">⬇ 아래 두 개를 선택하면 "표준 용량/방법" 칸에 자동으로 채워집니다</div>
     <div class="form-row">
-      <div class="form-group"><label>표준 용법 <span class="text-muted">(선택하면 아래 칸에 채워짐)</span></label>
+      <div class="form-group"><label>용법 선택</label>
         <select id="d-dose-basis" onchange="applyDoseSelects()">
-          <option value="">선택 안함</option>
+          <option value="">기준 선택...</option>
           <option value="물 200리터당">물 200리터당</option>
           <option value="물 500리터당">물 500리터당</option>
           <option value="1톤당">1톤당</option>
           <option value="수당">수당</option>
         </select>
       </div>
-      <div class="form-group"><label>표준 용량</label>
+      <div class="form-group"><label>용량 선택</label>
         <select id="d-dose-amount" onchange="applyDoseSelects()">
-          <option value="">선택 안함</option>
+          <option value="">용량 선택...</option>
           <option value="0.2cc">0.2cc</option>
           <option value="0.5cc">0.5cc</option>
           <option value="200cc">200cc</option>
@@ -508,7 +509,7 @@
       </div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>표준 용량/방법 <span class="text-muted">(직접 수정 가능)</span></label><input id="d-dose" placeholder="예) 물 200리터당 200cc, 5-6시간 투약"></div>
+      <div class="form-group"><label>표준 용량/방법</label><input id="d-dose" placeholder="위에서 선택하면 자동 입력됩니다 (직접 입력/수정도 가능)"></div>
       <div class="form-group"><label>휴약기간</label>
         <select id="d-withdrawal">
           <option value="">없음</option>
