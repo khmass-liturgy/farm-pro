@@ -276,6 +276,7 @@ function printPrescription(id) {
 
     rxCell('note strong', 1, 5, 4, 5, '처방전 유효기간'),
     rxCell('note strong', 5, 9, 4, 5, '발급일부터 ( 7 )일간'),
+    rxCell('note', 9, 12, 4, 5, ''),
     rxCell('note right', 12, 16, 4, 5, '처방전 유효기간 내에 구매해야 합니다.'),
 
     rxCell('label tight', 1, 2, 5, 9, `개별<br>처방<br>[${indivMark}]`),
