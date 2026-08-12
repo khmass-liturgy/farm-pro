@@ -524,6 +524,7 @@ function renderPrograms() {
         <table class="schedule-table" style="border-collapse:collapse;font-size:12px;min-width:600px">
           <thead><tr style="background:var(--bg)">
             <th style="padding:7px 10px;border-bottom:1px solid var(--border);width:50px;text-align:center">일령</th>
+            <th style="padding:7px 10px;border-bottom:1px solid var(--border);width:60px;text-align:center">날짜</th>
             <th style="padding:7px 10px;border-bottom:1px solid var(--border)">약품투약</th>
             <th style="padding:7px 10px;border-bottom:1px solid var(--border)">백신사항</th>
             <th style="padding:7px 10px;border-bottom:1px solid var(--border)">비고</th>
@@ -531,6 +532,7 @@ function renderPrograms() {
           <tbody>${p.days.map(d=>`
             <tr>
               <td style="text-align:center;font-weight:700;color:var(--accent);background:var(--bg);padding:5px 8px">${d.day}</td>
+              <td style="text-align:center;color:var(--text-secondary);font-size:11px;padding:5px 8px">${programDayDateShort(p.placementDate, d.day)}</td>
               <td style="padding:5px 8px">${(d.drugs&&d.drugs.length)?dayDrugPillsHtml(d):''}</td>
               <td style="padding:5px 8px">${d.vaccine?dayVaccinePillHtml(d):''}</td>
               <td style="padding:5px 8px;color:var(--text-secondary);font-size:11px">${d.note||''}</td>

@@ -43,10 +43,12 @@ function renderScheduleView() {
   if (!prog) return;
   const farm = load('farms').find(f => f.id === prog.farmId);
 
-  // 이 프로그램을 쓰는 사육중인 계군(배치)의 입추일 기준으로 현재 일령을 계산해
-  // 오늘(today)/7일 이내(upcoming) 예정 항목을 강조 표시한다.
+  // 이 프로그램을 쓰는 사육중인 계군(배치)의 입추일이 있으면 그걸로, 없으면 프로그램
+  // 자체에 입력된 입추일로 일령을 계산해 오늘(today)/7일 이내(upcoming) 예정 항목을
+  // 강조 표시하고, 각 일령의 실제 날짜도 함께 보여준다.
   const activeBatch = load('batches').find(b => b.programId === progId && b.status === 'active');
-  const dayAge = activeBatch ? computeDayAge(activeBatch.placementDate) : null;
+  const refPlacementDate = activeBatch ? activeBatch.placementDate : prog.placementDate;
+  const dayAge = refPlacementDate ? computeDayAge(refPlacementDate) : null;
 
   let rows = '';
   for (let i = 1; i <= prog.duration; i++) {
@@ -56,7 +58,7 @@ function renderScheduleView() {
     const isUpcoming = dayAge != null && i > dayAge && i <= dayAge + DUE_SOON_HORIZON_DAYS;
     const rowClass = isToday ? 'today' : (isUpcoming ? 'upcoming' : '');
     rows += `<div class="program-day-row ${rowClass}" style="${rowClass ? '' : 'background:' + (hasData ? 'var(--bg-card)' : 'var(--bg)')}">
-      <div class="program-cell num">${i}일${isToday ? ' (오늘)' : ''}</div>
+      <div class="program-cell num">${i}일${isToday ? ' (오늘)' : ''}<div style="font-size:10px;color:var(--text-secondary);font-weight:400">${programDayDateShort(refPlacementDate, i)}</div></div>
       <div class="program-cell">${(d && d.drugs && d.drugs.length) ? dayDrugPillsHtml(d) : ''}</div>
       <div class="program-cell">${(d && d.vaccine) ? dayVaccinePillHtml(d) : ''}</div>
       <div class="program-cell" style="color:var(--text-secondary);font-size:11px">${d?.note||''}</div>

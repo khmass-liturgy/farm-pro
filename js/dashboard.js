@@ -28,11 +28,12 @@ function computeDueSoonAlerts(horizonDays = DUE_SOON_HORIZON_DAYS) {
       if (!hasPlan) continue;
       if (logs.some(l => l.batchId === b.id && l.programDay === day)) continue;
       const label = [dayDrugLabel(d), dayVaccineLabel(d)].filter(Boolean).join(' / ');
+      const dateStr = programDayDateShort(b.placementDate, day);
       alerts.push({
         level: offset === 0 ? 'red' : 'amber',
         text: offset === 0
-          ? `${farm?.name||''} — 오늘(${day}일령) 투약 예정: ${label} (미기록)`
-          : `${farm?.name||''} — ${offset}일 후(${day}일령) 투약 예정: ${label}`,
+          ? `${farm?.name||''} — 오늘 ${dateStr}(${day}일령) 투약 예정: ${label} (미기록)`
+          : `${farm?.name||''} — ${offset}일 후 ${dateStr}(${day}일령) 투약 예정: ${label}`,
         batchId: b.id,
         farmId: b.farmId, day, offset,
       });
@@ -67,6 +68,29 @@ function computeUpcomingSchedule(horizonDays = DUE_SOON_HORIZON_DAYS) {
         farmName: farm?.name || '', batchId: b.id, day, offset,
         drugLabel: dayDrugLabel(d), vaccineLabel: dayVaccineLabel(d),
         logged: logs.some(l => l.batchId === b.id && l.programDay === day),
+      });
+    }
+  });
+  items.sort((a, b) => a.date.localeCompare(b.date) || a.farmName.localeCompare(b.farmName));
+  return items;
+}
+
+// 입추일이 입력된 모든 투약 프로그램의 "등록한 날짜(입추일)"부터 15일치 계획.
+// computeUpcomingSchedule과 달리 배치/오늘 날짜와 무관하게, 프로그램 자체의 입추일을
+// 기준으로 초반 15일 구간만 훑어 보여준다(신규 프로그램 검토용).
+function computeProgramFirst15Days() {
+  const programs = load('programs').filter(p => p.placementDate);
+  const items = [];
+  programs.forEach(p => {
+    const maxDay = Math.min(15, p.duration);
+    for (let day = 1; day <= maxDay; day++) {
+      const d = p.days.find(x => x.day === day);
+      const hasPlan = d && ((d.drugs && d.drugs.length) || d.vaccine);
+      if (!hasPlan) continue;
+      items.push({
+        date: programDayDate(p.placementDate, day),
+        programId: p.id, programName: p.name, farmName: p.farmName, day,
+        drugLabel: dayDrugLabel(d), vaccineLabel: dayVaccineLabel(d),
       });
     }
   });
@@ -162,4 +186,24 @@ function renderDashboard() {
     `<tr><td><strong>${d.name}</strong></td><td><span class="badge ${drugTypeColors[d.type]||'badge-blue'}">${d.type}</span></td><td style="color:var(--text-secondary)">${d.withdrawal||'-'}</td></tr>`
   ).join('') || `<tr><td colspan="3" class="text-muted" style="text-align:center;padding:20px">등록된 약품이 없습니다</td></tr>`;
   document.getElementById('dash-drugs').innerHTML = `<div class="tbl-wrap"><table><thead><tr><th>약품명</th><th>분류</th><th>휴약기간</th></tr></thead><tbody>${drugRows}</tbody></table></div>`;
+
+  const first15 = computeProgramFirst15Days();
+  const first15El = document.getElementById('dash-program-15days');
+  if (!first15.length) {
+    first15El.innerHTML = '';
+  } else {
+    const first15Rows = first15.map(it => `
+      <tr onclick="showPage('programs')" style="cursor:pointer">
+        <td>${it.date}</td>
+        <td><strong>${it.farmName}</strong></td>
+        <td style="color:var(--text-secondary)">${it.programName}</td>
+        <td>${it.day}일령</td>
+        <td>${it.drugLabel ? `<span class="drug-pill">${it.drugLabel}</span>` : '-'}</td>
+        <td>${it.vaccineLabel ? `<span class="vaccine-pill">💉 ${it.vaccineLabel}</span>` : '-'}</td>
+      </tr>`).join('');
+    first15El.innerHTML = `<div class="card mt-16">
+      <div class="card-header"><div class="card-title">📋 프로그램 등록일 기준 15일 일정</div></div>
+      <div class="tbl-wrap"><table><thead><tr><th>날짜</th><th>농장</th><th>프로그램</th><th>일령</th><th>약품</th><th>백신</th></tr></thead><tbody>${first15Rows}</tbody></table></div>
+    </div>`;
+  }
 }
