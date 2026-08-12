@@ -1,0 +1,1879 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>농장동물 컨설팅 - 날씨 · 환기 · 컨설팅</title>
+<meta name="description" content="날씨 기반 환기 컨설팅 및 육계·산란계 사양관리 컨설팅" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+    background: linear-gradient(135deg, #f8f4ef 0%, #eef2f8 100%);
+    min-height: 100vh; color: #1a1a1a;
+  }
+  button { font-family: inherit; cursor: pointer; }
+  input { font-family: inherit; }
+  a { text-decoration: none; }
+  .display { font-family: 'Black Han Sans', sans-serif; letter-spacing: -0.5px; }
+  header {
+    background: linear-gradient(90deg, #1a2744 0%, #2C3E6B 100%);
+    color: #fff; padding: 0 20px; position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  }
+  .header-inner { max-width: 900px; margin: 0 auto; }
+  .header-top { display: flex; align-items: center; justify-content: space-between; padding: 14px 0 8px; }
+  .tabs { display: flex; gap: 4px; }
+  .tab {
+    border: none; background: transparent; color: #fff; padding: 8px 18px;
+    font-size: 13px; border-radius: 8px 8px 0 0; border-bottom: 3px solid transparent;
+  }
+  .tab.active { background: rgba(255,255,255,0.15); font-weight: 700; border-bottom: 3px solid #F9C74F; }
+  main { max-width: 900px; margin: 0 auto; padding: 20px 16px 40px; }
+  .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 1px 8px rgba(0,0,0,0.07); }
+  .price-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 10px; }
+  .price-card {
+    background: #fff; border-radius: 14px; padding: 14px 15px; cursor: pointer;
+    border: 2px solid transparent; box-shadow: 0 1px 6px rgba(0,0,0,0.07); transition: all 0.2s;
+  }
+  table { width: 100%; border-collapse: collapse; }
+
+  /* 공지 바로가기 */
+  .board-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+  .board-card {
+    border-radius: 14px; padding: 18px; border: 1px solid #eee;
+    transition: transform 0.15s, box-shadow 0.15s; background: #fff;
+  }
+  .board-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
+  .board-link {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border-radius: 10px; margin-top: 8px;
+    font-size: 13px; font-weight: 600; transition: background 0.15s;
+  }
+  .board-link:hover { filter: brightness(0.96); }
+  .hidden { display: none !important; }
+
+  /* ── 반응형 레이아웃 ──
+     모바일에서는 고정 폭을 줄여서 억지로 맞추지 않고, 콘텐츠의
+     우선순위에 따라 헤더/카드/표를 재배치한다. */
+  html { overflow-x: hidden; }
+  .livestock-price-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .livestock-price-card { min-width: 0; }
+  .livestock-price-card__content, .livestock-price-card__body { min-width: 0; flex: 1 1 auto; }
+  .livestock-price-card__label { overflow-wrap: anywhere; }
+  .livestock-price-card__value { white-space: nowrap; }
+  .livestock-price-card__date { flex: 0 0 auto; }
+  .livestock-history-mobile { display: none; }
+  .livestock-history-scroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  @media (max-width: 640px) {
+    body { overflow-x: hidden; }
+    header { padding: 0 10px; }
+    .header-top { align-items: flex-start; flex-wrap: wrap; gap: 8px; padding: 10px 0 6px; }
+    .header-top > div:first-child { min-width: 0; flex: 1 1 220px; }
+    .header-top > div:first-child > div { min-width: 0; }
+    .header-top > div:first-child .display { font-size: 17px !important; line-height: 1.15 !important; overflow-wrap: anywhere; }
+    .header-top > div:first-child img { width: 30px !important; height: 30px !important; }
+    .header-top > div:last-child { flex: 0 0 auto; font-size: 11px !important; }
+    .tabs { width: calc(100% + 20px); margin-left: -10px; padding: 0 6px; gap: 2px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab { flex: 0 0 auto; white-space: nowrap; padding: 8px 11px; font-size: 11px; }
+    main { width: 100%; padding: 12px 8px 28px; }
+    .card { border-radius: 12px; padding: 14px; }
+    main .card > div[style*="justify-content:space-between"] { flex-wrap: wrap !important; gap: 8px !important; }
+    .price-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .price-card { padding: 11px 10px; border-radius: 11px; }
+    .board-grid { grid-template-columns: 1fr; gap: 10px; }
+    .board-card { padding: 14px; }
+    .livestock-price-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .livestock-price-card { display: block !important; padding: 11px !important; border-radius: 10px !important; }
+    .livestock-price-card__content, .livestock-price-card__body { display: block !important; }
+    .livestock-price-card__icon { display: block !important; font-size: 21px !important; }
+    .livestock-price-card__label { display: block !important; font-size: 11px !important; line-height: 1.35; }
+    .livestock-price-card__value { display: block !important; font-size: 19px !important; margin-top: 3px; }
+    .livestock-price-card__value span { font-size: 10px !important; }
+    .livestock-price-card__date { display: block !important; margin-top: 7px; text-align: left !important; font-size: 9px !important; line-height: 1.35; }
+    .livestock-price-heading { align-items: flex-start !important; }
+    .livestock-price-heading .livestock-price-actions { width: 100%; justify-content: flex-end; }
+    .livestock-price-heading .livestock-price-actions a,
+    .livestock-price-heading .livestock-price-actions button { padding: 6px 8px !important; font-size: 10px !important; }
+    .livestock-history-scroll { display: none; }
+    .livestock-history-mobile { display: block; }
+    .livestock-history-mobile-day { border: 1px solid #eee; border-radius: 9px; padding: 9px; margin-top: 7px; background: #fff; }
+    .livestock-history-mobile-day__date { font-size: 11px; font-weight: 800; color: #555; margin-bottom: 7px; }
+    .livestock-history-mobile-values { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .livestock-history-mobile-value { min-width: 0; padding: 6px 7px; border-radius: 7px; background: #fafafa; }
+    .livestock-history-mobile-value__label { display: block; font-size: 9px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .livestock-history-mobile-value__number { display: block; margin-top: 2px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .livestock-history-mobile-value__change { display: block; margin-top: 1px; font-size: 9px; }
+    /* 고정 3·7열 레이아웃도 모바일에서는 카드형으로 흐르게 한다. */
+    [style*="grid-template-columns:1fr 1fr 1fr"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    [style*="grid-template-columns:repeat(7,1fr)"] { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; }
+    .header-top + .tabs + * { max-width: 100%; }
+  }
+
+  @media (max-width: 380px) {
+    .header-top > div:first-child .display { font-size: 15px !important; }
+    .tab { padding-left: 9px; padding-right: 9px; font-size: 10px; }
+    main { padding-left: 6px; padding-right: 6px; }
+    .card { padding: 12px; }
+    .livestock-price-cards { gap: 6px; }
+    .livestock-price-card { padding: 9px !important; }
+    .livestock-price-card__value { font-size: 17px !important; }
+    [style*="grid-template-columns:1fr 1fr 1fr"] { grid-template-columns: 1fr !important; }
+  }
+  /* ── 브리핑 마크다운 스타일 ── */
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const WEEK_DAYS = ["일","월","화","수","목","금","토"];
+function fmtDate(d){ return `${d.getMonth()+1}/${d.getDate()}(${WEEK_DAYS[d.getDay()]})`; }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 상태
+// ═══════════════════════════════════════════════════════════════════════════
+let state = { tab:"weather" };
+
+// ── 날씨 상태 ──────────────────────────────────────────────────────────────
+let weatherState = {
+  status:"idle", // idle | loading | done | error
+  lat:null, lng:null, locationName:"",
+  forecast:[], // 7일 예보
+  lastYear:null, // 작년 오늘 날씨
+  hourly:{},   // { "2026-07-29": [{hour,code,temp,rain,wind,humidity},...] }
+  selectedDate:null, // 클릭한 날짜 (시간대별 상세보기)
+};
+function saveWeatherLocation(lat,lng,name){
+  try { localStorage.setItem("weather_loc", JSON.stringify({lat,lng,name})); } catch(e){}
+}
+function loadWeatherLocation(){
+  try { const s=localStorage.getItem("weather_loc"); if(s) return JSON.parse(s); } catch(e){}
+  return null;
+}
+const WX_ICONS = {
+  0:"☀️",1:"🌤️",2:"⛅",3:"☁️",
+  45:"🌫️",48:"🌫️",
+  51:"🌦️",53:"🌦️",55:"🌧️",
+  61:"🌧️",63:"🌧️",65:"🌧️",
+  71:"🌨️",73:"🌨️",75:"❄️",
+  77:"🌨️",80:"🌦️",81:"🌧️",82:"⛈️",
+  85:"🌨️",86:"❄️",
+  95:"⛈️",96:"⛈️",99:"⛈️",
+};
+const WX_DESC = {
+  0:"맑음",1:"대체로 맑음",2:"구름 조금",3:"흐림",
+  45:"안개",48:"안개",
+  51:"가벼운 이슬비",53:"이슬비",55:"짙은 이슬비",
+  61:"가벼운 비",63:"비",65:"강한 비",
+  71:"가벼운 눈",73:"눈",75:"강한 눈",77:"싸락눈",
+  80:"소나기",81:"강한 소나기",82:"폭우",
+  85:"소량 적설",86:"강한 적설",
+  95:"뇌우",96:"뇌우(우박)",99:"강한 뇌우(우박)",
+};
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function fetchWithTimeout(url, ms){
+  return Promise.race([
+    fetch(url, { headers:{ "Accept":"application/json" } }),
+    new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")), ms)),
+  ]);
+}
+async function fetchWeather(lat, lng, name){
+  weatherState.status="loading"; weatherState.locationName=name;
+  if(state.tab==="weather") render();
+  try {
+    const today = new Date();
+    // 작년 같은 주 7일: 오늘부터 6일 후까지 (예보와 같은 기간)
+    const lyStart = new Date(today); lyStart.setFullYear(today.getFullYear()-1);
+    const lyEnd = new Date(lyStart); lyEnd.setDate(lyStart.getDate()+6);
+    const dateFmt = (d)=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    const fcstUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max,relative_humidity_2m_mean&hourly=temperature_2m,weathercode,precipitation,windspeed_10m,relativehumidity_2m&timezone=Asia%2FSeoul&forecast_days=7`;
+    const histUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lng}&start_date=${dateFmt(lyStart)}&end_date=${dateFmt(lyEnd)}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum,relative_humidity_2m_mean&timezone=Asia%2FSeoul`;
+    const [fcstResp, histResp] = await Promise.all([
+      fetchWithTimeout(fcstUrl, 10000),
+      fetchWithTimeout(histUrl, 10000),
+    ]);
+    if(!fcstResp.ok) throw new Error("예보 HTTP "+fcstResp.status);
+    const fcstData = await fcstResp.json();
+    const days = fcstData.daily;
+    weatherState.forecast = days.time.map((t,i)=>({
+      date:t, code:days.weathercode[i],
+      tMax:days.temperature_2m_max[i], tMin:days.temperature_2m_min[i],
+      rain:days.precipitation_sum[i], wind:days.windspeed_10m_max[i],
+      hum: days.relative_humidity_2m_mean ? days.relative_humidity_2m_mean[i] : null,
+    }));
+    // 시간대별 데이터 → 날짜별 그룹핑 (THI 계산용)
+    const h = fcstData.hourly;
+    const hourlyByDate = {};
+    if(h && h.time){
+      h.time.forEach((dt,i)=>{
+        const date = dt.slice(0,10);
+        if(!hourlyByDate[date]) hourlyByDate[date] = [];
+        hourlyByDate[date].push({
+          hour:     parseInt(dt.slice(11,13)),
+          code:     h.weathercode[i],
+          temp:     h.temperature_2m[i],
+          rain:     h.precipitation[i],
+          wind:     h.windspeed_10m[i],
+          humidity: h.relativehumidity_2m[i],
+        });
+      });
+    }
+    weatherState.hourly = hourlyByDate;
+    // 기본 선택: 오늘
+    if(!weatherState.selectedDate && days.time.length>0){
+      weatherState.selectedDate = days.time[0];
+    }
+    // 작년 7일치 배열로 저장
+    if(histResp.ok){
+      const hd = (await histResp.json()).daily;
+      if(hd && hd.time){
+        weatherState.lastYear = hd.time.map((t,i)=>({
+          date:t, code:hd.weathercode[i],
+          tMax:hd.temperature_2m_max[i], tMin:hd.temperature_2m_min[i],
+          rain:hd.precipitation_sum[i],
+          hum: hd.relative_humidity_2m_mean ? hd.relative_humidity_2m_mean[i] : null,
+        }));
+      }
+    }
+    weatherState.lat=lat; weatherState.lng=lng;
+    weatherState.status="done";
+    saveWeatherLocation(lat, lng, name);
+  } catch(e){
+    console.error("날씨 조회 실패:", e);
+    weatherState.status="error";
+  }
+  if(state.tab==="weather") render();
+}
+
+async function searchLocation(query){
+  const url=`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=ko&format=json`;
+  const resp=await fetchWithTimeout(url, 8000);
+  if(!resp.ok) throw new Error("지오코딩 실패");
+  const data=await resp.json();
+  return data.results||[];
+}
+
+function render(){
+  document.getElementById("app").innerHTML = `
+    ${renderHeader()}
+    <main>
+      ${state.tab==="weather" ? renderWeatherTab() : state.tab==="vent" ? renderVentTab() : state.tab==="consult" ? renderConsultTab() : renderWeatherTab()}
+    </main>`;
+  attachEvents();
+}
+
+function renderHeader(){
+  const now=new Date();
+  return `
+  <header><div class="header-inner">
+    <div class="header-top">
+      <div style="display:flex;align-items:center;gap:10px">
+        <img src="data:image/png;base64,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" alt="로고" style="width:36px;height:36px;border-radius:9px;flex-shrink:0" />
+        <div>
+          <div class="display" style="font-size:20px;line-height:1.1">농장동물 컨설팅</div>
+          <div style="font-size:11px;opacity:0.65;margin-top:2px">날씨 · 사양환경 · 환기 컨설팅</div>
+        </div>
+      </div>
+      <div style="text-align:right"><div style="font-size:13px;font-weight:700;color:#F9C74F">${fmtDate(now)}</div></div>
+    </div>
+    <div class="tabs">
+      <button class="tab ${state.tab==="weather"?"active":""}" data-tab="weather">🌤️ 날씨</button>
+      <button class="tab ${state.tab==="vent"?"active":""}" data-tab="vent">🌬️ 환기가이드</button>
+      <button class="tab ${state.tab==="consult"?"active":""}" data-tab="consult">🐔🥚 육계/산란계 컨설팅</button>
+    </div>
+  </div></header>`;
+}
+
+function openTHIInfoModal(){
+  const old = document.getElementById("thi-info-modal");
+  if(old) old.remove();
+
+  const ZONES = [
+    {range:"< 68",  label:"정상",   color:"#2E7D32", bg:"#E8F5E9", desc:"열스트레스 없음 · 정상 사양관리"},
+    {range:"68~72", label:"경미",   color:"#F57F17", bg:"#FFFDE7", desc:"불편감 시작 · 환기 점검, 음수 확인"},
+    {range:"72~80", label:"중등도", color:"#E65100", bg:"#FFF3E0", desc:"사료섭취·생산성 뚜렷한 저하"},
+    {range:"80~90", label:"심각",   color:"#B71C1C", bg:"#FFEBEE", desc:"개구호흡·건강 위험 급증"},
+    {range:"90 이상", label:"위험",  color:"#880000", bg:"#FCE4EC", desc:"폐사 위험 · 즉시 냉방 조치"},
+  ];
+
+  const SPECIES = [
+    {icon:"🐔", name:"육계",   start:"70", severe:"78", note:"증체·사료효율 저하, 고밀도 사육 시 더 취약"},
+    {icon:"🥚", name:"산란계", start:"72", severe:"80", note:"산란율·난중·난각질 저하, 27°C 초과 주의"},
+    {icon:"🐷", name:"돼지",   start:"72", severe:"79", note:"임신·포유돈 취약, 수태율·번식성적 저하"},
+    {icon:"🐄", name:"젖소",   start:"68", severe:"78", note:"가장 민감 · THI 72↑ 유량 감소 뚜렷"},
+    {icon:"🐂", name:"한우",   start:"75", severe:"82", note:"상대적 내성 높음 · 증체 저하 위주"},
+  ];
+
+  const modal = document.createElement("div");
+  modal.id = "thi-info-modal";
+  modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px";
+  modal.innerHTML = `
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+    <div style="padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:#1a2744">🌡️ THI 온습도지수 기준표</div>
+        <div style="font-size:11px;color:#aaa;margin-top:2px">Temperature-Humidity Index</div>
+      </div>
+      <button id="thi-modal-close" style="border:none;background:none;font-size:20px;color:#aaa;cursor:pointer;padding:4px">✕</button>
+    </div>
+
+    <div style="padding:16px 20px">
+      <!-- 계산식 -->
+      <div style="background:#f7f7f7;border-radius:10px;padding:10px 12px;margin-bottom:16px">
+        <div style="font-size:11px;font-weight:700;color:#555;margin-bottom:4px">📐 계산식</div>
+        <div style="font-family:monospace;font-size:11px;color:#333;line-height:1.6">
+          THI = T − (0.55 − 0.55 × RH/100) × (T − 58)
+        </div>
+        <div style="font-size:10px;color:#888;margin-top:4px">T: 건구온도(°F) · RH: 상대습도(%)</div>
+      </div>
+
+      <!-- 단계별 기준 -->
+      <div style="font-size:12px;font-weight:700;color:#333;margin-bottom:8px">단계별 위험도</div>
+      <div style="margin-bottom:18px">
+        ${ZONES.map(z=>`
+        <div style="display:flex;align-items:center;gap:10px;background:${z.bg};border-radius:8px;padding:8px 10px;margin-bottom:5px">
+          <div style="min-width:56px;font-size:12px;font-weight:800;color:${z.color};text-align:center">${z.range}</div>
+          <div style="min-width:44px;font-size:12px;font-weight:700;color:${z.color}">${z.label}</div>
+          <div style="flex:1;font-size:11px;color:#555;line-height:1.5">${z.desc}</div>
+        </div>`).join("")}
+      </div>
+
+      <!-- 축종별 임계값 -->
+      <div style="font-size:12px;font-weight:700;color:#333;margin-bottom:8px">축종별 임계값</div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead>
+            <tr style="background:#1a2744;color:#fff">
+              <th style="padding:7px 6px;text-align:left;font-weight:600">축종</th>
+              <th style="padding:7px 6px;text-align:center;font-weight:600">시작</th>
+              <th style="padding:7px 6px;text-align:center;font-weight:600">심각</th>
+              <th style="padding:7px 6px;text-align:left;font-weight:600">특징</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${SPECIES.map((s,i)=>`
+            <tr style="background:${i%2?"#fafafa":"#fff"};border-bottom:1px solid #f0f0f0">
+              <td style="padding:7px 6px;font-weight:600;color:#333;white-space:nowrap">${s.icon} ${s.name}</td>
+              <td style="padding:7px 6px;text-align:center;color:#E65100;font-weight:700">${s.start}</td>
+              <td style="padding:7px 6px;text-align:center;color:#B71C1C;font-weight:700">${s.severe}</td>
+              <td style="padding:7px 6px;color:#666;line-height:1.5">${s.note}</td>
+            </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 참고 -->
+      <div style="margin-top:16px;background:#FFF8E1;border-radius:8px;padding:10px 12px;font-size:10px;color:#666;line-height:1.7">
+        <b style="color:#333">💡 실무 참고</b><br>
+        · 같은 온도라도 습도가 높으면 THI가 급상승 (증발냉각 효율 저하)<br>
+        · 야간에도 THI 72 이상 유지되면 회복 불가 → 누적 폐사 위험<br>
+        · 풍속 1m/s당 체감 THI 약 1~2 하락 (터널환기 효과)<br>
+        · 대시보드는 오후 11~15시 최악 시간대 기준으로 산출
+      </div>
+
+      <div style="font-size:9px;color:#aaa;margin-top:10px;text-align:right">
+        출처: USDA / Clemson University / NRC Livestock Heat Stress Indices
+      </div>
+    </div>
+  </div>`;
+
+  document.body.appendChild(modal);
+  const close = ()=>modal.remove();
+  document.getElementById("thi-modal-close").onclick = close;
+  modal.onclick = (e)=>{ if(e.target===modal) close(); };
+}
+
+// ── 축산 날씨 스트레스 지표 패널 ────────────────────────────────────────────
+// 육계 일령별 목표 사육온도 (Aviagen 기준)
+const BROILER_TARGET_TEMP = [
+  {day:"1~3일", t:33}, {day:"4~7일", t:31}, {day:"8~14일", t:29},
+  {day:"15~21일", t:27}, {day:"22~28일", t:25}, {day:"29~35일", t:22},
+  {day:"36일~", t:20},
+];
+
+// 산란계 주령별 목표 사육온도 (Hy-Line Commercial Layer Management Guide 기준)
+// 입추 33~36°C → 1주 후부터 매주 2~3°C 하향 → 21°C 도달 → 산란기 21~27°C
+const LAYER_TARGET_TEMP = [
+  {wk:"1주령",     t:34, range:"33~35", stage:"육추"},
+  {wk:"2주령",     t:32, range:"31~33", stage:"육추"},
+  {wk:"3주령",     t:30, range:"29~31", stage:"육추"},
+  {wk:"4주령",     t:28, range:"27~29", stage:"육추"},
+  {wk:"5주령",     t:26, range:"25~27", stage:"육추"},
+  {wk:"6주령",     t:24, range:"23~25", stage:"육추"},
+  {wk:"7주령",     t:22, range:"21~23", stage:"육추"},
+  {wk:"8~17주",    t:21, range:"20~22", stage:"육성"},
+  {wk:"18주~ 산란", t:24, range:"21~27", stage:"산란"},
+];
+
+// 양돈 구간별 목표 돈사온도 (PIC 2019 Wean to Finish Guidelines, Appendix A 기준)
+// 밀폐형(무창) 돈사·톱밥깔짚+보온등 조합 기준. 이유 직후 23°C → 출하 시점까지 지속 하향.
+const PIG_TARGET_TEMP = [
+  {stage:"입식(이유)",     t:23, wk:"0주",  weight:"5kg"},
+  {stage:"자돈 전기",      t:21, wk:"2주",  weight:"9kg"},
+  {stage:"자돈 후기",      t:25, wk:"4주",  weight:"14kg"},
+  {stage:"육성 전기",      t:21, wk:"6주",  weight:"23kg"},
+  {stage:"육성 중기",      t:19, wk:"8주",  weight:"33kg"},
+  {stage:"육성 후기",      t:18, wk:"10주", weight:"45kg"},
+  {stage:"비육 전기",      t:16, wk:"14주", weight:"71kg"},
+  {stage:"비육 후기(출하)", t:14, wk:"17주", weight:"91kg"},
+];
+
+// ── 환기 컨설팅 구조: 가금 (Aviagen 3단계 모델) ───────────────────────────────
+// 세계 최대 육종회사 Aviagen이 전 세계 계열사·컨설턴트에게 배포하는
+// "Environmental Management in the Broiler House" 지침의 3단계 환기 체계.
+// 무창(밀폐형) 음압 계사를 전제로 하며, 온도계 수치보다 계군의 행동(헐떡임·웅크림)을
+// 최종 판단 기준으로 삼는 것이 이 지침의 핵심이다.
+const POULTRY_VENT_STAGES = [
+  {
+    id:"minimum", name:"최소환기", nameEn:"Minimum Ventilation", icon:"🌬️", color:"#1565C0",
+    when:"계사 내부온도가 목표(사육)온도 이하이거나 근접 — 사실상 상시 가동되는 기본 단계",
+    method:"타이머로 팬을 짧게 반복 가동. 측벬 상단·천장 인렛으로 소량만 유입시켜 병아리에 직접 바람이 닿지 않게 한다.",
+    purpose:"온도 조절이 아니라 습도·암모니아 등 유해가스 제거가 목적. 육추 초기 전 기간 필수이며 이 이하로 낮추면 안 된다.",
+    checks:[
+      "정압 0.05~0.08 inch WC(약 12~20Pa) 유지",
+      "인렛 속도 800~1,000 FPM",
+      "외기온 20~40°F(−7~4°C) 구간 0.2 CFM/수, 40~60°F(4~16°C) 구간 0.3 CFM/수",
+    ],
+  },
+  {
+    id:"transitional", name:"전이환기", nameEn:"Transitional Ventilation", icon:"🔄", color:"#EF6C00",
+    when:"외기온이 계사 설정온도를 넘어서 최소환기 팬만으로 열을 다 못 뺄 때 — 봄·가을 등 일교차 큰 시기",
+    method:"터널팬 일부를 최소환기 인렛과 함께 가동. 공기를 계사 위쪽으로 유입시켜 계군에 직접 닿지 않게 한다(터널모드처럼 관통시키지 않음).",
+    purpose:"일교차가 큰 환절기에 온도 급변을 막는 중간 단계. 히터는 꺼둔다.",
+    checks:[
+      "환기량 증가는 단계별로 완만하게(급격한 증가 지양)",
+      "계사 내 온도 균일도 유지",
+      "터널 인렛은 닫아둔 채로 진행",
+    ],
+  },
+  {
+    id:"tunnel", name:"터널환기", nameEn:"Tunnel Ventilation", icon:"🌀", color:"#C62828",
+    when:"전이환기로도 계사 온도·닭 컨디션을 유지 못 할 때만 — 온도계보다 계군 행동을 우선 판단 기준으로",
+    method:"터널팬 전체 가동. 공기가 계사 길이 방향을 관통해 흐르며 체감온도(윈드칠) 효과로 냉각시킨다.",
+    purpose:"고온기 열 스트레스 방지를 위한 최대 냉각 단계.",
+    checks:[
+      "헐떡임(panting) 20% 초과 시 쿨링패드 가동",
+      "패드 가동 중 습도 70~80% 초과하면 냉각 중단",
+      "팬 50~60%만 가동 중인데 닭이 추워 보이면 전이환기로 복귀",
+    ],
+  },
+];
+
+// ── 환기 컨설팅 구조: 양돈 (PIC / 미네소타대 확장연구소 3단계 모델) ──────────────
+// 세계 최대 돈육 육종회사 PIC와 미네소타대 축산공학 컨설팅(L. Jacobson)이 공통으로
+// 쓰는 동절기/중간/하절기 3단계 CFM 체계. 이유자돈·육성돈·비육돈 두당 CFM 기준.
+const SWINE_VENT_STAGES = [
+  {
+    id:"cold", name:"동절기(최소)환기", nameEn:"Cold/Minimum Rate", icon:"🌬️", color:"#1565C0",
+    when:"외기온이 낮아 열손실 최소화가 우선 — 겨울철 상시 기준선",
+    method:"피트팬(바닥환기팬) 중심의 연속 기저환기. 이 이하로는 절대 낮추지 않는다.",
+    purpose:"습도·가스(암모니아·CO₂) 제거를 위한 최소 기준. 온도 조절 목적이 아니다.",
+    rateTable:[
+      {stage:"이유자돈(12~30lb)", cfm:"2 CFM/두"},
+      {stage:"육성돈(75~150lb)", cfm:"7 CFM/두"},
+      {stage:"비육돈(150~220lb)", cfm:"10 CFM/두"},
+    ],
+    checks:[
+      "정압 최소 0.02 inch WC(수주) 이상 — 이보다 낮으면 환기량·공기질 관리 불가",
+      "유창(커튼형)은 겨울철 커튼을 최대한 밀착·밀폐",
+      "결로·응축 여부 점검 — 젖은 슬랫은 같은 기온에서도 체감온도를 5°C가량 낮춘다",
+    ],
+  },
+  {
+    id:"mild", name:"중간환기", nameEn:"Mild/Transitional Rate", icon:"🔄", color:"#EF6C00",
+    when:"봄·가을 등 완만한 외기온 구간, 돈군 성장에 따라 발열량이 늘어날 때",
+    method:"측벽 인렛 개방을 늘리며 팬 단수를 순차적으로 증가시킨다.",
+    purpose:"동절기 최소환기로는 부족한 열 제거를 보완.",
+    rateTable:[
+      {stage:"이유자돈", cfm:"10 CFM/두"},
+      {stage:"육성돈", cfm:"24 CFM/두"},
+      {stage:"비육돈", cfm:"35 CFM/두"},
+    ],
+    checks:[
+      "팬 단계 전환 시 급격한 증가 지양 — 단계별로 순차 가동",
+      "인렛 개방 폭을 정압 기준으로 자동 조절(고정식이면 수시 점검)",
+      "습도 65% 초과 시 다음 단계로 조기 전환 검토",
+    ],
+  },
+  {
+    id:"hot", name:"하절기(최대)환기", nameEn:"Hot/Tunnel Rate", icon:"🌀", color:"#C62828",
+    when:"고온기 체온 상승 방지가 최우선일 때",
+    method:"터널환기 설비가 있으면 최대 가동, 없어도 표준 120~150 CFM/비육돈두를 목표로 팬을 전량 가동.",
+    purpose:"돈사 내 온도 상승 최소화 + 인렛 속도 800~1,000 FPM 유지.",
+    rateTable:[
+      {stage:"이유자돈", cfm:"25 CFM/두"},
+      {stage:"육성돈", cfm:"75 CFM/두"},
+      {stage:"비육돈(터널無)", cfm:"120~150 CFM/두"},
+    ],
+    extra:"100lb(45kg) 이상 돈에는 살수냉각(스프링클러) 병행 가능 — 세트포인트 대비 9~10°C 높을 때 가동, 슬랫은 다음 살수 전 거의 말라 있어야 함",
+    checks:[
+      "인렛 속도 800~1,000 FPM 유지 여부 점검",
+      "살수 시 슬랫이 완전히 마른 뒤 재살수(과습 방지)",
+      "돈군 30~35두당 스프링클러 1개 비율 유지",
+      "습도 65% 초과 시 환기량을 더 늘려도 효과가 제한적임을 인지",
+    ],
+  },
+];
+
+let ventState = { species:"broiler", barn:"solid" };
+
+function renderLivestockWeatherPanel(fc, hourlyByDate){
+  if(!fc || fc.length === 0) return "";
+  hourlyByDate = hourlyByDate || {};
+
+  // ── 지표 계산 함수들 ──────────────────────────────────────────────────────
+  // THI (온습도지수): USDA 공식 (소·돼지·가금 공통 기준)
+  // THI = T - (0.55 - 0.55×RH/100) × (T - 58)  [T: °F]
+  const calcTHI = (tempC, rh) => {
+    if(tempC==null || rh==null) return null;
+    const T = tempC * 9/5 + 32; // °C → °F
+    return Math.round(T - (0.55 - 0.55*(rh/100)) * (T - 58));
+  };
+
+  // THI 단계 (가금·돼지·소 통합 기준)
+  const thiLevel = (thi) => {
+    if(thi == null) return null;
+    if(thi < 68) return {label:"정상", color:"#2E7D32", bg:"#E8F5E9", icon:"✅"};
+    if(thi < 72) return {label:"경미", color:"#F57F17", bg:"#FFFDE7", icon:"⚠️"};
+    if(thi < 80) return {label:"중등도", color:"#E65100", bg:"#FFF3E0", icon:"🔶"};
+    if(thi < 90) return {label:"심각", color:"#B71C1C", bg:"#FFEBEE", icon:"🔴"};
+    return {label:"위험", color:"#880000", bg:"#FCE4EC", icon:"🚨"};
+  };
+
+  // 일교차 위험도 (호흡기·면역 저하 기준: 10°C 이상시 경보)
+  const dtLevel = (dt) => {
+    if(dt == null) return null;
+    if(dt < 8)  return {label:"안전", color:"#2E7D32", icon:"✅"};
+    if(dt < 12) return {label:"주의", color:"#F57F17", icon:"⚠️"};
+    return {label:"경보", color:"#B71C1C", icon:"🔴"};
+  };
+
+  const broilerTargetTemp = BROILER_TARGET_TEMP;
+  const layerTargetTemp = LAYER_TARGET_TEMP;
+  const pigTargetTemp = PIG_TARGET_TEMP;
+
+  // 오늘 날씨 기본값 (일별 예보에서)
+  const today = fc[0];
+  const todayDate = today?.date;
+
+  // 오늘 시간대별 데이터에서 THI 계산 (정오~15시 최악 조건 기준)
+  const todayHourly = (hourlyByDate[todayDate] || []);
+  const peakHours = todayHourly.filter(h => h.hour >= 11 && h.hour <= 15);
+  let peakTHI = null, peakTemp = null, peakHumidity = null;
+  if(peakHours.length > 0){
+    // 가장 더운 시간대
+    const worst = peakHours.reduce((a,b)=>
+      (calcTHI(b.temp,b.humidity)||0) > (calcTHI(a.temp,a.humidity)||0) ? b : a
+    );
+    peakTemp     = worst.temp;
+    peakHumidity = worst.humidity;
+    peakTHI      = calcTHI(peakTemp, peakHumidity);
+  } else if(today) {
+    // 시간대별 없으면 최고기온 + 평균습도 추정
+    peakTemp = today.tMax;
+    peakHumidity = today.hum || 70;
+    peakTHI = calcTHI(peakTemp, peakHumidity);
+  }
+
+  const thiLv = thiLevel(peakTHI);
+  const dt = (today?.tMax != null && today?.tMin != null)
+    ? Math.round(today.tMax - today.tMin) : null;
+  const dtLv = dtLevel(dt);
+
+  // Hy-Line 습도 보정: 상대습도 60% 초과 시 5%p당 목표온도 1°C 하향
+  const todayHum = today?.hum != null ? today.hum : peakHumidity;
+  const humAdj = (todayHum != null && todayHum > 60)
+    ? Math.floor((todayHum - 60) / 5) : 0;
+
+  // 7일 THI 추이 (일별 최고기온 + 평균습도)
+  const weekTHI = fc.map(d => ({
+    date: d.date,
+    thi:  calcTHI(d.tMax, d.hum || 70),
+    rain: d.rain,
+    tMax: d.tMax, tMin: d.tMin,
+    dt:   (d.tMax!=null && d.tMin!=null) ? Math.round(d.tMax-d.tMin) : null,
+  }));
+
+  // 이번 주 강수 위험일 수
+  const rainDays = fc.filter(d => (d.rain||0) >= 5).length;
+
+  // 오늘 야간 최저(새벽 3~5시) THI - 고온다습 야간 위험 체크
+  const nightHours = todayHourly.filter(h => h.hour >= 3 && h.hour <= 5);
+  let nightTHI = null;
+  if(nightHours.length > 0){
+    const worst = nightHours.reduce((a,b)=>
+      (calcTHI(b.temp,b.humidity)||0) > (calcTHI(a.temp,a.humidity)||0) ? b : a
+    );
+    nightTHI = calcTHI(worst.temp, worst.humidity);
+  }
+
+  // ── 렌더링 ───────────────────────────────────────────────────────────────
+  const fmtDay2 = (dateStr) => {
+    const d=new Date(dateStr), dn=["일","월","화","수","목","금","토"];
+    return `${d.getMonth()+1}/${d.getDate()}(${dn[d.getDay()]})`;
+  };
+
+  // THI 게이지 바
+  const thiGauge = (thi) => {
+    if(thi==null) return "";
+    const pct = Math.min(100, Math.max(0, ((thi-55)/45)*100));
+    const lv = thiLevel(thi);
+    return `<div style="background:#eee;border-radius:4px;height:6px;margin-top:4px">
+      <div style="background:${lv.color};width:${pct}%;height:6px;border-radius:4px;transition:width 0.5s"></div>
+    </div>`;
+  };
+
+  // 7일 THI 바 차트
+  const thiBars = weekTHI.map(d => {
+    const lv = thiLevel(d.thi);
+    const pct = d.thi ? Math.min(100, Math.max(0, ((d.thi-55)/45)*100)) : 0;
+    const isToday = d.date === todayDate;
+    return `<div style="flex:1;text-align:center">
+      <div style="font-size:10px;color:${isToday?"#1a2744":"#888"};font-weight:${isToday?"700":"400"};margin-bottom:2px">
+        ${fmtDay2(d.date)}
+      </div>
+      <div style="height:48px;display:flex;align-items:flex-end;justify-content:center">
+        <div style="background:${lv?lv.color:"#ccc"};width:22px;height:${pct}%;border-radius:3px 3px 0 0;min-height:3px;position:relative">
+          ${d.thi ? `<div style="position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;color:${lv.color};white-space:nowrap">${d.thi}</div>` : ""}
+        </div>
+      </div>
+      ${d.rain >= 5 ? `<div style="font-size:10px;color:#1565C0">💧</div>` : `<div style="font-size:10px;color:transparent">·</div>`}
+    </div>`;
+  }).join("");
+
+  return `
+  <div class="card" style="margin-top:16px;margin-bottom:16px">
+    <div class="display" style="font-size:16px;margin-bottom:14px">🌡️ 축산 날씨 스트레스 지표</div>
+
+    <!-- 핵심 지표 3종 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+
+      <!-- THI 오늘 -->
+      <div style="background:${thiLv ? thiLv.bg : "#f5f5f5"};border-radius:12px;padding:12px;text-align:center;position:relative">
+        <button id="btn-thi-info" title="THI 기준표 보기"
+          style="position:absolute;top:6px;right:6px;border:none;background:rgba(255,255,255,0.7);border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;color:#555;padding:0;line-height:1">ⓘ</button>
+        <div style="font-size:11px;color:#888;font-weight:600;margin-bottom:4px">온습도지수 (THI)</div>
+        <div style="font-size:29px;font-weight:800;color:${thiLv ? thiLv.color : "#333"}">${peakTHI ?? "-"}</div>
+        <div style="font-size:12px;font-weight:700;color:${thiLv ? thiLv.color : "#aaa"}">${thiLv ? thiLv.icon+" "+thiLv.label : "-"}</div>
+        ${thiGauge(peakTHI)}
+        <div style="font-size:10px;color:#aaa;margin-top:4px">오후 최고 기준 · ⓘ 기준표</div>
+      </div>
+
+      <!-- 일교차 -->
+      <div style="background:${dtLv ? (dt>=12?"#FFEBEE":dt>=8?"#FFFDE7":"#E8F5E9") : "#f5f5f5"};border-radius:12px;padding:12px;text-align:center">
+        <div style="font-size:11px;color:#888;font-weight:600;margin-bottom:4px">일교차</div>
+        <div style="font-size:29px;font-weight:800;color:${dtLv ? dtLv.color : "#333"}">${dt != null ? dt+"°" : "-"}</div>
+        <div style="font-size:12px;font-weight:700;color:${dtLv ? dtLv.color : "#aaa"}">${dtLv ? dtLv.icon+" "+dtLv.label : "-"}</div>
+        <div style="font-size:10px;color:#aaa;margin-top:8px">호흡기·면역 저하 위험<br>10°↑주의 / 12°↑경보</div>
+      </div>
+
+      <!-- 야간 THI -->
+      <div style="background:${nightTHI!=null&&nightTHI>=72?"#FFEBEE":nightTHI!=null&&nightTHI>=68?"#FFF3E0":"#f5f5f5"};border-radius:12px;padding:12px;text-align:center">
+        <div style="font-size:11px;color:#888;font-weight:600;margin-bottom:4px">야간 THI (새벽3~5시)</div>
+        <div style="font-size:29px;font-weight:800;color:${nightTHI!=null&&nightTHI>=72?"#B71C1C":nightTHI!=null&&nightTHI>=68?"#E65100":"#2E7D32"}">${nightTHI ?? "-"}</div>
+        <div style="font-size:12px;font-weight:700;color:${nightTHI!=null&&nightTHI>=68?"#B71C1C":"#2E7D32"}">
+          ${nightTHI!=null?(nightTHI>=72?"🔴 야간 고온주의":nightTHI>=68?"⚠️ 주의":"✅ 안전"):"-"}
+        </div>
+        <div style="font-size:10px;color:#aaa;margin-top:8px">야간 폐사 위험 구간<br>(가금 새벽 2~5시 취약)</div>
+      </div>
+    </div>
+
+    <!-- 7일 THI 추이 -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:6px">📊 7일 THI 추이 (일 최고 기준) · 💧=강수 5mm↑</div>
+      <div style="display:flex;gap:4px;align-items:flex-end">${thiBars}</div>
+      <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
+        <span style="font-size:10px;color:#2E7D32">■ <68 정상</span>
+        <span style="font-size:10px;color:#F57F17">■ 68~72 경미</span>
+        <span style="font-size:10px;color:#E65100">■ 72~80 중등도</span>
+        <span style="font-size:10px;color:#B71C1C">■ 80~90 심각</span>
+        <span style="font-size:10px;color:#880000">■ 90↑ 위험</span>
+      </div>
+    </div>
+
+    <!-- 육계 일령별 목표온도 vs 오늘 최고기온 -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:6px">🐔 육계 일령별 목표온도 vs 오늘 최고기온 (${today?.tMax!=null?Math.round(today.tMax)+"°C":"-"})</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${broilerTargetTemp.map(b => {
+          const diff = today?.tMax != null ? Math.round(today.tMax) - b.t : null;
+          const over = diff != null && diff > 0;
+          const under = diff != null && diff < 0;
+          return `<div style="background:${over?"#FFEBEE":under?"#E3F2FD":"#E8F5E9"};border-radius:8px;padding:6px 8px;text-align:center;min-width:60px">
+            <div style="font-size:10px;color:#888">${b.day}</div>
+            <div style="font-size:13px;font-weight:700;color:#555">목표 ${b.t}°</div>
+            <div style="font-size:11px;font-weight:700;color:${over?"#B71C1C":under?"#1565C0":"#2E7D32"}">
+              ${diff!=null?(over?"▲+"+diff:under?"▼"+Math.abs(diff):"±0"):""}
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+      <div style="font-size:10px;color:#aaa;margin-top:4px">▲ 빨강=목표 초과(과열 주의) · ▼ 파랑=목표 미달(보온 필요) · 출처: Aviagen 브로일러 가이드라인</div>
+    </div>
+
+    <!-- 산란계 주령별 목표온도 vs 오늘 최고기온 -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:6px">
+        🥚 산란계 주령별 목표온도 vs 오늘 최고기온 (${today?.tMax!=null?Math.round(today.tMax)+"°C":"-"})
+        ${humAdj > 0 ? `<span style="color:#0288D1;font-weight:700"> · 습도보정 -${humAdj}°C 적용</span>` : ""}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${layerTargetTemp.map(b => {
+          // 육추 구간만 습도 보정 적용 (Hy-Line: 습도 60% 초과 시 5%p당 1°C 하향)
+          const adjT = b.stage === "육추" ? b.t - humAdj : b.t;
+          const diff = today?.tMax != null ? Math.round(today.tMax) - adjT : null;
+          const over  = diff != null && diff > 0;
+          const under = diff != null && diff < 0;
+          const stageColor = {"육추":"#E8530A","육성":"#7B1FA2","산란":"#2E7D32"}[b.stage] || "#555";
+          return `<div style="background:${over?"#FFEBEE":under?"#E3F2FD":"#E8F5E9"};border-radius:8px;padding:6px 8px;text-align:center;min-width:64px;border-top:2px solid ${stageColor}">
+            <div style="font-size:10px;color:${stageColor};font-weight:700">${b.wk}</div>
+            <div style="font-size:13px;font-weight:700;color:#555">목표 ${adjT}°</div>
+            <div style="font-size:9px;color:#aaa">(${b.range}°)</div>
+            <div style="font-size:11px;font-weight:700;color:${over?"#B71C1C":under?"#1565C0":"#2E7D32"}">
+              ${diff!=null?(over?"▲+"+diff:under?"▼"+Math.abs(diff):"±0"):""}
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+      <div style="display:flex;gap:10px;margin-top:5px;flex-wrap:wrap">
+        <span style="font-size:10px;color:#E8530A">■ 육추기(1~7주)</span>
+        <span style="font-size:10px;color:#7B1FA2">■ 육성기(8~17주)</span>
+        <span style="font-size:10px;color:#2E7D32">■ 산란기(18주~)</span>
+      </div>
+      <div style="font-size:10px;color:#aaa;margin-top:4px">
+        입추 33~36°C → 1주 후부터 매주 2~3°C 하향 → 21°C 도달 · 산란기 정상범위 21~27°C(27°C 초과 시 산란율·난중 저하)<br>
+        습도 보정: 상대습도 60% 초과 시 5%p당 목표온도 1°C 하향 (육추기 적용) · 출처: Hy-Line Commercial Layer Management Guide
+      </div>
+    </div>
+
+    <!-- 양돈 구간별 목표온도 vs 오늘 최고기온 -->
+    <div style="margin-bottom:15px">
+      <div style="font-size:13px;font-weight:600;color:#555;margin-bottom:7px">
+        🐷 양돈 구간별 목표돈사온도 vs 오늘 최고기온 (${today?.tMax!=null?Math.round(today.tMax)+"°C":"-"})
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${pigTargetTemp.map(b => {
+          const diff = today?.tMax != null ? Math.round(today.tMax) - b.t : null;
+          const over  = diff != null && diff > 0;
+          const under = diff != null && diff < 0;
+          return `<div style="background:${over?"#FFEBEE":under?"#E3F2FD":"#E8F5E9"};border-radius:8px;padding:6px 8px;text-align:center;min-width:64px;border-top:2px solid #6D4C41">
+            <div style="font-size:10px;color:#6D4C41;font-weight:700">${b.stage}</div>
+            <div style="font-size:9px;color:#aaa">${b.wk} · ${b.weight}</div>
+            <div style="font-size:13px;font-weight:700;color:#555">목표 ${b.t}°</div>
+            <div style="font-size:11px;font-weight:700;color:${over?"#B71C1C":under?"#1565C0":"#2E7D32"}">
+              ${diff!=null?(over?"▲+"+diff:under?"▼"+Math.abs(diff):"±0"):""}
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+      <div style="font-size:10px;color:#aaa;margin-top:4px">
+        ▲ 빨강=목표 초과(고온 스트레스·번식장애 주의) · ▼ 파랑=목표 미달(보온 필요) · 밀폐형 돈사·톱밥깔짚 기준<br>
+        출처: PIC(Pig Improvement Company) 2019 Wean to Finish Guidelines, Appendix A
+      </div>
+    </div>
+
+    <!-- 강수 위험 & 관리 조언 -->
+    <div style="background:#f7f7f7;border-radius:10px;padding:10px 12px;font-size:12px;color:#555;line-height:1.8">
+      <div style="font-weight:700;color:#333;margin-bottom:4px">📋 오늘의 축산 관리 포인트</div>
+      ${peakTHI != null && peakTHI >= 80 ? `<div>🔴 <b>심각한 열스트레스(THI ${peakTHI})</b> — 터널환기 최대 가동, 쿨링패드·미스터 점검, 음수량 30~50% 증가, 전해질(KCl·NaHCO₃) 공급, 오후 2~6시 집중 관찰</div>` :
+       peakTHI != null && peakTHI >= 72 ? `<div>🔶 <b>중등도 열스트레스(THI ${peakTHI})</b> — 환기 강화, 음수 충분 공급(수온 20°C 이하 유지), 사료 섭취 저하 예상(야간 급이 비중 확대)</div>` :
+       peakTHI != null && peakTHI >= 68 ? `<div>⚠️ <b>경미한 열스트레스(THI ${peakTHI})</b> — 환기 상태 점검, 음수 공급 확인, 과밀 사육 여부 체크</div>` :
+       `<div>✅ <b>열스트레스 없음(THI ${peakTHI ?? "-"})</b> — 정상 관리 유지</div>`}
+      ${dt != null && dt >= 12 ? `<div>🔴 <b>일교차 ${dt}°C 경보</b> — 호흡기·CRD 위험, 새벽 환기 조절, 백신·예방약 점검</div>` :
+       dt != null && dt >= 8  ? `<div>⚠️ <b>일교차 ${dt}°C 주의</b> — 온도 변화 완충, 환기 급변 억제</div>` : ""}
+      ${nightTHI != null && nightTHI >= 72 ? `<div>🌙 <b>야간 고온 경보(THI ${nightTHI})</b> — 새벽 2~5시 폐사 집중 모니터링, 야간 환기 유지</div>` : ""}
+      ${rainDays >= 3 ? `<div>💧 <b>이번 주 강수 ${rainDays}일 예상</b> — 축사 침수·누수 점검, 깔집 습도 관리, 대장균·살모넬라 감염 위험 ↑</div>` :
+       rainDays >= 1 ? `<div>🌧 <b>강수 예보 ${rainDays}일</b> — 배수로 점검, 입하리터 건조 유지</div>` : ""}
+      ${today?.tMax != null && Math.round(today.tMax) > 27 ? `<div>🥚 <b>산란계 주의</b> — 계사 온도 27°C 초과 예상, 산란율·난중·난각질 저하 위험. 사료 섭취 감소분 보완 위해 에너지·칼슘 농도 상향 검토, 오후 급이 자제·야간 급이 확대</div>` :
+       today?.tMax != null && Math.round(today.tMax) < 15 ? `<div>🥚 <b>산란계 주의</b> — 저온으로 사료 요구량 증가(체온 유지), 음수 결빙 점검, 환기 부족 시 암모니아 축적 주의</div>` : ""}
+      ${today?.tMax != null && Math.round(today.tMax) >= 30 ? `<div>🐷 <b>양돈 주의</b> — 고온으로 모돈 사료섭취 저하·수태율 저하 위험, 임신돈·포유돈 냉방(쿨링패드·터널환기) 우선 가동, 비육돈 출하 전 온열스트레스로 인한 폐사 주의</div>` :
+       today?.tMax != null && Math.round(today.tMax) < 10 ? `<div>🐷 <b>양돈 주의</b> — 저온으로 자돈 설사·폐사 위험 증가, 보온등·매트 점검, 이유자돈 구역난방 상태 확인</div>` : ""}
+      ${humAdj > 0 ? `<div>💦 <b>습도 ${Math.round(todayHum)}% (기준 60% 초과)</b> — 육추 목표온도 ${humAdj}°C 하향 조정 권장 (Hy-Line 지침)</div>` : ""}
+    </div>
+
+    <div style="font-size:10px;color:#aaa;margin-top:8px;text-align:right">
+      THI 공식: USDA/Clemson Univ. · 육계: Aviagen Broiler Guide · 산란계: Hy-Line Layer Management Guide · 양돈: PIC Wean to Finish Guidelines
+    </div>
+  </div>`;
+}
+
+// ── 🌬️ 환기가이드 탭 ──────────────────────────────────────────────────────
+
+// ── 육계 표준 사양매뉴얼 데이터 ─────────────────────────────────────────────
+// [일령, 목표체중(g), 일당증체(g), 누적사료섭취(g), 누적FCR]
+// 출처: Aviagen 「Ross 308/308 FF Broiler Performance Objectives 2022」As-Hatched
+const ROSS308_DATA = [[0,44,null,null,null],[1,62,18,12,0.196],[2,81,19,28,0.352],[3,102,21,48,0.476],[4,125,23,72,0.577],[5,151,26,100,0.658],[6,181,29,131,0.724],[7,213,32,166,0.78],[8,249,36,206,0.826],[9,288,39,249,0.865],[10,330,42,297,0.9],[11,376,46,349,0.93],[12,425,49,406,0.957],[13,477,52,468,0.982],[14,533,56,535,1.005],[15,592,59,608,1.026],[16,655,62,685,1.047],[17,720,66,768,1.066],[18,789,69,856,1.086],[19,860,72,950,1.105],[20,935,74,1050,1.123],[21,1012,77,1155,1.142],[22,1092,80,1266,1.16],[23,1174,82,1383,1.178],[24,1258,85,1505,1.196],[25,1345,87,1633,1.214],[26,1434,89,1767,1.233],[27,1524,91,1907,1.251],[28,1616,92,2051,1.269],[29,1710,94,2202,1.288],[30,1805,95,2357,1.306],[31,1901,96,2518,1.325],[32,1999,97,2684,1.343],[33,2097,98,2855,1.362],[34,2196,99,3031,1.381],[35,2296,100,3211,1.399],[36,2396,100,3396,1.418],[37,2496,100,3584,1.437],[38,2597,101,3777,1.456],[39,2697,101,3974,1.474],[40,2798,100,4175,1.493],[41,2898,100,4379,1.512],[42,2998,100,4586,1.531],[43,3097,100,4797,1.55],[44,3197,99,5010,1.569],[45,3295,98,5226,1.587],[46,3393,98,5445,1.606],[47,3490,97,5666,1.625],[48,3586,96,5890,1.644],[49,3681,95,6115,1.663],[50,3776,94,6342,1.681],[51,3869,93,6571,1.7],[52,3961,92,6801,1.719],[53,4052,91,7032,1.738],[54,4142,90,7265,1.756],[55,4230,89,7498,1.775],[56,4318,87,7733,1.793]];
+// 출처: Cobb-Vantress 「Cobb500 Broiler Performance & Nutrition Supplement」As-Hatched
+const COBB500_DATA = [[0,42,0,null,null],[1,56,14,13,0.232],[2,72,16,30,0.417],[3,89,17,51,0.573],[4,109,20,74,0.679],[5,131,22,101,0.773],[6,157,26,132,0.841],[7,185,28,167,0.902],[8,215,30,206,0.958],[9,247,32,250,1.012],[10,283,36,298,1.053],[11,321,38,352,1.097],[12,364,43,410,1.126],[13,412,48,474,1.15],[14,465,53,542,1.165],[15,524,59,617,1.177],[16,586,62,698,1.191],[17,651,65,785,1.206],[18,719,68,878,1.221],[19,790,71,976,1.235],[20,865,75,1081,1.25],[21,943,78,1192,1.264],[22,1023,80,1309,1.284],[23,1104,81,1432,1.303],[24,1186,82,1562,1.321],[25,1269,83,1696,1.337],[26,1353,84,1837,1.356],[27,1438,85,1985,1.373],[28,1524,86,2137,1.402],[29,1613,89,2295,1.423],[30,1705,92,2458,1.442],[31,1799,94,2627,1.46],[32,1895,96,2801,1.478],[33,1993,98,2981,1.496],[34,2092,99,3163,1.512],[35,2191,99,3352,1.53],[36,2289,98,3545,1.549],[37,2386,97,3742,1.568],[38,2482,96,3943,1.589],[39,2577,95,4148,1.61],[40,2671,94,4357,1.631],[41,2764,93,4570,1.653],[42,2857,93,4786,1.675],[43,2950,93,5006,1.697],[44,3043,93,5228,1.718],[45,3136,93,5453,1.739],[46,3229,93,5680,1.759],[47,3322,93,5911,1.779],[48,3414,92,6144,1.8],[49,3506,92,6379,1.819],[50,3596,90,6616,1.84],[51,3685,89,6855,1.86],[52,3773,88,7095,1.88],[53,3859,86,7337,1.901],[54,3944,85,7580,1.922],[55,4028,84,7825,1.943],[56,4111,83,8070,1.963],[57,4192,81,8315,1.984],[58,4272,80,8560,2.004],[59,4350,78,8805,2.024],[60,4427,77,9050,2.044],[61,4502,75,9295,2.065],[62,4576,74,9540,2.085],[63,4649,73,9785,2.105]];
+
+// ── 산란계 표준 사양매뉴얼 데이터 ────────────────────────────────────────────
+// 육성기: [주령, 목표체중(g), 사료섭취(g/일), 음수섭취(ml/일), 누적폐사율(%)]
+// 산란기: [주령, 산란율(%), 목표체중(g), 사료섭취(g/일), 음수섭취(ml/일), 평균난중(g), 누적폐사율(%)]
+// 출처: Hy-Line International 「Hy-Line Brown Commercial Layers Performance Standards」 2025.12
+const HYLINE_BROWN_DATA = { rearing:[[1,71,16,28,0.4],[2,122,18,32,0.55],[3,192,22,38,0.65],[4,274,27,46,0.75],[5,367,32,57,0.85],[6,469,38,68,0.95],[7,577,44,78,1.05],[8,687,50,88,1.15],[9,794,55,97,1.25],[10,896,59,104,1.35],[11,990,63,110,1.45],[12,1076,66,115,1.55],[13,1152,68,120,1.63],[14,1220,70,124,1.7],[15,1282,72,127,1.78],[16,1340,76,132,1.85],[17,1396,80,139,2.0]], production:[[18,6.8,1452,84,147,44.1,0.24],[19,24.6,1509,89,158,46.6,0.28],[20,53.8,1568,94,167,49.0,0.32],[21,77.8,1627,100,175,50.7,0.36],[22,89.1,1685,104,184,52.2,0.4],[23,93.0,1740,108,190,53.5,0.44],[24,94.7,1788,110,194,54.8,0.49],[25,95.8,1830,112,197,55.9,0.53],[26,96.0,1862,113,199,56.9,0.58],[27,96.0,1884,114,200,57.9,0.62],[28,96.0,1900,114,200,58.6,0.67],[29,95.8,1910,114,200,59.2,0.72],[30,95.8,1918,114,200,59.8,0.77],[31,95.7,1924,114,200,60.3,0.82],[32,95.6,1930,114,200,60.8,0.87],[33,95.5,1937,114,200,61.1,0.92],[34,95.3,1944,114,200,61.4,0.97],[35,95.2,1950,114,200,61.5,1.03],[36,95.1,1958,114,200,61.8,1.09],[37,95.0,1964,114,200,61.9,1.14],[38,94.9,1968,114,200,62.0,1.2],[39,94.7,1972,114,200,62.0,1.26],[40,94.6,1976,114,200,62.0,1.32],[41,94.4,1978,114,200,62.1,1.38],[42,94.2,1981,114,200,62.1,1.44],[43,94.1,1984,114,200,62.1,1.51],[44,93.9,1986,114,200,62.2,1.57],[45,93.8,1988,114,200,62.2,1.64],[46,93.6,1989,114,200,62.2,1.71],[47,93.4,1990,114,200,62.3,1.78],[48,93.2,1992,114,200,62.4,1.85],[49,93.0,1992,114,200,62.4,1.92],[50,92.8,1994,114,200,62.4,1.99],[55,91.7,1998,114,200,62.6,2.39],[60,90.3,2002,114,200,62.8,2.83],[65,88.5,2006,114,200,62.9,3.32],[70,86.7,2010,114,200,63.1,3.86],[75,84.9,2013,114,200,63.3,4.46],[80,82.9,2016,114,200,63.5,5.13],[85,80.8,2018,114,200,63.6,5.87],[90,78.7,2020,114,200,63.8,6.69],[95,76.4,2021,114,200,64.0,7.6],[100,74.2,2022,114,200,64.2,8.6]] };
+// 출처: Hy-Line International 「W-36 Commercial Layers Management Guide」 North America 2020.01
+const HYLINE_W36_DATA = { rearing:[[1,66,14,26,0.75],[2,109,18,33,1.3],[3,166,24,43,1.55],[4,230,32,55,1.66],[5,320,36,64,1.77],[6,406,41,72,1.88],[7,502,45,78,1.99],[8,585,48,86,2.1],[9,685,52,93,2.15],[10,776,56,98,2.2],[11,862,58,101,2.25],[12,946,58,104,2.3],[13,1010,61,108,2.35],[14,1075,62,110,2.4],[15,1132,64,113,2.45],[16,1182,66,116,2.5],[17,1220,70,122,2.55]], production:[[18,2.5,1265,68,122,44.2,0.1],[19,18.5,1320,72,128,45.0,0.1],[20,42.5,1375,76,135,45.9,0.1],[21,63.5,1425,80,142,48.0,0.2],[22,82.0,1450,84,148,49.8,0.2],[23,90.0,1465,89,157,51.3,0.3],[24,92.5,1480,92,163,52.6,0.4],[25,94.0,1500,96,168,53.7,0.5],[26,95.0,1510,98,172,54.7,0.5],[27,95.5,1515,99,174,55.5,0.6],[28,95.5,1520,100,174,56.3,0.6],[29,96.0,1530,100,176,57.0,0.7],[30,96.0,1530,100,176,57.6,0.7],[35,94.5,1560,101,178,59.7,1.0],[40,93.5,1570,102,178,60.9,1.3],[45,92.0,1580,102,178,61.8,1.7],[50,90.0,1580,102,178,62.3,2.1],[55,89.0,1580,102,178,62.7,2.5],[60,87.0,1580,102,178,63.0,2.9],[65,85.0,1580,102,178,63.2,3.4],[70,83.0,1580,102,178,63.3,3.9],[75,81.0,1580,102,178,63.4,4.3],[80,78.5,1580,102,178,63.5,4.7],[85,76.5,1580,102,178,63.6,5.5],[90,73.5,1580,102,178,63.7,6.3],[95,71.5,1580,102,178,63.7,7.2],[100,68.5,1580,102,178,63.8,8.0]] };
+
+// 출처: Aviagen 「Arbor Acres Plus Broiler Performance Objectives 2022」As-Hatched
+const ARBORACRES_DATA = [[0,44,null,null,null],[1,61,17,13,0.207],[2,79,18,29,0.37],[3,100,20,50,0.499],[4,123,23,74,0.601],[5,148,26,101,0.682],[6,177,29,133,0.749],[7,209,32,168,0.803],[8,244,35,207,0.848],[9,283,39,251,0.887],[10,325,42,299,0.92],[11,370,45,351,0.949],[12,419,49,408,0.975],[13,471,52,471,0.999],[14,527,56,538,1.021],[15,586,59,611,1.042],[16,648,62,689,1.062],[17,714,66,772,1.082],[18,782,69,861,1.101],[19,854,72,956,1.12],[20,928,75,1057,1.138],[21,1006,77,1163,1.157],[22,1085,80,1275,1.175],[23,1168,82,1393,1.193],[24,1252,85,1517,1.212],[25,1339,87,1647,1.23],[26,1428,89,1782,1.248],[27,1518,91,1923,1.267],[28,1611,92,2069,1.285],[29,1704,94,2221,1.304],[30,1799,95,2378,1.322],[31,1895,96,2540,1.341],[32,1992,97,2707,1.36],[33,2090,98,2879,1.378],[34,2188,98,3056,1.397],[35,2287,99,3237,1.416],[36,2386,99,3422,1.435],[37,2486,99,3611,1.454],[38,2585,99,3805,1.473],[39,2684,99,4001,1.491],[40,2784,99,4202,1.51],[41,2882,99,4405,1.529],[42,2981,98,4612,1.548],[43,3079,98,4821,1.567],[44,3176,97,5033,1.586],[45,3272,96,5247,1.605],[46,3368,96,5464,1.624],[47,3462,95,5682,1.643],[48,3556,94,5903,1.661],[49,3649,93,6125,1.68],[50,3740,92,6348,1.699],[51,3831,90,6573,1.718],[52,3920,89,6798,1.736],[53,4007,88,7025,1.755],[54,4094,87,7252,1.773],[55,4179,85,7480,1.792],[56,4263,84,7708,1.81]];
+// 출처: ISA(Hendrix Genetics) 「ISA Brown CS Cage Guide」. 물음수 항목 미공개(null)
+const ISABROWN_DATA = { rearing:[[1,66,11,null,null],[2,136,17,null,null],[3,216,25,null,null],[4,304,32,null,null],[5,398,37,null,null],[6,498,42,null,null],[7,599,46,null,null],[8,702,50,null,null],[9,806,54,null,null],[10,909,58,null,null],[11,1009,61,null,null],[12,1106,64,null,null],[13,1199,67,null,null],[14,1287,70,null,null],[15,1370,73,null,null],[16,1445,76,null,null],[17,1514,79,null,null],[18,1576,84,null,null]], production:[[18,3.8,1576,84.0,null,42.3,0.1],[19,16.9,1630,89.0,null,46.1,0.2],[20,40.1,1676,97.0,null,49.3,0.2],[21,63.8,1713,104.0,null,52.0,0.3],[22,82.1,1750,110.0,null,54.2,0.4],[23,92.4,1767,112.0,null,56.0,0.5],[24,95.4,1782,112.0,null,57.4,0.6],[25,96.1,1796,112.0,null,58.6,0.7],[26,96.1,1809,112.0,null,59.5,0.7],[27,96.0,1821,112.0,null,60.2,0.8],[28,96.0,1831,112.0,null,60.8,0.9],[29,96.0,1841,112.0,null,61.2,1.0],[30,95.9,1850,112.0,null,61.6,1.1],[35,95.4,1885,112.0,null,62.7,1.5],[40,94.6,1911,113.0,null,63.4,1.9],[45,93.5,1931,113.0,null,63.5,2.3],[50,92.0,1949,113.0,null,63.7,2.7],[55,90.2,1965,113.0,null,63.8,3.1],[60,88.1,1975,113.0,null,63.9,3.5],[65,85.9,1982,113.0,null,64.0,3.9],[70,83.5,1988,113.0,null,64.2,4.3],[75,81.0,1992,113.0,null,64.3,4.8],[80,78.7,1995,114.0,null,64.4,5.2],[85,76.3,1998,114.0,null,64.5,5.6],[90,73.9,2000,114.0,null,64.7,6.0],[95,71.5,2002,113.9,null,64.8,6.4],[100,69.1,2005,114.0,null,64.9,6.8]] };
+// 출처: Lohmann Breeders 「LOHMANN LSL-LITE Management Guide」. 주령별 사료·물음수·폐사율 미공개(null)
+const LOHMANN_DATA = { rearing:[[1,70,null,null,null],[2,120,null,null,null],[3,185,null,null,null],[4,255,null,null,null],[5,334,null,null,null],[6,425,null,null,null],[7,524,null,null,null],[8,635,null,null,null],[9,735,null,null,null],[10,825,null,null,null],[11,894,null,null,null],[12,959,null,null,null],[13,1023,null,null,null],[14,1084,null,null,null],[15,1143,null,null,null],[16,1200,null,null,null],[17,1255,null,null,null],[18,1306,null,null,null]], production:[[19,10.0,1356,null,null,41.0,null],[20,35.0,1405,null,null,44.0,null],[21,55.1,1452,null,null,47.0,null],[22,73.1,1497,null,null,49.5,null],[23,83.2,1538,null,null,51.8,null],[24,89.2,1575,null,null,53.5,null],[25,92.3,1608,null,null,55.0,null],[26,93.8,1628,null,null,56.4,null],[27,94.6,1639,null,null,57.3,null],[28,95.2,1645,null,null,57.9,null],[29,95.5,1649,null,null,58.4,null],[30,95.7,1651,null,null,58.8,null],[35,96.3,1660,null,null,60.7,null],[40,96.1,1669,null,null,61.8,null],[45,95.4,1677,null,null,62.3,null],[50,94.2,1685,null,null,62.8,null],[55,92.8,1692,null,null,63.3,null],[60,91.1,1698,null,null,63.6,null],[65,89.2,1704,null,null,63.8,null],[70,86.9,1709,null,null,64.1,null],[75,84.4,1713,null,null,64.3,null],[80,81.4,1716,null,null,64.6,null],[85,78.2,1719,null,null,64.6,null],[90,74.5,1721,null,null,64.7,null],[95,70.3,1723,null,null,64.7,null]] };
+
+// ── 조회/보간 함수 ───────────────────────────────────────────────────────────
+function lookupBroiler(breedData, day){
+  day = Math.max(0, Math.min(day, breedData[breedData.length-1][0]));
+  // 육계 데이터는 매일 있으므로 정확히 일치하는 행을 그대로 찾는다
+  return breedData.find(r=>r[0]===day) || breedData[breedData.length-1];
+}
+
+function lookupLayerPhase(breedData, week){
+  // 품종마다 육성표가 끝나는 시점(17주 또는 18주)이 달라 하드코딩하지 않고
+  // 실제 산란기(production) 데이터가 시작되는 첫 주령을 기준으로 나눈다.
+  const prodStart = breedData.production[0][0];
+  if(week < prodStart){
+    const rows = breedData.rearing;
+    const exact = rows.find(r=>r[0]===week);
+    if(exact) return {phase:"rearing", row:exact, interpolated:false};
+    return {phase:"rearing", row: interpolateRow(rows, week), interpolated:true};
+  }
+  const rows = breedData.production;
+  const exact = rows.find(r=>r[0]===week);
+  if(exact) return {phase:"production", row:exact, interpolated:false};
+  return {phase:"production", row: interpolateRow(rows, week), interpolated:true};
+}
+
+// 축약 데이터표에 없는 주령은 앞뒤로 가장 가까운 두 값을 선형보간
+function interpolateRow(rows, week){
+  let lo=null, hi=null;
+  for(const r of rows){
+    if(r[0]<=week && (!lo || r[0]>lo[0])) lo=r;
+    if(r[0]>=week && (!hi || r[0]<hi[0])) hi=r;
+  }
+  if(!lo) return hi;
+  if(!hi) return lo;
+  if(lo[0]===hi[0]) return lo;
+  const t = (week-lo[0])/(hi[0]-lo[0]);
+  const out = [week];
+  for(let i=1;i<lo.length;i++){
+    const a=lo[i], b=hi[i];
+    out.push((a==null||b==null) ? null : Math.round((a+(b-a)*t)*10)/10);
+  }
+  return out;
+}
+
+// ── 축종/품종 메타 ───────────────────────────────────────────────────────────
+const CONSULT_BREEDS = {
+  broiler: {
+    label:"육계", icon:"🐔", unit:"일령", maxAge:40,
+    breeds:{
+      ross308: {name:"Ross 308", data:ROSS308_DATA, maxDay:40, source:"Aviagen Ross 308/308 FF Performance Objectives 2022"},
+      cobb500: {name:"Cobb 500", data:COBB500_DATA, maxDay:40, source:"Cobb-Vantress Cobb500 Broiler Performance & Nutrition Supplement"},
+      arborAcres: {name:"Arbor Acres Plus", data:ARBORACRES_DATA, maxDay:40, source:"Aviagen Arbor Acres Plus Broiler Performance Objectives 2022"},
+    },
+  },
+  layer: {
+    label:"산란계", icon:"🥚", unit:"주령", maxAge:100,
+    breeds:{
+      hylineBrown: {name:"Hy-Line Brown", data:HYLINE_BROWN_DATA, maxWeek:100, source:"Hy-Line International Brown Commercial Layers Performance Standards 2025.12"},
+      hylineW36:  {name:"Hy-Line W-36",  data:HYLINE_W36_DATA,  maxWeek:100, source:"Hy-Line International W-36 Commercial Layers Management Guide 2020.01"},
+      isaBrown:   {name:"ISA Brown",     data:ISABROWN_DATA,    maxWeek:100, source:"ISA(Hendrix Genetics) ISA Brown CS Cage Guide"},
+      lohmann:    {name:"로만라이트(Lohmann LSL-Lite)", data:LOHMANN_DATA, maxWeek:95, source:"Lohmann Breeders LOHMANN LSL-LITE Management Guide"},
+    },
+  },
+};
+
+let consultState = { species:"broiler", breed:"ross308", age:7 };
+
+// ── 습구온도(Wet-Bulb Temperature) 기반 쿨링패드 효과 예측 ────────────────────
+// 미국 조지아대(UGA)·일리노이대 등 가금산업 선진국의 익스텐션(농가 기술지도)
+// 컨설턴트들이 쿨링패드 효과를 사전에 판단할 때 쓰는 핵심 지표. 쿨링패드는
+// 물을 증발시켜 냉각하므로, 아무리 효율이 좋아도 "습구온도" 밑으로는 절대
+// 못 내려간다 — 건구온도(보통의 기온)만 보고는 오늘 패드가 얼마나 도움이
+//될지 알 수 없고, 습구온도를 반드시 같이 봐야 한다는 것이 핵심이다.
+function calcWetBulbC(tempC, rh){
+  if(tempC==null || rh==null) return null;
+  rh = Math.max(5, Math.min(99, rh)); // Stull(2011) 공식 유효범위
+  const t = tempC;
+  return t*Math.atan(0.151977*Math.sqrt(rh+8.313659))
+    + Math.atan(t+rh)
+    - Math.atan(rh-1.676331)
+    + 0.00391838*Math.pow(rh,1.5)*Math.atan(0.023101*rh)
+    - 4.686035;
+}
+
+// 사양단계 라벨("1~3일","36일~","8~17주","18주~ 산란" 등)에서 적용 구간을 추출
+function parseAgeRangeLabel(label){
+  const s = String(label);
+  const nums = (s.match(/\d+/g)||[]).map(Number);
+  if(nums.length>=2) return [nums[0], nums[1]];
+  if(nums.length===1){
+    // "36일~"처럼 숫자 뒤에 물결표가 있으면 그 이상 전부(개방구간),
+    // "1주령"처럼 물결표가 없으면 그 값 하나만 정확히 가리킨다.
+    return s.includes("~") ? [nums[0], Infinity] : [nums[0], nums[0]];
+  }
+  return [0, Infinity];
+}
+function getTargetTempForAge(species, age){
+  const table = species==="broiler" ? BROILER_TARGET_TEMP : species==="layer" ? LAYER_TARGET_TEMP : null;
+  if(!table) return null;
+  for(const row of table){
+    const label = row.day || row.wk;
+    const [lo,hi] = parseAgeRangeLabel(label);
+    if(age>=lo && age<=hi) return row.t;
+  }
+  return table[table.length-1].t;
+}
+
+function renderWetBulbPanel(){
+  const fc = weatherState.forecast || [];
+  if(fc.length===0) return "";
+  const today = fc[0];
+  const T = today.tMax, RH = today.hum;
+  if(T==null || RH==null) return "";
+
+  const tw = calcWetBulbC(T, RH);
+  const EFF = 0.75; // UGA 권장 실무 효율(70~80% 구간의 중간값)
+  const padOutTemp = T - (T - tw) * EFF;
+  const padOutRH = Math.min(95, RH + (T - padOutTemp) * 4.5); // 1°C 냉각당 습도 약 4.5%p 상승(UGA 환산)
+
+  // 터널풍속 체감냉각효과(Wind-Chill Effect) — UGA·오번대(Auburn)가 실제로 쓰는
+  // 계산 방식은 "패드냉방 + 풍속체감"을 더한 값이다. 예: "기온 95°F에서 패드로
+  // 12°F 낮추고, 터널풍속(설계기준 500ft/min)에서 체감 10°F가 추가로 낮아지면
+  // 닭은 73°F로 느낀다"(UGA/Auburn 실사례). 500ft/min은 터널환기 설계 표준
+  // 풍속이며, 이 조건에서의 체감냉각효과가 약 5.6°C(10°F)로 보고된다.
+  const WIND_CHILL_C = 5.6; // 500ft/min 설계기준 풍속에서의 체감냉각효과(UGA/Auburn)
+  const effectiveTemp = padOutTemp - WIND_CHILL_C;
+
+  const targetT = getTargetTempForAge(consultState.species, consultState.age);
+  const stillHot = targetT!=null && effectiveTemp > targetT;
+
+  return `
+  <div class="card" style="border-top:5px solid #0288D1;margin-top:16px">
+    <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">💧 습구온도 기반 쿨링패드+풍속 체감냉각 예측</div>
+    <div style="font-size:10px;color:#aaa;margin-bottom:12px">오늘 날씨(${T}°C · 습도${RH}%) 기준 — 조지아대(UGA)·오번대(Auburn) 익스텐션 컨설턴트가 쓰는 방식</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div style="background:#E3F2FD;border-radius:10px;padding:10px 12px">
+        <div style="font-size:10px;color:#0277BD">오늘 습구온도</div>
+        <div style="font-size:18px;font-weight:800;color:#01579B">${tw.toFixed(1)}°C</div>
+        <div style="font-size:9px;color:#888;margin-top:2px">쿨링패드로도 이 온도 밑으로는 못 내려감</div>
+      </div>
+      <div style="background:#E8F5E9;border-radius:10px;padding:10px 12px">
+        <div style="font-size:10px;color:#2E7D32">① 패드 통과 후 예상온도</div>
+        <div style="font-size:18px;font-weight:800;color:#1B5E20">${padOutTemp.toFixed(1)}°C</div>
+        <div style="font-size:9px;color:#888;margin-top:2px">효율 75% 가정 · 습도 약 ${Math.round(padOutRH)}%로 상승</div>
+      </div>
+    </div>
+
+    <div style="background:#EDE7F6;border-radius:10px;padding:10px 12px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:10px;color:#4527A0">② + 터널풍속(500ft/min) 체감냉각 적용 시</div>
+          <div style="font-size:9px;color:#888;margin-top:2px">①에서 풍속 체감냉각 5.6°C 추가 반영 — 닭이 실제로 느끼는 온도</div>
+        </div>
+        <div style="font-size:22px;font-weight:800;color:#311B92">${effectiveTemp.toFixed(1)}°C</div>
+      </div>
+    </div>
+
+    ${targetT!=null ? `
+    <div style="background:${stillHot?"#FFEBEE":"#E8F5E9"};border-left:4px solid ${stillHot?"#C62828":"#2E7D32"};border-radius:8px;padding:11px 13px">
+      <div style="font-size:12px;font-weight:700;color:${stillHot?"#B71C1C":"#1B5E20"};margin-bottom:3px">
+        ${stillHot ? "⚠️ 패드+풍속 냉각으로도 목표온도 도달 어려움" : "✅ 패드+풍속 냉각으로 목표온도 도달 가능"}
+      </div>
+      <div style="font-size:11px;color:#333;line-height:1.6">
+        현재 사양단계 목표온도는 <b>${targetT}°C</b>인데, 패드+풍속 적용 후 체감온도는 <b>${effectiveTemp.toFixed(1)}°C</b>입니다.
+        ${stillHot
+          ? "습구온도 자체가 이미 높아 패드+풍속 조합으로도 한계가 있습니다 — 사육밀도 완화, 살수, 야간 집중관리 등 보조 수단을 함께 검토하세요."
+          : "오늘 조건에서는 패드+터널풍속 조합으로 목표온도 달성이 가능할 것으로 보입니다."}
+      </div>
+    </div>` : ""}
+
+    <div style="font-size:9px;color:#aaa;margin-top:8px;line-height:1.6">
+      ※ 습구온도는 Stull(2011) 근사식으로 계산했습니다(미국기상학회지 게재, 평균오차 0.3°C 이내).
+      패드 효율 75%·냉각당 습도 상승 4.5%p/°C, 터널풍속 체감냉각 5.6°C(500ft/min 설계기준)는
+      UGA·오번대 Poultry Housing Tips의 실무 환산값을 따랐습니다. 실제 효과는 설비 상태·풍속·계사 밀폐도에 따라 달라질 수 있습니다.
+    </div>
+  </div>`;
+}
+
+// ── 이슬점(Dew Point) 기반 결로·깔짚 습윤 위험 예측 ───────────────────────────
+// 습구온도가 "더운 날 패드냉방"용이라면, 이슬점은 그 반대 — 미국 조지아대(UGA)
+// 익스텐션(Czarick·Fairchild)이 "추운 날 최소환기·결로·깔짚 습윤 관리"를 조언할
+// 때 쓰는 지표다. 실내 공기가 커튼·급수라인·천장 같은 찬 표면에 닿았을 때
+// 그 표면 온도가 이슬점보다 낮으면 결로(물맺힘)가 생긴다 — 이게 깔짚을 적시고
+// 암모니아·풋패드 문제로 이어지는 가장 흔한 원인 중 하나다.
+function calcDewPointC(tempC, rh){
+  if(tempC==null || rh==null) return null;
+  rh = Math.max(1, Math.min(100, rh));
+  const a=17.27, b=237.7; // Magnus-Tetens 근사식 계수
+  const alpha = (a*tempC)/(b+tempC) + Math.log(rh/100);
+  return (b*alpha)/(a-alpha);
+}
+
+function renderDewPointPanel(){
+  const fc = weatherState.forecast || [];
+  if(fc.length===0) return "";
+  const today = fc[0];
+  const T = today.tMax, RH = today.hum;
+  if(T==null || RH==null) return "";
+
+  const dp = calcDewPointC(T, RH);
+  const depression = T - dp; // 이슬점 강하— 작을수록 결로 위험 큼
+
+  // UGA 자료: 습도 70%일 때 표면온도가 기온보다 약 5.6°C(10°F)만 낮아도 결로 발생
+  // → 이슬점 강하가 대략 그 이하로 좁으면 "결로 주의권"으로 판단
+  let riskLevel, riskColor, riskBg, riskMsg;
+  if(depression <= 3){
+    riskLevel="🔴 결로 위험 높음"; riskColor="#B71C1C"; riskBg="#FFEBEE";
+    riskMsg="공기 중 수분이 거의 포화 상태입니다. 커튼·급수라인·천장 등 찬 표면에 물맺힘이 매우 쉽게 생깁니다. 최소환기량을 평소보다 늘려 습기를 밖으로 빼내세요(UGA 권장: 저온다습 시 최소 20%↑).";
+  } else if(depression <= 6){
+    riskLevel="🔶 결로 주의"; riskColor="#E65100"; riskBg="#FFF3E0";
+    riskMsg="표면온도가 기온보다 조금만 낮아도(약 5~6°C) 결로가 생길 수 있는 구간입니다. 특히 야간·새벽 찬 표면(급수라인·환기구 주변)을 확인하세요.";
+  } else {
+    riskLevel="✅ 결로 위험 낮음"; riskColor="#2E7D32"; riskBg="#E8F5E9";
+    riskMsg="오늘 조건에서는 결로로 인한 깔짚 습윤 위험이 낮습니다.";
+  }
+
+  // UGA/Auburn 권장 계사 적정 습도 범위(깔짚 수분 균형): 50~70%
+  const rhInBand = RH>=50 && RH<=70;
+  const rhNote = RH>70
+    ? "습도가 권장 상한(70%)을 넘었습니다 — 환기를 늘려 깔짚이 눅눅해지지 않게 관리하세요."
+    : RH<50
+    ? "습도가 권장 하한(50%) 아래입니다 — 과도한 환기는 깔짚을 지나치게 건조시켜 분진·난방비 증가로 이어질 수 있습니다."
+    : "권장 습도 범위(50~70%) 안에 있습니다.";
+
+  return `
+  <div class="card" style="border-top:5px solid #6D4C41;margin-top:16px">
+    <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">🌫️ 이슬점 기반 결로·깔짚 습윤 위험 예측</div>
+    <div style="font-size:10px;color:#aaa;margin-bottom:12px">오늘 날씨(${T}°C · 습도${RH}%) 기준 — UGA(조지아대) 익스텐션의 저온기 결로·깔짚 관리 방식</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div style="background:#EFEBE9;border-radius:10px;padding:10px 12px">
+        <div style="font-size:10px;color:#6D4C41">오늘 이슬점</div>
+        <div style="font-size:18px;font-weight:800;color:#4E342E">${dp.toFixed(1)}°C</div>
+        <div style="font-size:9px;color:#888;margin-top:2px">이 온도보다 차가운 표면엔 물이 맺힘</div>
+      </div>
+      <div style="background:#EFEBE9;border-radius:10px;padding:10px 12px">
+        <div style="font-size:10px;color:#6D4C41">이슬점 강하(여유폭)</div>
+        <div style="font-size:18px;font-weight:800;color:#4E342E">${depression.toFixed(1)}°C</div>
+        <div style="font-size:9px;color:#888;margin-top:2px">좁을수록 결로 위험 큼</div>
+      </div>
+    </div>
+
+    <div style="background:${riskBg};border-left:4px solid ${riskColor};border-radius:8px;padding:11px 13px;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:700;color:${riskColor};margin-bottom:3px">${riskLevel}</div>
+      <div style="font-size:11px;color:#333;line-height:1.6">${riskMsg}</div>
+    </div>
+
+    <div style="background:${rhInBand?"#E8F5E9":"#FFF8E1"};border-radius:8px;padding:9px 12px">
+      <div style="font-size:11px;color:#333;line-height:1.6">💧 <b>깔짚 적정습도(50~70%) 기준:</b> ${rhNote}</div>
+    </div>
+
+    <div style="font-size:9px;color:#aaa;margin-top:8px;line-height:1.6">
+      ※ 이슬점은 Magnus-Tetens 근사식으로 계산했습니다. 결로 판단 기준과 깔짚 적정습도(50~70%) 범위는
+      UGA Poultry Housing Tips("A Dozen Cold Weather Poultry House Moisture Control Facts", Czarick·Fairchild)를 따랐습니다.
+      실제 표면온도는 위치·단열 상태에 따라 달라 참고용입니다.
+    </div>
+  </div>`;
+}
+
+// ── 환기량 계산 (습도수지 방식, UGA Czarick 방식) ─────────────────────────────
+// "간단한 CFM/마리 공식은 100% 이상 틀릴 수 있다"— UGA 익스텐션 엔지니어
+// Michael Czarick 본인이 직접 경고한 부분이다. 그래서 그가 실제로 쓰는(그리고
+// UGA가 계산기 앱으로도 배포하는) 방식은 "습도수지(moisture balance)" 계산이다:
+// 오늘 새·돼지가 사료를 통해 마시는 물의 양 → 그중 깔짚·공기 중에 남는 양(80%)을
+// → 실내외 공기의 습도함량(humidity ratio) 차이로 나눠 필요한 환기량을 역산한다.
+function calcHumidityRatio(tempC, rh){
+  // 습도함량(g 수증기/kg 건조공기). 이슬점 계산과 같은 Magnus 포화수증기압 식을 재사용.
+  if(tempC==null || rh==null) return null;
+  const es = 6.112*Math.exp(17.67*tempC/(tempC+243.5)); // hPa
+  const e = es*Math.max(0,Math.min(100,rh))/100;
+  const P = 1013.25; // 표준 해면기압(hPa)
+  return 622*e/(P-e); // g/kg
+}
+
+function calcVentilationRate(feedIntakeG, targetTempC, outTempC, outRH){
+  // targetTempC: 계사 내부 목표온도(사양단계별) / 내부 목표습도는 UGA 권장 60%로 가정
+  if(feedIntakeG==null || targetTempC==null || outTempC==null || outRH==null) return null;
+  const WATER_FEED_RATIO = 2.1; // UGA: 사료 1파운드당 물 약 1쿼트 ≈ 사료 무게의 2.1배
+  const MOISTURE_TO_AIR_FRACTION = 0.8; // UGA: 마신 물의 약 80%가 깔짚·공기 중 수분으로 남음
+  const AIR_DENSITY = 1.2; // kg 건조공기/m³ (표준 근사치)
+
+  const waterG = feedIntakeG * WATER_FEED_RATIO;
+  const moistureG = waterG * MOISTURE_TO_AIR_FRACTION;
+
+  const wIn = calcHumidityRatio(targetTempC, 60);
+  const wOut = calcHumidityRatio(outTempC, outRH);
+  const diff = wIn - wOut; // g/kg
+
+  if(diff <= 0){
+    return { ineffective:true, waterG, moistureG };
+  }
+  const volumeM3PerDay = moistureG / (diff*AIR_DENSITY); // m³/일/마리
+  const cfmPerBird = (volumeM3PerDay*35.3147)/(24*60);
+  const m3hrPerBird = volumeM3PerDay/24;
+  return { ineffective:false, waterG, moistureG, cfmPerBird, m3hrPerBird, wIn, wOut };
+}
+
+// 현재 선택된 종/품종/일령 기준 "오늘의 사료섭취량(g/일/마리)"을 구한다.
+// 육계 데이터는 누적사료만 저장돼 있어 전날과의 차이로 일일 섭취량을 역산한다.
+function getFeedIntakeForCurrent(){
+  const sp = CONSULT_BREEDS[consultState.species];
+  const breedKey = consultState.breed || Object.keys(sp.breeds)[0];
+  const breed = sp.breeds[breedKey];
+  const age = consultState.age;
+
+  if(consultState.species==="broiler"){
+    const rows = breed.data;
+    const today = rows.find(r=>r[0]===age);
+    const yest = rows.find(r=>r[0]===age-1);
+    if(!today || today[3]==null) return null;
+    if(!yest || yest[3]==null) return today[3]; // day0처럼 전날이 없으면 누적값 그대로
+    return today[3]-yest[3];
+  } else {
+    const {row} = lookupLayerPhase(breed.data, age);
+    // 육성기 row:[wk,bw,fi,wtr,mort] / 산란기 row:[wk,hd,bw,fi,wtr,ew,mort]
+    const fi = row.length===5 ? row[2] : row[3];
+    return fi ?? null;
+  }
+}
+
+function renderVentCalcPanel(){
+  const fc = weatherState.forecast || [];
+  if(fc.length===0) return "";
+  const today = fc[0];
+  const outT = today.tMax, outRH = today.hum;
+  if(outT==null || outRH==null) return "";
+
+  const targetT = getTargetTempForAge(consultState.species, consultState.age);
+  const feedG = getFeedIntakeForCurrent();
+  if(targetT==null || feedG==null) return "";
+
+  const r = calcVentilationRate(feedG, targetT, outT, outRH);
+  if(!r) return "";
+
+  return `
+  <div class="card" style="border-top:5px solid #00838F;margin-top:16px">
+    <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:3px">🌀 환기량 계산 (습도수지 방식)</div>
+    <div style="font-size:10px;color:#aaa;margin-bottom:12px">오늘 섭취 사료 ${Math.round(feedG)}g/일·마리 기준 — UGA 익스텐션(Czarick·Fairchild)의 습도수지 계산법</div>
+
+    ${r.ineffective ? `
+    <div style="background:#FFEBEE;border-left:4px solid #C62828;border-radius:8px;padding:11px 13px">
+      <div style="font-size:12px;font-weight:700;color:#B71C1C;margin-bottom:3px">⚠️ 환기로는 수분 제거 불가한 조건</div>
+      <div style="font-size:11px;color:#333;line-height:1.6">오늘 바깥 공기가 목표 실내 조건보다 절대습도 기준으로 더 습합니다.
+      환기를 늘려도 수분이 빠지지 않고 오히려 들어올 수 있습니다 — 제습·난방 병행을 검토하세요.</div>
+    </div>` : `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div style="background:#E0F7FA;border-radius:10px;padding:10px 12px">
+        <div style="font-size:10px;color:#00695C">필요 환기량(마리당)</div>
+        <div style="font-size:18px;font-weight:800;color:#004D40">${r.cfmPerBird.toFixed(2)} <span style="font-size:11px;font-weight:600">CFM</span></div>
+        <div style="font-size:9px;color:#888;margin-top:2px">= ${r.m3hrPerBird.toFixed(3)} m³/시간·마리</div>
+      </div>
+      <div style="background:#E0F7FA;border-radius:10px;padding:10px 12px">
+        <div style="font-size:10px;color:#00695C">제거해야 할 수분</div>
+        <div style="font-size:18px;font-weight:800;color:#004D40">${Math.round(r.moistureG)} g</div>
+        <div style="font-size:9px;color:#888;margin-top:2px">일일 음수량의 80% (마리당)</div>
+      </div>
+    </div>
+    <div style="background:#fafafa;border-radius:8px;padding:9px 12px;font-size:10px;color:#666;line-height:1.7">
+      실내 목표: ${targetT}°C·습도60%(가정) → 습도함량 ${r.wIn.toFixed(2)}g/kg &nbsp;|&nbsp;
+      바깥 현재: ${outT}°C·습도${outRH}% → 습도함량 ${r.wOut.toFixed(2)}g/kg
+    </div>`}
+
+    <div style="font-size:9px;color:#aaa;margin-top:8px;line-height:1.6">
+      ※ UGA 자료(Czarick·Fairchild)의 "사료 1파운드당 물 1쿼트(≈사료의 2.1배), 그중 80%가 깔짚·공기 중 수분으로 남음" 기준과
+      표준 습도함량(humidity ratio) 계산을 결합했습니다. 실내 목표습도는 UGA 권장 적정범위의 중간값인 60%로 가정했습니다.
+      실제 필요 환기량은 계사 밀폐도·사육밀도·설비에 따라 달라질 수 있는 참고치입니다.
+    </div>
+  </div>`;
+}
+
+// ── 사양관리 컨설팅 포인트 ───────────────────────────────────────────────────
+// 육종회사 매뉴얼의 "핵심 관리 포인트"를 그대로 옮기지 않고 우리말로 요약 정리.
+// 육계: Aviagen Key Management Points / 산란계: Hy-Line 육성기 체중관리 포인트
+const BROILER_MGMT_POINTS = [
+  "입식 초기 병아리 품질이 전체 성적을 좌우함 — 부화·운송·농장 도착 과정의 온습도 관리가 핵심",
+  "초기엔 보조 급이·급수기에서 자동 급이·급수기로 전환하는 시점을 신중히 관리",
+  "소화 잘 되는 고영양 초생추 사료(Starter)를 반드시 급여",
+  "상대습도 50% 미만으로 떨어지지 않도록 주의 — 너무 건조하면 오히려 문제",
+  "모이주머니(소낭) 충만도·비담(급이·음수) 행동·7일령 체중으로 육추 상태를 매일 점검",
+  "21일령부터는 개체 체중을 주기적으로 측정해 균일도 확인",
+  "생육 후반기(특히 21일 이후)엔 사육온도를 21°C 이하로 유지하는 것이 증체에 유리",
+  "위생·소독 기준을 철저히 지켜 질병 유입을 최소화",
+];
+const LAYER_MGMT_POINTS = [
+  "6·12·18·24·30주령 체중 목표 달성 여부를 반드시 확인 — 골격·소화기 발달의 핵심 시점",
+  "0~12주는 체중을 표준범위 상단으로 관리 — 골격·소화기관 발달에 유리",
+  "12주 이후엔 체중 급증을 피할 것 — 복부지방 과다 축적 위험",
+  "산란 개시 시점 체중이 표준범위이고 균일도 90% 이상일 때 이후 산란 성적이 가장 좋음",
+  "저체중이거나 균일도가 낮으면 사료 단계 전환을 늦춰 보정",
+  "이행기(육성→산란) 체중 증가가 25%를 넘지 않도록 관리 — 과도한 증체는 대사 문제로 이어짐",
+];
+
+function renderMgmtPointsPanel(){
+  const points = consultState.species==="broiler" ? BROILER_MGMT_POINTS : LAYER_MGMT_POINTS;
+  const source = consultState.species==="broiler"
+    ? "Aviagen Broiler Performance Objectives — Key Management Points"
+    : "Hy-Line International Commercial Layers Management Guide — Growth & Development";
+  return `
+  <div class="card" style="border-top:5px solid #7B1FA2;margin-top:16px">
+    <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:10px">📋 사양관리 컨설팅 포인트</div>
+    ${points.map(p=>`<div style="font-size:11px;color:#333;line-height:1.9;padding-left:14px;position:relative">
+      <span style="position:absolute;left:0;color:#7B1FA2">·</span>${p}
+    </div>`).join("")}
+    <div style="font-size:9px;color:#aaa;margin-top:10px">※ 출처: ${source}</div>
+  </div>`;
+}
+
+function renderConsultTab(){
+  const sp = CONSULT_BREEDS[consultState.species];
+  if(consultState.breed && !sp.breeds[consultState.breed]) consultState.breed = Object.keys(sp.breeds)[0];
+  const breedKey = consultState.breed || Object.keys(sp.breeds)[0];
+  const breed = sp.breeds[breedKey];
+
+  const speciesBtns = Object.entries(CONSULT_BREEDS).map(([key,v])=>`
+    <button class="consult-species-btn" data-species="${key}"
+      style="flex:1;border:2px solid ${consultState.species===key?"#1a2744":"#eee"};background:${consultState.species===key?"#1a2744":"#fff"};color:${consultState.species===key?"#F9C74F":"#333"};border-radius:10px;padding:10px 6px;font-size:13px;font-weight:700;cursor:pointer">
+      ${v.icon} ${v.label}
+    </button>`).join("");
+
+  const breedBtns = Object.entries(sp.breeds).map(([key,b])=>`
+    <button class="consult-breed-btn" data-breed="${key}"
+      style="flex:1 1 auto;min-width:110px;border:2px solid ${breedKey===key?"#1a2744":"#eee"};background:${breedKey===key?"#1a2744":"#fff"};color:${breedKey===key?"#F9C74F":"#333"};border-radius:10px;padding:9px 8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">
+      ${b.name}
+    </button>`).join("");
+
+  const maxAge = consultState.species==="broiler" ? breed.maxDay : breed.maxWeek;
+  const age = Math.max(consultState.species==="broiler"?0:1, Math.min(consultState.age, maxAge));
+
+  let card;
+  if(consultState.species==="broiler"){
+    const row = lookupBroiler(breed.data, age);
+    const [d,w,gain,cumIntake,fcr] = row;
+    card = `
+    <div class="card" style="border-top:5px solid #E8530A;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        <div>
+          <div style="font-size:11px;color:#aaa;font-weight:600">${breed.name} · ${d}일령</div>
+          <div style="font-size:26px;font-weight:800;color:#333;margin-top:2px">${w!=null?w.toLocaleString():"-"}<span style="font-size:14px;color:#888;font-weight:500"> g</span></div>
+          <div style="font-size:11px;color:#999;margin-top:1px">목표체중</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:#aaa">누적 FCR</div>
+          <div style="font-size:20px;font-weight:800;color:#E8530A">${fcr!=null?fcr.toFixed(3):"-"}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:#FFF3EE;border-radius:10px;padding:10px 12px">
+          <div style="font-size:10px;color:#888">일당증체</div>
+          <div style="font-size:16px;font-weight:700;color:#333">${gain!=null?gain+" g":"-"}</div>
+        </div>
+        <div style="background:#FFF3EE;border-radius:10px;padding:10px 12px">
+          <div style="font-size:10px;color:#888">누적 사료섭취</div>
+          <div style="font-size:16px;font-weight:700;color:#333">${cumIntake!=null?cumIntake.toLocaleString()+" g":"-"}</div>
+        </div>
+      </div>
+    </div>`;
+  } else {
+    const {phase, row, interpolated} = lookupLayerPhase(breed.data, age);
+    if(phase==="rearing"){
+      const [wk,bw,fi,wtr,mort] = row;
+      card = `
+      <div class="card" style="border-top:5px solid #7B1FA2;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+          <div>
+            <div style="font-size:11px;color:#aaa;font-weight:600">${breed.name} · ${wk}주령 <span style="color:#7B1FA2">(육성기)</span>${interpolated?' · 보간값':''}</div>
+            <div style="font-size:26px;font-weight:800;color:#333;margin-top:2px">${bw!=null?Math.round(bw).toLocaleString():"-"}<span style="font-size:14px;color:#888;font-weight:500"> g</span></div>
+            <div style="font-size:11px;color:#999;margin-top:1px">목표체중</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;color:#aaa">누적 폐사율</div>
+            <div style="font-size:20px;font-weight:800;color:#7B1FA2">${mort!=null?mort+"%":"-"}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:#F5EEF9;border-radius:10px;padding:10px 12px">
+            <div style="font-size:10px;color:#888">일일 사료섭취</div>
+            <div style="font-size:16px;font-weight:700;color:#333">${fi!=null?fi+" g":"-"}</div>
+          </div>
+          <div style="background:#F5EEF9;border-radius:10px;padding:10px 12px">
+            <div style="font-size:10px;color:#888">일일 음수섭취</div>
+            <div style="font-size:16px;font-weight:700;color:#333">${wtr!=null?wtr+" ml":"-"}</div>
+          </div>
+        </div>
+      </div>`;
+    } else {
+      const [wk,hd,bw,fi,wtr,ew,mort] = row;
+      card = `
+      <div class="card" style="border-top:5px solid #D4A012;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+          <div>
+            <div style="font-size:11px;color:#aaa;font-weight:600">${breed.name} · ${wk}주령 <span style="color:#D4A012">(산란기)</span>${interpolated?' · 보간값':''}</div>
+            <div style="font-size:26px;font-weight:800;color:#333;margin-top:2px">${hd!=null?hd+"%":"-"}</div>
+            <div style="font-size:11px;color:#999;margin-top:1px">산란율(Hen-Day)</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;color:#aaa">누적 폐사율</div>
+            <div style="font-size:20px;font-weight:800;color:#D4A012">${mort!=null?mort+"%":"-"}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div style="background:#FFFBEE;border-radius:10px;padding:10px 12px">
+            <div style="font-size:10px;color:#888">목표체중</div>
+            <div style="font-size:16px;font-weight:700;color:#333">${bw!=null?Math.round(bw).toLocaleString()+" g":"-"}</div>
+          </div>
+          <div style="background:#FFFBEE;border-radius:10px;padding:10px 12px">
+            <div style="font-size:10px;color:#888">평균 난중</div>
+            <div style="font-size:16px;font-weight:700;color:#333">${ew!=null?ew+" g":"-"}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:#FFFBEE;border-radius:10px;padding:10px 12px">
+            <div style="font-size:10px;color:#888">일일 사료섭취</div>
+            <div style="font-size:16px;font-weight:700;color:#333">${fi!=null?fi+" g":"-"}</div>
+          </div>
+          <div style="background:#FFFBEE;border-radius:10px;padding:10px 12px">
+            <div style="font-size:10px;color:#888">일일 음수섭취</div>
+            <div style="font-size:16px;font-weight:700;color:#333">${wtr!=null?wtr+" ml":"-"}</div>
+          </div>
+        </div>
+      </div>`;
+    }
+  }
+
+  const ageLabel = consultState.species==="broiler" ? "일령" : "주령";
+  const ageInput = `
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;background:#fafafa;border-radius:12px;padding:12px 14px">
+    <div style="font-size:12px;color:#666;font-weight:600;white-space:nowrap">${ageLabel} 입력</div>
+    <input type="range" id="consult-age-slider" min="${consultState.species==="broiler"?0:1}" max="${maxAge}" value="${age}"
+      style="flex:1" />
+    <input type="number" id="consult-age-number" min="${consultState.species==="broiler"?0:1}" max="${maxAge}" value="${age}"
+      style="width:64px;border:1px solid #ddd;border-radius:8px;padding:6px 8px;font-size:14px;text-align:center" />
+    <div style="font-size:12px;color:#888">${ageLabel}</div>
+  </div>`;
+
+  return `
+  <div style="margin-bottom:14px">
+    <div class="display" style="font-size:16px;margin-bottom:3px">🐔🥚 육계/산란계 컨설팅</div>
+    <div style="font-size:11px;color:#aaa">품종·일령(주령)을 선택하면 세계 표준 사양매뉴얼 수치를 바로 보여줍니다</div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:10px">${speciesBtns}</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">${breedBtns}</div>
+
+  ${ageInput}
+  ${card}
+  ${renderWetBulbPanel()}
+  ${renderDewPointPanel()}
+  ${renderVentCalcPanel()}
+  ${renderMgmtPointsPanel()}
+
+  <div style="font-size:10px;color:#aaa;line-height:1.7">
+    ※ 출처: ${breed.source}. 사양매뉴얼 표는 국가·환경에 따라 실제 성적과 차이가 날 수 있는 "목표치"이며,
+    축약 표에 없는 주령은 인접한 두 시점 사이를 선형보간한 값입니다(표시 시 "보간값"으로 별도 안내).
+    실제 현장 컨설팅 시에는 반드시 해당 육종회사의 최신 원문 매뉴얼을 함께 확인하세요.
+  </div>`;
+}
+
+
+function determineVentStage(diff){
+  // diff = 오늘 최고기온 - 목표(사육/돈사)온도.
+  // 업계 지침(Aviagen·PIC)은 온도계 숫자 하나로 딱 자르지 않고 계군 행동을
+  // 최종 판단 기준으로 삼으므로, 아래 구간은 "오늘 어느 단계부터 점검을
+  // 시작하면 좋을지" 가늠하는 실무 참고 기준이며 확정 수치가 아니다.
+  if(diff <= 0) return 0;      // 최소환기
+  if(diff <= 5) return 1;      // 전이환기
+  return 2;                    // 터널/최대환기
+}
+
+// ── 습도 기준 환기 판정 (Munters Rotem Trio 이중제어 로직 + PIC 습도 규칙) ─────
+// 글로벌 기후제어 1위 업체 Munters의 상업용 계사 컨트롤러(Rotem Trio)는
+// "온도요구 환기량(VT)"과 "습도요구 환기량(VH)" 두 값을 각각 계산해 그중
+// 더 큰 쪽을 따르는 이중제어 방식을 쓴다 — 온도상 최소환기 단계라도 습도가
+// 높으면 그보다 높은 단계로 자동 상향된다. 임계치(65%)는 PIC 2019 Wean to
+// Finish Guidelines의 "습도는 항상 65% 이하로 유지" 규정을 따른다.
+const VENT_HUMIDITY_THRESHOLD = 65; // % — 이 이상이면 환기 단계를 상향
+const VENT_HUMIDITY_SEVERE = 80;    // % — 이 이상이면 무조건 최대(터널)단계
+
+function determineHumidityStage(hum){
+  if(hum == null) return 0;
+  if(hum > VENT_HUMIDITY_SEVERE) return 2;
+  if(hum > VENT_HUMIDITY_THRESHOLD) return 1;
+  return 0;
+}
+
+function renderVentTab(){
+  const speciesInfo = {
+    broiler: {label:"육계", icon:"🐔", table:BROILER_TARGET_TEMP, stages:POULTRY_VENT_STAGES, unit:"day"},
+    layer:   {label:"산란계", icon:"🥚", table:LAYER_TARGET_TEMP,   stages:POULTRY_VENT_STAGES, unit:"wk"},
+    pig:     {label:"양돈", icon:"🐷", table:PIG_TARGET_TEMP,     stages:SWINE_VENT_STAGES,   unit:"pig"},
+  };
+  const sp = speciesInfo[ventState.species] || speciesInfo.broiler;
+
+  // 성장단계 기본 선택값 (없으면 첫 단계)
+  if(ventState.stageIdx == null || ventState.stageIdx >= sp.table.length) ventState.stageIdx = 0;
+  const curStage = sp.table[ventState.stageIdx];
+  const targetT = curStage.t;
+
+  const wx = weatherState;
+  const fc = wx.forecast || [];
+  const today = fc[0];
+  const todayHigh = today?.tMax != null ? Math.round(today.tMax) : null;
+  const todayHum  = today?.hum != null ? Math.round(today.hum) : null;
+  const diff = todayHigh != null ? todayHigh - targetT : null;
+  const tempStageIdx = diff != null ? determineVentStage(diff) : null;
+  const humStageIdx  = determineHumidityStage(todayHum);
+  // Munters Rotem Trio 이중제어 로직: 온도요구·습도요구 중 더 큰 쪽을 따른다
+  const recIdx = tempStageIdx != null ? Math.max(tempStageIdx, humStageIdx) : null;
+  const humDrivenUp = tempStageIdx != null && humStageIdx > tempStageIdx;
+  // PIC 규칙: 외기온이 이미 목표온도를 넘어선 상태에서 습도까지 높으면
+  // 환기를 더 늘려도 습도가 안 떨어진다(밖 공기 자체가 덥고 습하므로) — 별도 경고
+  const humVentIneffective = todayHum != null && todayHum > VENT_HUMIDITY_THRESHOLD
+    && diff != null && diff > 0;
+
+  // 유창(커튼형) 돈사는 단열이 약해 목표온도를 1~2°C 높여 잡는 것이 PIC 권장사항
+  const barnNote = ventState.species==="pig" && ventState.barn==="curtain"
+    ? " · 유창(커튼형) 돈사는 단열이 약해 목표온도를 1~2°C 높여 판단하는 것이 PIC 권장사항입니다."
+    : ventState.barn==="curtain"
+    ? " · 자연환기(유창) 계사는 바람·일사 영향이 커 아래 3단계 체계를 참고용으로만 활용하세요."
+    : "";
+
+  // 날씨 데이터 없을 때 안내
+  const noWeather = fc.length===0;
+
+  const speciesBtns = Object.entries(speciesInfo).map(([key,v])=>`
+    <button class="vent-species-btn" data-species="${key}"
+      style="flex:1;border:2px solid ${ventState.species===key?"#1a2744":"#eee"};background:${ventState.species===key?"#1a2744":"#fff"};color:${ventState.species===key?"#F9C74F":"#333"};border-radius:10px;padding:10px 6px;font-size:13px;font-weight:700;cursor:pointer">
+      ${v.icon} ${v.label}
+    </button>`).join("");
+
+  const barnBtns = `
+    <button class="vent-barn-btn" data-barn="solid"
+      style="flex:1;border:2px solid ${ventState.barn==="solid"?"#1a2744":"#eee"};background:${ventState.barn==="solid"?"#1a2744":"#fff"};color:${ventState.barn==="solid"?"#F9C74F":"#333"};border-radius:10px;padding:9px 6px;font-size:12px;font-weight:700;cursor:pointer">
+      🏭 무창(밀폐형)
+    </button>
+    <button class="vent-barn-btn" data-barn="curtain"
+      style="flex:1;border:2px solid ${ventState.barn==="curtain"?"#1a2744":"#eee"};background:${ventState.barn==="curtain"?"#1a2744":"#fff"};color:${ventState.barn==="curtain"?"#F9C74F":"#333"};border-radius:10px;padding:9px 6px;font-size:12px;font-weight:700;cursor:pointer">
+      🏚️ 유창(커튼형·자연환기)
+    </button>`;
+
+  const stageBtns = sp.table.map((s,i)=>{
+    const label = s.day || s.wk || s.stage;
+    const sel = i===ventState.stageIdx;
+    return `<button class="vent-stage-btn" data-idx="${i}"
+      style="border:1.5px solid ${sel?"#1a2744":"#e0e0e0"};background:${sel?"#1a2744":"#fafafa"};color:${sel?"#F9C74F":"#555"};border-radius:8px;padding:6px 9px;font-size:11px;font-weight:${sel?700:500};cursor:pointer;white-space:nowrap">
+      ${label}${s.weight?" · "+s.weight:""}
+    </button>`;
+  }).join("");
+
+  const recommendCard = (() => {
+    if(noWeather) return `
+      <div class="card" style="text-align:center;padding:28px 16px;margin-bottom:16px">
+        <div style="font-size:28px;margin-bottom:8px">🌤️</div>
+        <div style="font-size:13px;color:#888;margin-bottom:10px">날씨 데이터가 필요합니다. 날씨 탭에서 지역을 먼저 설정해주세요.</div>
+      </div>`;
+
+    const st = sp.stages[recIdx];
+    const diffLabel = diff>0 ? `목표 대비 <b style="color:#C62828">+${diff}°C</b> 높음` :
+                       diff<0 ? `목표 대비 <b style="color:#1565C0">${diff}°C</b> 낮음` : `목표와 동일`;
+    return `
+    <div class="card" style="border-top:5px solid ${st.color};margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        <div>
+          <div style="font-size:11px;color:#aaa;font-weight:600">오늘의 추천 환기 단계</div>
+          <div style="font-size:19px;font-weight:800;color:${st.color};margin-top:2px">${st.icon} ${st.name}</div>
+          <div style="font-size:10px;color:#999;margin-top:1px">${st.nameEn}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:#aaa">오늘 최고기온 · 습도</div>
+          <div style="font-size:22px;font-weight:800;color:#333">${todayHigh}°C <span style="font-size:14px;color:${todayHum!=null&&todayHum>VENT_HUMIDITY_THRESHOLD?"#0288D1":"#999"};font-weight:700">💧${todayHum!=null?todayHum+"%":"-"}</span></div>
+          <div style="font-size:11px;color:#666;margin-top:1px">목표 ${targetT}°C · ${diffLabel}</div>
+          ${humDrivenUp?`<div style="font-size:10px;color:#0288D1;font-weight:700;margin-top:2px">💧 습도 기준으로 단계 상향됨</div>`:""}
+        </div>
+      </div>
+
+      ${humDrivenUp || humVentIneffective ? `
+      <div style="background:#E3F2FD;border-left:4px solid #0288D1;border-radius:8px;padding:11px 13px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:#01579B;margin-bottom:4px">💧 습도 기준 판정 (Munters 이중제어 로직)</div>
+        <div style="font-size:11px;color:#333;line-height:1.7">
+          ${humDrivenUp?`오늘 습도 ${todayHum}%는 기준치(${VENT_HUMIDITY_THRESHOLD}%)를 초과해, 온도만 보면 ${sp.stages[tempStageIdx].name}이지만 습도 요구량이 더 커서 <b>${st.name}</b>으로 상향했습니다.`:""}
+          ${humVentIneffective?`<br>⚠️ 외기온이 이미 목표온도를 초과한 상태에서 습도까지 높으므로, 환기를 더 늘려도 습도가 잘 안 떨어질 수 있습니다(바깥 공기 자체가 덥고 습함). 제습·쿨링패드 등 별도 조치를 함께 검토하세요.`:""}
+        </div>
+        <div style="font-size:9px;color:#0277BD;margin-top:6px">출처: Munters Rotem Trio 환기컨트롤러(온도·습도·CO₂ 복합 제어) · PIC "습도 65% 이하 유지" 규정</div>
+      </div>` : ""}
+
+      <div style="background:#fafafa;border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:#333;margin-bottom:4px">📍 발동 기준</div>
+        <div style="font-size:12px;color:#555;line-height:1.6">${st.when}</div>
+      </div>
+      <div style="background:#fafafa;border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:#333;margin-bottom:4px">🔧 환기 방법</div>
+        <div style="font-size:12px;color:#555;line-height:1.6">${st.method}</div>
+      </div>
+      <div style="background:#fafafa;border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:#333;margin-bottom:4px">🎯 목적</div>
+        <div style="font-size:12px;color:#555;line-height:1.6">${st.purpose}</div>
+      </div>
+
+      ${st.rateTable ? `
+      <div style="background:#fff8e8;border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:#333;margin-bottom:6px">💨 두당 환기량 기준</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${st.rateTable.map(r=>`
+            <div style="background:#fff;border-radius:8px;padding:7px 10px;text-align:center;flex:1;min-width:90px">
+              <div style="font-size:10px;color:#888">${r.stage}</div>
+              <div style="font-size:13px;font-weight:700;color:#E65100">${r.cfm}</div>
+            </div>`).join("")}
+        </div>
+        ${st.extra?`<div style="font-size:10px;color:#888;margin-top:6px">${st.extra}</div>`:""}
+      </div>` : ""}
+
+      <div style="background:#eef4ff;border-radius:10px;padding:12px">
+        <div style="font-size:12px;font-weight:700;color:#333;margin-bottom:5px">✅ 현장 점검 체크리스트</div>
+        ${st.checks.map(c=>`<div style="font-size:11px;color:#555;line-height:1.9">· ${c}</div>`).join("")}
+      </div>
+    </div>`;
+  })();
+
+  // 7일 예보 기준 단계 변화 미리보기
+  const weekPreview = !noWeather ? `
+  <div class="card" style="margin-bottom:16px">
+    <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:10px">📅 7일 환기단계 예보 <span style="font-size:9px;color:#0288D1;font-weight:500">· 💧는 습도(${VENT_HUMIDITY_THRESHOLD}%↑)로 단계가 상향된 날</span></div>
+    <div style="display:flex;gap:5px;overflow-x:auto;padding-bottom:2px">
+      ${fc.slice(0,7).map((d,i)=>{
+        const dn=["일","월","화","수","목","금","토"];
+        const dd=new Date(d.date);
+        const hi = d.tMax!=null ? Math.round(d.tMax) : null;
+        const dh = d.hum!=null ? Math.round(d.hum) : null;
+        const dfi = hi!=null ? hi - targetT : null;
+        const tsi = dfi!=null ? determineVentStage(dfi) : null;
+        const hsi = determineHumidityStage(dh);
+        const si = tsi!=null ? Math.max(tsi, hsi) : null;
+        const stg = si!=null ? sp.stages[si] : null;
+        const humUp = tsi!=null && hsi>tsi;
+        return `<div style="flex:1;min-width:58px;text-align:center;background:${stg?stg.color+"14":"#f5f5f5"};border-radius:8px;padding:7px 3px">
+          <div style="font-size:9px;color:#888;font-weight:600">${i===0?"오늘":dn[dd.getDay()]+" "+(dd.getMonth()+1)+"/"+dd.getDate()}</div>
+          <div style="font-size:14px;font-weight:800;margin:3px 0;color:#333">${hi!=null?hi+"°":"-"}</div>
+          <div style="font-size:9px;font-weight:700;color:${stg?stg.color:"#aaa"}">${stg?stg.icon+" "+stg.name.replace(/\(.*?\)/,""):"-"}${humUp?" 💧":""}</div>
+        </div>`;
+      }).join("")}
+    </div>
+  </div>` : "";
+
+  return `
+  <div style="margin-bottom:14px">
+    <div class="display" style="font-size:16px;margin-bottom:3px">🌬️ 환기가이드</div>
+    <div style="font-size:11px;color:#aaa">Aviagen(가금) · PIC(양돈) 3단계 체계 + Munters 습도 이중제어 로직 — 오늘 날씨·계사구조·사육단계에 맞는 환기방법 추천${barnNote}</div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:10px">${speciesBtns}</div>
+  <div style="display:flex;gap:8px;margin-bottom:12px">${barnBtns}</div>
+
+  <div style="margin-bottom:14px">
+    <div style="font-size:11px;color:#888;font-weight:600;margin-bottom:6px">사육단계 선택 (${sp.label})</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${stageBtns}</div>
+  </div>
+
+  ${recommendCard}
+  ${weekPreview}
+
+  <div style="font-size:10px;color:#aaa;line-height:1.7">
+    ※ 온도 기준 3단계 체계는 Aviagen「Environmental Management in the Broiler House」,
+    PIC「Wean to Finish Guidelines Appendix A」, 미네소타대 확장연구소(L. Jacobson) 자료를 재구성했습니다.
+    습도 기준 판정은 글로벌 계사환경제어 1위 업체 Munters의 상업용 컨트롤러(Rotem Trio)가 쓰는
+    "온도요구·습도요구 환기량 중 더 큰 값을 따르는" 이중제어 로직과 PIC의 습도 65% 관리 기준을 결합해 구성했습니다.
+    실제 전환 시점은 수치뿐 아니라 계군·돈군의 행동(헐떡임, 웅크림, 피딩 활동 등)을 함께 관찰해 판단하는 것이 원 지침의 핵심입니다.
+  </div>`;
+}
+
+function renderWeatherTab(){
+  const today = new Date();
+  const dayNames = ["일","월","화","수","목","금","토"];
+  const fmtDay = (dateStr)=>{
+    const d=new Date(dateStr); return `${d.getMonth()+1}/${d.getDate()}(${dayNames[d.getDay()]})`;
+  };
+  const icon = (code)=> WX_ICONS[code!=null?code:0]||"🌡️";
+  const desc = (code)=> WX_DESC[code!=null?code:0]||"";
+  const tStr = (v)=> v!=null ? Math.round(v)+"°" : "-";
+  const diffStr = (a,b)=>{
+    if(a==null||b==null) return "";
+    const d=Math.round(a)-Math.round(b);
+    if(d===0) return '<span style="color:#888">±0°</span>';
+    return d>0
+      ? `<span style="color:#D32F2F">▲${d}°</span>`
+      : `<span style="color:#1565C0">▼${Math.abs(d)}°</span>`;
+  };
+
+  if(weatherState.status==="loading"){
+    return `<div class="card" style="text-align:center;padding:40px">
+      <div style="font-size:32px;margin-bottom:12px">⏳</div>
+      <div style="font-size:14px;color:#888">날씨 정보를 가져오는 중...</div>
+    </div>`;
+  }
+  if(weatherState.status==="error"){
+    return `<div class="card" style="text-align:center;padding:40px">
+      <div style="font-size:32px;margin-bottom:12px">⚠️</div>
+      <div style="font-size:14px;color:#D32F2F;margin-bottom:16px">날씨 정보를 가져오지 못했습니다.</div>
+      <button id="btn-wx-gps" style="border:none;border-radius:10px;background:#1a2744;color:#fff;padding:10px 20px;font-size:13px;font-weight:600">📍 내 위치로 다시 시도</button>
+    </div>`;
+  }
+  if(weatherState.status==="idle"){
+    return `
+    <div class="card" style="text-align:center;padding:40px">
+      <div style="font-size:48px;margin-bottom:12px">🌤️</div>
+      <div class="display" style="font-size:18px;margin-bottom:8px">주간 날씨 & 작년 비교</div>
+      <div style="font-size:12px;color:#888;margin-bottom:24px;line-height:1.8">GPS로 현재 위치를 감지하거나, 지역명을 직접 입력하세요.</div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button id="btn-wx-gps" style="border:none;border-radius:10px;background:#1a2744;color:#fff;padding:12px 24px;font-size:13px;font-weight:600">📍 현재 위치 감지</button>
+        <button id="btn-wx-search" style="border:1px solid #1a2744;border-radius:10px;background:#fff;color:#1a2744;padding:12px 24px;font-size:13px;font-weight:600">🔍 지역 직접 입력</button>
+      </div>
+    </div>`;
+  }
+
+  const fc = weatherState.forecast;
+  const ly = Array.isArray(weatherState.lastYear) ? weatherState.lastYear : [];
+  const loc = weatherState.locationName;
+
+  // 올해/작년 7일 비교 카드 (클릭 시 시간대별 상세)
+  const compCards = fc.map((d,i)=>{
+    const l = ly[i]||null;
+    const isToday = i===0;
+    const isSel = d.date === weatherState.selectedDate;
+    return `
+    <div class="wx-day-card" data-date="${d.date}"
+      style="border-radius:14px;overflow:hidden;border:2px solid ${isSel?"#F9A825":isToday?"#1a2744":"#efefef"};cursor:pointer">
+      <!-- 날짜 헤더 -->
+      <div style="background:${isToday?"#1a2744":"#f5f5f5"};padding:8px;text-align:center">
+        <div style="font-size:11px;font-weight:700;color:${isToday?"#F9C74F":"#555"}">${isToday?"오늘":fmtDay(d.date)}</div>
+        ${isSel?`<div style="font-size:9px;color:${isToday?"#F9C74F":"#F9A825"};margin-top:1px">▼ 시간대</div>`:""}
+      </div>
+      <!-- 올해 -->
+      <div style="background:${isToday?"#f0f4ff":"#fff"};padding:12px 8px;text-align:center;border-bottom:1px dashed #efefef">
+        <div style="font-size:9px;color:#888;margin-bottom:4px;font-weight:600">올해</div>
+        <div style="font-size:24px">${icon(d.code)}</div>
+        <div style="font-size:9px;color:#aaa;margin:2px 0">${desc(d.code)}</div>
+        <div style="font-size:13px;font-weight:700;color:#D32F2F">${tStr(d.tMax)}</div>
+        <div style="font-size:11px;color:#1565C0">${tStr(d.tMin)}</div>
+        ${d.hum!=null?`<div style="font-size:9px;color:#0288D1;margin-top:2px">💦 습도 ${Math.round(d.hum)}%</div>`:""}
+        ${d.rain>0?`<div style="font-size:9px;color:#1565C0;margin-top:2px">💧${d.rain.toFixed(1)}mm</div>`:""}
+      </div>
+      <!-- 작년 -->
+      <div style="background:#fafafa;padding:12px 8px;text-align:center">
+        <div style="font-size:9px;color:#888;margin-bottom:4px;font-weight:600">작년</div>
+        ${l ? `
+        <div style="font-size:24px">${icon(l.code)}</div>
+        <div style="font-size:9px;color:#aaa;margin:2px 0">${desc(l.code)}</div>
+        <div style="font-size:13px;font-weight:700;color:#D32F2F">${tStr(l.tMax)}</div>
+        <div style="font-size:11px;color:#1565C0">${tStr(l.tMin)}</div>
+        ${l.hum!=null?`<div style="font-size:9px;color:#0288D1;margin-top:2px">💦 습도 ${Math.round(l.hum)}%</div>`:""}
+        ${l.rain>0?`<div style="font-size:9px;color:#1565C0;margin-top:2px">💧${l.rain.toFixed(1)}mm</div>`:""}
+        <div style="margin-top:6px;padding-top:6px;border-top:1px solid #eee;font-size:10px">
+          최고 ${diffStr(d.tMax,l.tMax)} / 최저 ${diffStr(d.tMin,l.tMin)}
+        </div>
+        ` : `<div style="font-size:20px;color:#ddd">-</div><div style="font-size:9px;color:#ccc">데이터 없음</div>`}
+      </div>
+    </div>`;
+  }).join("");
+
+  // ── 시간대별 상세 패널 ──────────────────────────────────────────────────
+  const selDate  = weatherState.selectedDate;
+  const hourData = (weatherState.hourly[selDate]||[]).filter(h=>[0,3,6,9,12,15,18,21].includes(h.hour));
+  const DOW2     = ["일","월","화","수","목","금","토"];
+  const selLabel = selDate ? (()=>{ const dd=new Date(selDate);
+    return `${selDate.slice(5).replace('-','/')}(${DOW2[dd.getDay()]})`; })() : "";
+  const timeLabel = {0:"자정",3:"새벽3시",6:"새벽6시",9:"오전9시",12:"정오",15:"오후3시",18:"오후6시",21:"밤9시"};
+
+  let hourlyPanel = "";
+  if(selDate && hourData.length>0){
+    const slots = hourData.map(h=>{
+      const isNight = h.hour>=21 || h.hour<6;
+      const isMorn  = h.hour>=6 && h.hour<12;
+      const isAft   = h.hour>=12 && h.hour<18;
+      const bg  = isNight?"#1a1a2e":isMorn?"#e3f2fd":isAft?"#fff8e1":"#ede7f6";
+      const sub = isNight?"rgba(255,255,255,0.6)":"#555";
+      return `
+      <div style="flex:1;min-width:78px;background:${bg};border-radius:10px;padding:10px 5px;text-align:center">
+        <div style="font-size:10px;font-weight:700;color:${sub};margin-bottom:4px">${timeLabel[h.hour]||h.hour+"시"}</div>
+        <div style="font-size:22px;margin:3px 0">${icon(h.code)}</div>
+        <div style="font-size:14px;font-weight:800;color:${isNight?"#ff8a80":"#D32F2F"}">${h.temp!=null?Math.round(h.temp)+"°":"-"}</div>
+        <div style="font-size:9px;color:${isNight?"#80cbc4":"#0288D1"};margin-top:3px">💦${h.humidity!=null?Math.round(h.humidity)+"%":"-"}</div>
+        ${h.rain>0?`<div style="font-size:9px;color:${isNight?"#80cbc4":"#1565C0"}">💧${h.rain.toFixed(1)}mm</div>`:""}
+        <div style="font-size:9px;color:${sub};margin-top:2px">💨${h.wind!=null?Math.round(h.wind):"?"}km</div>
+      </div>`;
+    }).join("");
+
+    hourlyPanel = `
+    <div class="card" id="wx-hourly-panel" style="margin-top:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:6px">
+        <div class="display" style="font-size:15px">🕐 ${selLabel} 시간대별 날씨</div>
+        <span style="font-size:10px;color:#aaa">3시간 간격 · 날짜 카드를 눌러 변경</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${slots}</div>
+      <div style="margin-top:8px;font-size:10px;color:#aaa">💦 습도 · 💧 강수량 · 💨 풍속(km/h)</div>
+    </div>`;
+  }
+
+  return `
+  <div style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:12px;color:#888;font-weight:600;letter-spacing:1px">🌤️ 주간 날씨 · 올해 vs 작년 비교 · ${esc(loc)||""}</div>
+        <div style="font-size:11px;color:#aaa;margin-top:4px">Open-Meteo (ECMWF IFS) · 작년: ERA5 재분석</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button id="btn-wx-gps" style="border:1px solid #1a2744;border-radius:8px;background:#fff;padding:7px 12px;font-size:12px;color:#1a2744;font-weight:600">📍 내 위치</button>
+        <button id="btn-wx-search" style="border:1px solid #1a2744;border-radius:8px;background:#fff;padding:7px 12px;font-size:12px;color:#1a2744;font-weight:600">🔍 지역변경</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:12px">
+    ${compCards}
+  </div>
+  <div style="font-size:10px;color:#aaa;text-align:right">
+    기온 차이: <span style="color:#D32F2F">▲ 올해가 높음</span> · <span style="color:#1565C0">▼ 올해가 낮음</span> · 날짜 카드를 누르면 시간대별 날씨
+  </div>
+
+  ${hourlyPanel}
+
+  ${renderLivestockWeatherPanel(fc, weatherState.hourly)}
+
+  <div class="card" style="margin-top:16px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="font-size:32px">🎬</span>
+      <div style="flex:1">
+        <div class="display" style="font-size:15px;color:#FF0000;margin-bottom:4px">소박사 날씨 정보</div>
+        <div style="font-size:12px;color:#888;margin-bottom:10px;line-height:1.6">축산·농업 현장에 맞는 날씨 정보를 제공하는 소박사 유튜브 채널입니다.</div>
+        <a href="https://youtube.com/@drsohtv?si=bbqdyduKggZmVDAB" target="_blank" rel="noopener"
+           style="display:inline-flex;align-items:center;gap:8px;background:#FF0000;color:#fff;font-size:13px;font-weight:700;padding:10px 18px;border-radius:10px;text-decoration:none">
+          ▶ 유튜브 채널 바로가기
+        </a>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 이벤트
+// ═══════════════════════════════════════════════════════════════════════════
+function attachEvents(){
+  document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+    state.tab=b.dataset.tab; render();
+    if(state.tab==="weather" && weatherState.status==="idle"){
+      // 저장된 위치가 있으면 자동 로드
+      const saved=loadWeatherLocation();
+      if(saved) fetchWeather(saved.lat, saved.lng, saved.name);
+    }
+    if(state.tab==="vent" && weatherState.status==="idle"){
+      const saved=loadWeatherLocation();
+      if(saved) fetchWeather(saved.lat, saved.lng, saved.name);
+    }
+  });
+
+  // 환기가이드: 축종/계사구조/사육단계 선택
+  document.querySelectorAll(".vent-species-btn").forEach(b=>b.onclick=()=>{
+    ventState.species = b.dataset.species;
+    ventState.stageIdx = 0;
+    render();
+  });
+  document.querySelectorAll(".vent-barn-btn").forEach(b=>b.onclick=()=>{
+    ventState.barn = b.dataset.barn;
+    render();
+  });
+  document.querySelectorAll(".vent-stage-btn").forEach(b=>b.onclick=()=>{
+    ventState.stageIdx = parseInt(b.dataset.idx,10);
+    render();
+  });
+
+  // 육계/산란계 컨설팅: 축종/품종/일령 선택
+  document.querySelectorAll(".consult-species-btn").forEach(b=>b.onclick=()=>{
+    consultState.species = b.dataset.species;
+    consultState.breed = null; // 축종 바뀌면 해당 축종의 첫 품종으로 자동 전환
+    consultState.age = consultState.species==="broiler" ? 7 : 25;
+    render();
+  });
+  document.querySelectorAll(".consult-breed-btn").forEach(b=>b.onclick=()=>{
+    consultState.breed = b.dataset.breed;
+    render();
+  });
+  const consultSlider = document.getElementById("consult-age-slider");
+  const consultNumber = document.getElementById("consult-age-number");
+  // render()가 매번 전체 DOM을 다시 그리므로, 슬라이더는 드래그 중(input)이 아니라
+  // 놓았을 때(change) 한 번만 반영해야 드래그가 중간에 끊기지 않는다.
+  if(consultSlider) consultSlider.onchange = (e)=>{
+    consultState.age = parseInt(e.target.value,10);
+    render();
+  };
+  if(consultNumber) consultNumber.onchange = (e)=>{
+    const v = parseInt(e.target.value,10);
+    if(!isNaN(v)){ consultState.age = v; render(); }
+  };
+
+  // 날씨 GPS 버튼
+  const wxGpsBtn=document.getElementById("btn-wx-gps");
+  if(wxGpsBtn) wxGpsBtn.onclick=()=>{
+    if(!navigator.geolocation){ alert("이 브라우저는 위치 감지를 지원하지 않습니다."); return; }
+    weatherState.status="loading"; weatherState.locationName="위치 감지 중..."; render();
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      const {latitude:lat, longitude:lng} = pos.coords;
+      // nominatim으로 역지오코딩
+      try {
+        const r=await fetchWithTimeout(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ko`,5000);
+        const d=await r.json();
+        const name=d.address?.city||d.address?.town||d.address?.county||d.display_name?.split(",")[0]||"현재 위치";
+        fetchWeather(lat, lng, name);
+      } catch(e){
+        fetchWeather(lat, lng, "현재 위치");
+      }
+    }, err=>{
+      weatherState.status="error"; render();
+      alert("위치 감지에 실패했습니다. 지역을 직접 입력해주세요.");
+    });
+  };
+
+  // THI 기준표 모달
+  const thiInfoBtn = document.getElementById("btn-thi-info");
+  if(thiInfoBtn) thiInfoBtn.onclick = (e)=>{ e.stopPropagation(); openTHIInfoModal(); };
+
+  // 날씨 요일 카드 클릭 → 시간대별 상세
+  document.querySelectorAll(".wx-day-card").forEach(b=>b.onclick=()=>{
+    weatherState.selectedDate = b.dataset.date;
+    render();
+    setTimeout(()=>{
+      const el=document.getElementById("wx-hourly-panel");
+      if(el) el.scrollIntoView({behavior:"smooth",block:"center"});
+    },80);
+  });
+
+  // 날씨 지역 검색 버튼
+  const wxSearchBtn=document.getElementById("btn-wx-search");
+  if(wxSearchBtn) wxSearchBtn.onclick=async ()=>{
+    if(!query||!query.trim()) return;
+    try {
+      const results=await searchLocation(query.trim());
+      if(!results||results.length===0){ alert("'"+query+"' 지역을 찾을 수 없습니다.\n다른 이름으로 다시 시도해주세요."); return; }
+      const r=results[0];
+      const name=r.name+(r.admin1?", "+r.admin1:"")+(r.country_code==="KR"?"":"("+r.country+")");
+      fetchWeather(r.latitude, r.longitude, name);
+    } catch(e){
+      alert("지역 검색에 실패했습니다. 다시 시도해주세요.");
+    }
+  };
+}
+
+render();
+// 기본 탭이 날씨이므로, 저장된 위치가 있으면 페이지 로드 시 바로 불러온다
+if(state.tab==="weather" && weatherState.status==="idle"){
+  const saved=loadWeatherLocation();
+  if(saved) fetchWeather(saved.lat, saved.lng, saved.name);
+}
+
+</script>
+</body>
+</html>
