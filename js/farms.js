@@ -1,4 +1,9 @@
 // ─── 농장 관리 ────────────────────────────────────────────────────────────
+// 담당 수의사는 항상 대한동물병원 최동명 수의사가 맡으므로 기본값으로 고정한다
+// (기존 농장에 다른 값이 저장되어 있으면 그 값을 그대로 보여주고, 비어있을 때만 채움).
+const DEFAULT_VET_NAME = '최동명 수의사';
+const DEFAULT_VET_PHONE = '010-9150-8844';
+
 function openFarmModal(id) {
   editingId.farm = id || null;
   const farm = id ? load('farms').find(f => f.id === id) : null;
@@ -8,6 +13,8 @@ function openFarmModal(id) {
     if (el) el.value = farm ? (farm[k.replace('-','_')] || '') : '';
   });
   if (farm) document.getElementById('f-type').value = farm.type || '육계';
+  if (!document.getElementById('f-vet').value) document.getElementById('f-vet').value = DEFAULT_VET_NAME;
+  if (!document.getElementById('f-vet-phone').value) document.getElementById('f-vet-phone').value = DEFAULT_VET_PHONE;
   openModal('modal-farm');
 }
 
@@ -65,7 +72,7 @@ function renderFarms() {
       <td style="color:var(--text-secondary)">${f.address}</td>
       <td>${f.phone||'-'}</td>
       <td>${f.count ? Number(f.count).toLocaleString()+'수' : '-'}</td>
-      <td>${f.vet||'-'}</td>
+      <td>${f.vet || DEFAULT_VET_NAME}</td>
       <td><div class="flex-gap">
         <button class="btn btn-outline btn-sm" onclick="openFarmModal('${f.id}')">편집</button>
         <button class="btn btn-danger btn-sm" onclick="deleteFarm('${f.id}')">삭제</button>

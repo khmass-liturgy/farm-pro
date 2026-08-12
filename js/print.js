@@ -58,8 +58,8 @@ function printProgram(id) {
       <div class="print-info-cell"><div class="lbl">입추수수</div><div class="val">${farm?.count ? Number(farm.count).toLocaleString()+'수' : '-'}</div></div>
       <div class="print-info-cell"><div class="lbl">사육기간</div><div class="val">${prog.duration}일령</div></div>
       <div class="print-info-cell"><div class="lbl">동수</div><div class="val">${farm?.houses ? farm.houses+'동' : '-'}</div></div>
-      <div class="print-info-cell"><div class="lbl">담당수의사</div><div class="val">${farm?.vet||'-'}</div></div>
-      <div class="print-info-cell"><div class="lbl">수의사 연락처</div><div class="val">${farm?.vet_phone||'-'}</div></div>
+      <div class="print-info-cell"><div class="lbl">담당수의사</div><div class="val">${farm?.vet || DEFAULT_VET_NAME}</div></div>
+      <div class="print-info-cell"><div class="lbl">수의사 연락처</div><div class="val">${farm?.vet_phone || DEFAULT_VET_PHONE}</div></div>
       <div class="print-info-cell"><div class="lbl">입추예정일</div><div class="val" ${prog.placementDate ? '' : 'style="color:#aaa"'}>${prog.placementDate || '　'}</div></div>
     </div>
 
