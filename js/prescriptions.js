@@ -220,16 +220,6 @@ function rxFormatDocNo(rx) {
   return `${RX_CLINIC.licenseNo}${ymd}${rx.issueNo ?? ''}`;
 }
 
-// 유효기간 = 발급일 + 1년. DB의 valid_until(generated column)을 우선 쓰고,
-// 아직 supabase/schema.sql을 재실행하지 않아 컬럼이 없는 환경을 위해 클라이언트에서도 계산한다.
-function rxValidUntil(rx) {
-  if (rx.validUntil) return rx.validUntil;
-  // Date.UTC + toISOString(둘 다 UTC 기준)으로 계산해야 한다. new Date(str+'T00:00:00')는
-  // 로컬시간으로 파싱되므로, UTC+9(한국) 브라우저에서 toISOString() 결과가 하루 당겨진다.
-  const [y, m, d] = rx.issueDate.split('-').map(Number);
-  return new Date(Date.UTC(y + 1, m - 1, d)).toISOString().slice(0, 10);
-}
-
 function rxFormatDateKo(dateStr) {
   if (!dateStr) return '-';
   const [y, m, d] = dateStr.split('-');
@@ -265,7 +255,6 @@ function renderRxTable(cellDefs) {
 function printPrescription(id) {
   const rx = load('prescriptions').find(p => p.id === id);
   if (!rx) return;
-  const validUntil = rxValidUntil(rx);
   const indivMark = rx.scope === 'individual' ? '■' : ' ';
   const groupMark = rx.scope === 'group' ? '■' : ' ';
   const items = rx.items || [];
@@ -286,8 +275,8 @@ function printPrescription(id) {
     rxCell('metabar', 13, 16, 3, 4, rxFormatDocNo(rx)),
 
     rxCell('note strong', 1, 5, 4, 5, '처방전 유효기간'),
-    rxCell('note strong', 5, 9, 4, 5, `발급일부터 1년간 (~ ${validUntil})`),
-    rxCell('note', 12, 16, 4, 5, '처방전 유효기간 내에 구매해야 합니다.'),
+    rxCell('note strong', 5, 9, 4, 5, '발급일부터 ( 7 )일간'),
+    rxCell('note right', 12, 16, 4, 5, '처방전 유효기간 내에 구매해야 합니다.'),
 
     rxCell('label tight', 1, 2, 5, 9, `개별<br>처방<br>[${indivMark}]`),
     rxCell('label', 2, 5, 5, 6, '동물의 이름'),

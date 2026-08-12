@@ -317,22 +317,23 @@ body { display: block !important; height: auto !important; overflow: visible !im
    표로 다시 짰다. */
 .rx-table {
   position: relative; width: 100%; table-layout: fixed; border-collapse: collapse;
-  font-size: 7.2pt; line-height: 1.2; color: #1a2f52;
+  font-size: 8.2pt; line-height: 1.2; color: #1a2f52;
 }
 .rx-td { border: 0.6pt solid #1a2f52; padding: 1.5pt 2pt; overflow: hidden; word-break: break-word; vertical-align: middle; text-align: left; }
-.rx-td.topline { border: none; font-size: 6.5pt; vertical-align: bottom; }
-.rx-td.title { border: none; font-size: 20pt; font-weight: 900; text-align: center; letter-spacing: 9pt; }
+.rx-td.topline { border: none; font-size: 7.5pt; vertical-align: bottom; }
+.rx-td.title { border: none; font-size: 21pt; font-weight: 900; text-align: center; letter-spacing: 9pt; }
 .rx-td.metabar { background: #d9d9d9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: 700; text-align: center; }
 .rx-td.label { font-weight: 700; text-align: center; }
 .rx-td.value { font-weight: 600; }
 .rx-td.value.center { text-align: center; }
 .rx-td.value.strong { font-weight: 800; }
 .rx-td.value.pre { white-space: pre-line; }
-.rx-td.note { border: none; font-size: 6.8pt; white-space: nowrap; }
-.rx-td.tight { font-size: 6.6pt; line-height: 1.15; text-align: center; }
+.rx-td.note { border: none; font-size: 7.8pt; white-space: nowrap; }
+.rx-td.note.right { text-align: right; white-space: normal; }
+.rx-td.tight { font-size: 7.6pt; line-height: 1.15; text-align: center; }
 .rx-td.header { font-weight: 700; text-align: center; }
 .rx-td.section-title { background: #b2b2b2 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-weight: 700; text-align: center; }
-.rx-td.footer { border: none; text-align: center; font-size: 6.5pt; color: #555; }
+.rx-td.footer { border: none; text-align: right; font-size: 7.5pt; color: #555; }
 .rx-td.stamp-anchor { position: relative; overflow: visible; }
 .rx-stamp { position: absolute; pointer-events: none; z-index: 2; top: 50%; }
 .rx-stamp-hospital { width: 14.6mm; height: 14.6mm; left: 72%; transform: translate(-50%, -50%); opacity: 0.92; }
