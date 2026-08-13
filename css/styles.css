@@ -205,6 +205,24 @@ table tr:hover td { background: #f9fbff; }
   white-space: nowrap;
 }
 
+/* 축산산지시세 카드 (대시보드) */
+.livestock-price-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+.livestock-price-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.livestock-price-card {
+  min-width: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px 18px; display: flex; align-items: center; justify-content: space-between;
+}
+.livestock-price-card__content { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1 1 auto; }
+.livestock-price-card__icon { font-size: 25px; }
+.livestock-price-card__body { min-width: 0; flex: 1 1 auto; }
+.livestock-price-card__label { font-size: 12px; color: var(--text-secondary); font-weight: 700; overflow-wrap: anywhere; }
+.livestock-price-card__value { font-size: 22px; font-weight: 800; white-space: nowrap; }
+.livestock-price-card__value span { font-size: 11px; color: var(--text-muted); font-weight: 400; margin-left: 3px; }
+.livestock-price-card__date { font-size: 10px; color: var(--text-muted); text-align: right; flex: 0 0 auto; }
+@media (max-width: 900px) {
+  .livestock-price-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 /* 탭 */
 .tab-bar { display: flex; gap: 2px; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
 .tab {

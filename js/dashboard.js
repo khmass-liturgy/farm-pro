@@ -198,4 +198,76 @@ function renderDashboard() {
       <div class="tbl-wrap"><table><thead><tr><th>날짜</th><th>농장</th><th>프로그램</th><th>일령</th><th>약품</th><th>백신</th></tr></thead><tbody>${next15Rows}</tbody></table></div>
     </div>`;
   }
+
+  if (poultryPriceState.status === 'idle') fetchPoultryPrices(); else renderPoultryPriceCard();
+}
+
+// ── 축산산지시세 ────────────────────────────────────────────────────────────
+// 농장동물컨설팅(pb) 프로젝트가 GitHub Actions로 매일 수집해 저장하는 시세
+// 데이터를 raw.githubusercontent.com에서 직접 fetch한다(CORS 허용 도메인이라
+// 프록시 불필요). pb 프로젝트 자체 크론잡이 갱신하므로 이 저장소는 최신 URL만
+// 참조하면 되고, 데이터를 별도로 복제/관리할 필요가 없다.
+const POULTRY_PRICE_JSON_URL = 'https://raw.githubusercontent.com/khmass-liturgy/pb/main/poultry_price/latest.json';
+let poultryPriceState = { status: 'idle', data: null };
+
+async function fetchPoultryPrices(force) {
+  poultryPriceState = { status: 'loading', data: null };
+  if (currentPage === 'dashboard') renderPoultryPriceCard();
+  try {
+    const bust = force ? Date.now() : Math.floor(Date.now() / 600000);
+    const resp = await fetch(POULTRY_PRICE_JSON_URL + '?t=' + bust);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (!data.egg?.rows?.length || !data.chicken?.rows?.length || !data.pig?.rows?.length || !data.cow?.items) throw new Error('시세 자료 없음');
+    poultryPriceState = { status: 'done', data };
+  } catch (e) {
+    console.warn('축산산지시세 로딩 실패:', e.message);
+    poultryPriceState = { status: 'error', data: null };
+  }
+  if (currentPage === 'dashboard') renderPoultryPriceCard();
+}
+
+function renderPoultryPriceCard() {
+  const el = document.getElementById('dash-poultry-price');
+  if (!el) return;
+  const st = poultryPriceState;
+  if (st.status === 'idle' || st.status === 'loading') {
+    el.innerHTML = `<div class="card mt-16" style="text-align:center;padding:20px;color:var(--text-muted)">⏳ 축산산지시세 조회 중...</div>`;
+    return;
+  }
+  if (st.status === 'error' || !st.data) {
+    el.innerHTML = `<div class="card mt-16" style="text-align:center;padding:20px;color:var(--text-muted)">⚠️ 축산산지시세를 불러오지 못했습니다.</div>`;
+    return;
+  }
+  const { egg, chicken, pig, cow } = st.data;
+  const items = [
+    { icon:'🥚', label:'계란 산지가격', sub:'특란 (XL)', value: egg.latest, unit:'원/10개', color:'#D4A012', date: egg.rows[0]?.date },
+    { icon:'🐔', label:'육계 생계유통', sub:'대', value: chicken.latest, unit:'원/kg', color:'#E8530A', date: chicken.rows[0]?.date },
+    { icon:'🐷', label:'양돈', sub:'농가수취 평균', value: pig.latest, unit:'원/kg', color:'#E84A6F', date: pig.rows[0]?.date },
+    { icon:'🐮', label: cow.items.female_calf.label, sub:'', value: cow.items.female_calf.value, unit: cow.items.female_calf.unit, color:'#A0522D', date: cow.items.female_calf.date },
+    { icon:'🐮', label: cow.items.male_calf.label, sub:'', value: cow.items.male_calf.value, unit: cow.items.male_calf.unit, color:'#8B4513', date: cow.items.male_calf.date },
+    { icon:'🐂', label: cow.items.farm_receipt_600kg.label, sub:'', value: cow.items.farm_receipt_600kg.value, unit: cow.items.farm_receipt_600kg.unit, color:'#6B4423', date: cow.items.farm_receipt_600kg.date },
+  ];
+  const cards = items.map(it => `
+    <div class="livestock-price-card">
+      <div class="livestock-price-card__content">
+        <span class="livestock-price-card__icon">${it.icon}</span>
+        <div class="livestock-price-card__body">
+          <div class="livestock-price-card__label">${it.label} <span style="font-weight:400">${it.sub}</span></div>
+          <div class="livestock-price-card__value" style="color:${it.color}">${Number.isInteger(it.value) ? it.value.toLocaleString() : '-'}<span>${it.unit}</span></div>
+        </div>
+      </div>
+      <div class="livestock-price-card__date">${it.date || ''}<br>발표전일 기준</div>
+    </div>`).join('');
+  el.innerHTML = `<div class="card mt-16">
+    <div class="livestock-price-heading">
+      <div class="card-title">📊 축산산지시세 <span style="font-size:10px;color:var(--text-muted);font-weight:400">수집 ${st.data.updated || ''}</span></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <a href="https://www.ekapepia.com/v3/web/main.do?userGroup=producer" target="_blank" rel="noopener" class="btn btn-outline btn-sm">생산자 시세 ↗</a>
+        <button class="btn btn-outline btn-sm" onclick="fetchPoultryPrices(true)">🔄 갱신</button>
+      </div>
+    </div>
+    <div class="livestock-price-cards">${cards}</div>
+    <div style="font-size:9px;color:var(--text-muted);margin-top:8px;text-align:right">카드 날짜=원본 발표일 · 수집 시각=${st.data.updated || ''} · 출처: 축산물품질평가원 다봄</div>
+  </div>`;
 }
