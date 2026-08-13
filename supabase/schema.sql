@@ -136,6 +136,11 @@ create table if not exists batches (
 create index if not exists idx_batches_farm_id on batches(farm_id);
 create index if not exists idx_batches_status on batches(status);
 
+-- 기존 배포본에 이미 batches 테이블이 있을 경우를 위한 컬럼 추가
+-- (동별 축종/품종 — 대시보드 사양표준 요약 카드가 품종으로 육종회사 매뉴얼을 조회하는 데 필요)
+alter table batches add column if not exists species text;
+alter table batches add column if not exists breed text;
+
 -- ─────────────────────────────────────────────────────────────────────────
 -- 투약 이력 기록(실적) — 신규
 -- ─────────────────────────────────────────────────────────────────────────
@@ -158,6 +163,14 @@ create table if not exists medication_logs (
 create index if not exists idx_medlogs_batch_id on medication_logs(batch_id);
 create index if not exists idx_medlogs_drug_id on medication_logs(drug_id);
 create index if not exists idx_medlogs_log_date on medication_logs(log_date);
+
+-- 기존 배포본에 이미 medication_logs 테이블이 있을 경우를 위한 컬럼 추가
+-- ("투약상담 및 처방" — 상담 중 진단한 질병을 기록. 투약 없이 진단만 한 상담도
+--  기록할 수 있도록 기존 "약품 또는 백신 필수" 제약을 완화한다)
+alter table medication_logs add column if not exists disease text;
+alter table medication_logs drop constraint if exists medication_logs_has_content;
+alter table medication_logs add constraint medication_logs_has_content
+  check (drug_name_text is not null or vaccine_name_text is not null or disease is not null or note is not null);
 
 -- ─────────────────────────────────────────────────────────────────────────
 -- 처방전 (수의사법 시행규칙 [별지 제10호서식]) — 신규

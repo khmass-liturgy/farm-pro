@@ -199,7 +199,74 @@ function renderDashboard() {
     </div>`;
   }
 
+  renderBreedSummaryCard();
+
   if (poultryPriceState.status === 'idle') fetchPoultryPrices(); else renderPoultryPriceCard();
+}
+
+// ── 사양표준 요약 (육종회사 표준 매뉴얼) ─────────────────────────────────────
+// 축종/품종이 설정된 사육중 배치를 대상으로, 오늘 일령(육계)/주령(산란계)에 해당하는
+// 표준 수치를 js/breedStandards.js의 CONSULT_BREEDS·lookupBroiler·lookupLayerPhase로
+// 조회한다(weather-consult.html의 육계/산란계 컨설팅 탭과 동일한 데이터·로직).
+function computeBreedStandardSummary() {
+  const batches = load('batches').filter(b => b.status === 'active' && b.species && b.breed);
+  const farms = load('farms');
+  const items = [];
+  batches.forEach(b => {
+    const speciesKey = b.species === '육계' ? 'broiler' : b.species === '산란계' ? 'layer' : null;
+    if (!speciesKey) return; // 육계/산란계 외에는 표준 매뉴얼 자체가 없음
+    const breed = CONSULT_BREEDS[speciesKey].breeds[b.breed];
+    if (!breed) return;
+    const farm = farms.find(f => f.id === b.farmId);
+    const dayAge = computeDayAge(b.placementDate);
+    if (dayAge < 1) return;
+    let ageLabel, parts = [];
+    if (speciesKey === 'broiler') {
+      const row = lookupBroiler(breed.data, dayAge);
+      ageLabel = `${dayAge}일령`;
+      if (row[1] != null) parts.push(`목표체중 ${row[1].toLocaleString()}g`);
+      if (row[4] != null) parts.push(`누적FCR ${row[4]}`);
+    } else {
+      const week = Math.ceil(dayAge / 7);
+      const { phase, row } = lookupLayerPhase(breed.data, week);
+      ageLabel = `${week}주령`;
+      if (phase === 'production') {
+        if (row[1] != null) parts.push(`산란율 ${row[1]}%`);
+        if (row[2] != null) parts.push(`목표체중 ${row[2].toLocaleString()}g`);
+        if (row[5] != null) parts.push(`평균난중 ${row[5]}g`);
+        if (row[6] != null) parts.push(`누적폐사율 ${row[6]}%`);
+      } else {
+        if (row[1] != null) parts.push(`목표체중 ${row[1].toLocaleString()}g`);
+        if (row[4] != null) parts.push(`누적폐사율 ${row[4]}%`);
+      }
+    }
+    if (!parts.length) return;
+    items.push({
+      farmName: farm?.name || '', house: b.house || '-', breedName: breed.name,
+      ageLabel, summaryText: parts.join(' · '), batchId: b.id,
+    });
+  });
+  items.sort((a, b) => a.farmName.localeCompare(b.farmName));
+  return items;
+}
+
+function renderBreedSummaryCard() {
+  const el = document.getElementById('dash-breed-summary');
+  if (!el) return;
+  const items = computeBreedStandardSummary();
+  if (!items.length) { el.innerHTML = ''; return; }
+  const rows = items.map(it => `
+    <tr onclick="openBatchDetail('${it.batchId}')" style="cursor:pointer">
+      <td><strong>${it.farmName}</strong></td>
+      <td style="color:var(--text-secondary)">${it.house}</td>
+      <td>${it.breedName}</td>
+      <td>${it.ageLabel}</td>
+      <td>${it.summaryText}</td>
+    </tr>`).join('');
+  el.innerHTML = `<div class="card mt-16">
+    <div class="card-header"><div class="card-title">🧬 사양표준 요약 (육종회사 매뉴얼)</div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>농장</th><th>동</th><th>품종</th><th>일령/주령</th><th>표준 수치</th></tr></thead><tbody>${rows}</tbody></table></div>
+  </div>`;
 }
 
 // ── 축산산지시세 ────────────────────────────────────────────────────────────

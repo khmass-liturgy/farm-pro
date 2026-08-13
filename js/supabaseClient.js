@@ -85,6 +85,7 @@ const TABLES = {
         farm_id: o.farmId, program_id: o.programId || null, program_name_snapshot: o.programName || null,
         house: o.house || null, placement_date: o.placementDate,
         bird_count: o.birdCount === '' || o.birdCount == null ? null : Number(o.birdCount),
+        species: o.species || null, breed: o.breed || null,
         status: o.status || 'active', end_date: o.endDate || null, notes: o.notes || null,
       };
     },
@@ -92,6 +93,7 @@ const TABLES = {
       return {
         id: r.id, farmId: r.farm_id, programId: r.program_id, programName: r.program_name_snapshot,
         house: r.house, placementDate: r.placement_date, birdCount: r.bird_count,
+        species: r.species, breed: r.breed,
         status: r.status, endDate: r.end_date, notes: r.notes, createdAt: r.created_at,
       };
     },
@@ -103,14 +105,16 @@ const TABLES = {
         batch_id: o.batchId, log_date: o.logDate, program_day: o.programDay ?? null,
         drug_id: o.drugId || null, drug_name_text: o.drugName || null,
         vaccine_id: o.vaccineId || null, vaccine_name_text: o.vaccineName || null,
-        dose_note: o.doseNote || null, administered_by_email: o.administeredByEmail || null, note: o.note || null,
+        dose_note: o.doseNote || null, administered_by_email: o.administeredByEmail || null,
+        note: o.note || null, disease: o.disease || null,
       };
     },
     fromRow(r) {
       return {
         id: r.id, batchId: r.batch_id, logDate: r.log_date, programDay: r.program_day,
         drugId: r.drug_id, drugName: r.drug_name_text, vaccineId: r.vaccine_id, vaccineName: r.vaccine_name_text,
-        doseNote: r.dose_note, administeredByEmail: r.administered_by_email, note: r.note, createdAt: r.created_at,
+        doseNote: r.dose_note, administeredByEmail: r.administered_by_email, note: r.note,
+        disease: r.disease, createdAt: r.created_at,
       };
     },
   },

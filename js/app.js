@@ -8,6 +8,7 @@ const PAGE_TITLES = {
   programs: '투약 프로그램',
   batches: '입추(사육배치) 관리',
   'batch-detail': '입추 상세',
+  medconsult: '투약상담 및 처방',
   prescriptions: '처방전 발급',
   schedule: '투약 일정',
   reports: '통계/리포트',
@@ -22,6 +23,7 @@ const PAGE_ACTIONS = {
   farms: `<button class="btn btn-primary" onclick="openFarmModal()">+ 농장 추가</button>`,
   programs: `<button class="btn btn-primary" onclick="openProgramModal()">+ 프로그램 추가</button>`,
   batches: `<button class="btn btn-primary" onclick="openBatchModal()">+ 입추 등록</button>`,
+  medconsult: `<button class="btn btn-primary" onclick="openConsultLogModal()">+ 상담 기록 추가</button>`,
   prescriptions: `<button class="btn btn-primary" onclick="openRxPrescriptionModal()">+ 처방전 발급</button>`,
   drugs: `<button class="btn btn-primary" onclick="openDrugModal()">+ 약품 추가</button>`,
   'rx-products': `<button class="btn btn-primary" onclick="openRxProductModal()">+ 제품 추가</button>`,
@@ -46,6 +48,7 @@ function showPage(name) {
   if (name === 'programs') { populateFarmFilter(); renderPrograms(); }
   if (name === 'batches') renderBatches();
   if (name === 'batch-detail') renderBatchDetail();
+  if (name === 'medconsult') populateConsultFilters();
   if (name === 'prescriptions') { populateRxFarmFilter(); renderPrescriptions(); }
   if (name === 'schedule') populateScheduleSelects();
   if (name === 'reports') renderReports();

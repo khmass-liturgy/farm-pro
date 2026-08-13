@@ -23,6 +23,55 @@ function onBatchFarmChange() {
   if (farm && farm.count && !document.getElementById('b-count').value) {
     document.getElementById('b-count').value = farm.count;
   }
+  if (farm && farm.type && !document.getElementById('b-species').value) {
+    document.getElementById('b-species').value = farm.type;
+    populateBatchBreedSelect(farm.type, '');
+  }
+  const houseSel = document.getElementById('b-house');
+  const curHouse = houseSel.value === '__custom__' ? document.getElementById('b-house-custom-input').value : houseSel.value;
+  populateBatchHouseSelect(farmId, curHouse);
+}
+
+// 농장의 "동수"만큼 1동~N동 선택지를 만들고, 현재 값이 그 범위 밖이면(다른 농장에서
+// 넘어왔거나 자유롭게 적어둔 값) "직접 입력" 옵션으로 유지한다.
+function populateBatchHouseSelect(farmId, selectedHouse) {
+  const farm = load('farms').find(f => f.id === farmId);
+  const n = farm?.houses ? Number(farm.houses) : 0;
+  const opts = [];
+  for (let i = 1; i <= n; i++) opts.push(`${i}동`);
+  const isCustom = !!selectedHouse && !opts.includes(selectedHouse);
+  const sel = document.getElementById('b-house');
+  sel.innerHTML = '<option value="">동 선택</option>'
+    + opts.map(o => `<option value="${o}"${o===selectedHouse?' selected':''}>${o}</option>`).join('')
+    + `<option value="__custom__"${isCustom?' selected':''}>✏️ 직접 입력</option>`;
+  document.getElementById('b-house-custom').style.display = isCustom ? '' : 'none';
+  document.getElementById('b-house-custom-input').value = isCustom ? selectedHouse : '';
+}
+function onBatchHouseSelectChange() {
+  document.getElementById('b-house-custom').style.display = document.getElementById('b-house').value === '__custom__' ? '' : 'none';
+}
+
+// 축종이 육계/산란계일 때만 CONSULT_BREEDS(js/breedStandards.js)의 품종 목록을 채운다.
+// 그 외 축종은 표준 매뉴얼 자체가 없어 대시보드 요약 대상에서 자연히 빠진다.
+function populateBatchBreedSelect(species, selectedBreed) {
+  const sel = document.getElementById('b-breed');
+  const hint = document.getElementById('b-breed-hint');
+  const speciesKey = species === '육계' ? 'broiler' : species === '산란계' ? 'layer' : null;
+  if (!speciesKey) {
+    sel.innerHTML = '<option value="">-</option>';
+    sel.disabled = true;
+    hint.style.display = species ? '' : 'none';
+    return;
+  }
+  sel.disabled = false;
+  hint.style.display = 'none';
+  const breeds = CONSULT_BREEDS[speciesKey].breeds;
+  sel.innerHTML = '<option value="">품종 선택</option>' + Object.entries(breeds).map(([key, b]) =>
+    `<option value="${key}"${key===selectedBreed?' selected':''}>${b.name}</option>`
+  ).join('');
+}
+function onBatchSpeciesChange() {
+  populateBatchBreedSelect(document.getElementById('b-species').value, '');
 }
 
 function openBatchModal(id) {
@@ -31,7 +80,9 @@ function openBatchModal(id) {
   document.getElementById('modal-batch-title').textContent = id ? '입추 편집' : '입추 등록';
   populateFarmSelect('b-farm', b?.farmId || '');
   populateProgramSelectForFarm('b-program', b?.farmId || '', b?.programId || '');
-  document.getElementById('b-house').value = b?.house || '';
+  document.getElementById('b-species').value = b?.species || '';
+  populateBatchBreedSelect(b?.species || '', b?.breed || '');
+  populateBatchHouseSelect(b?.farmId || '', b?.house || '');
   document.getElementById('b-placement-date').value = b?.placementDate || new Date().toISOString().slice(0,10);
   document.getElementById('b-count').value = b?.birdCount || '';
   document.getElementById('b-notes').value = b?.notes || '';
@@ -47,11 +98,15 @@ async function saveBatch() {
   if (!farmId || !placementDate) { alert('농장과 입추일은 필수입니다.'); return; }
   const programId = document.getElementById('b-program').value || null;
   const programName = programId ? (load('programs').find(p => p.id === programId)?.name || '') : '';
+  const houseSel = document.getElementById('b-house').value;
+  const house = houseSel === '__custom__' ? document.getElementById('b-house-custom-input').value.trim() : houseSel;
   const data = {
     farmId, programId, programName,
-    house: document.getElementById('b-house').value.trim(),
+    house,
     placementDate,
     birdCount: document.getElementById('b-count').value,
+    species: document.getElementById('b-species').value || null,
+    breed: document.getElementById('b-breed').value || null,
     notes: document.getElementById('b-notes').value.trim(),
     status: editingId.batch ? (document.getElementById('b-status').value || 'active') : 'active',
   };
@@ -83,6 +138,8 @@ function renderBatches() {
     const dayAge = computeDayAge(b.placementDate);
     const dayAgeLabel = dayAge < 1 ? '입추 예정' : `${dayAge}일령`;
     const statusBadge = b.status === 'completed' ? '<span class="badge badge-teal">완료</span>' : '<span class="badge badge-green">사육중</span>';
+    const speciesKey = b.species === '육계' ? 'broiler' : b.species === '산란계' ? 'layer' : null;
+    const breedName = speciesKey && b.breed ? (CONSULT_BREEDS[speciesKey].breeds[b.breed]?.name || b.breed) : '-';
     return `<tr style="cursor:pointer" onclick="openBatchDetail('${b.id}')">
       <td><strong>${farm?.name || '(삭제된 농장)'}</strong></td>
       <td>${prog ? prog.name : (b.programName || '-')}</td>
@@ -90,6 +147,7 @@ function renderBatches() {
       <td><strong>${dayAgeLabel}</strong></td>
       <td>${b.birdCount ? Number(b.birdCount).toLocaleString()+'수' : '-'}</td>
       <td>${b.house || '-'}</td>
+      <td>${b.species ? `${b.species}${breedName !== '-' ? ' · '+breedName : ''}` : '-'}</td>
       <td>${statusBadge}</td>
       <td onclick="event.stopPropagation()"><div class="flex-gap">
         <button class="btn btn-outline btn-sm" onclick="openBatchModal('${b.id}')">편집</button>

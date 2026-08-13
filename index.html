@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>농장 투약관리 시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260813f">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260813f">
-<link rel="icon" href="img/favicon.ico?v=20260813f">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260813f">
-<link rel="stylesheet" href="css/styles.css?v=20260813f">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260813g">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260813g">
+<link rel="icon" href="img/favicon.ico?v=20260813g">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260813g">
+<link rel="stylesheet" href="css/styles.css?v=20260813g">
 </head>
 <body>
 
@@ -46,6 +46,9 @@
     </div>
     <div class="sidebar-item" onclick="showPage('batches')">
       <span class="icon">🐣</span> 입추(사육배치) 관리
+    </div>
+    <div class="sidebar-item" onclick="showPage('medconsult')">
+      <span class="icon">🩺</span> 투약상담 및 처방
     </div>
     <div class="sidebar-item" onclick="showPage('prescriptions')">
       <span class="icon">🧾</span> 처방전 발급
@@ -106,6 +109,7 @@
       <div id="dash-alerts"></div>
       <div id="dash-upcoming"></div>
       <div id="dash-program-15days"></div>
+      <div id="dash-breed-summary"></div>
       <div id="dash-poultry-price"></div>
     </div>
 
@@ -169,7 +173,7 @@
           <table>
             <thead>
               <tr>
-                <th>농장</th><th>프로그램</th><th>입추일</th><th>현재일령</th><th>마리수</th><th>동</th><th>상태</th><th>관리</th>
+                <th>농장</th><th>프로그램</th><th>입추일</th><th>현재일령</th><th>마리수</th><th>동</th><th>축종/품종</th><th>상태</th><th>관리</th>
               </tr>
             </thead>
             <tbody id="batch-tbody"></tbody>
@@ -185,6 +189,34 @@
     <!-- 입추 상세 (사이드바에 없음, 목록에서 진입) -->
     <div id="page-batch-detail" class="page">
       <div id="batch-detail-body"></div>
+    </div>
+
+    <!-- 투약상담 및 처방 -->
+    <div id="page-medconsult" class="page">
+      <div class="search-bar">
+        <select id="mc-farm-filter" onchange="onConsultFarmFilterChange()" style="padding:8px 14px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card); flex:1;">
+          <option value="">전체 농장</option>
+        </select>
+        <select id="mc-batch-filter" onchange="renderConsultLogPage()" style="padding:8px 14px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card); flex:1;">
+          <option value="">전체 입추</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>날짜</th><th>농장</th><th>입추(동)</th><th>일령</th><th>질병</th><th>내용</th><th>투약내용</th><th>기록자</th><th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="medconsult-tbody"></tbody>
+          </table>
+        </div>
+        <div id="medconsult-empty" class="empty-state" style="display:none">
+          <div class="icon-big">🩺</div>
+          <p>기록된 투약상담 내역이 없습니다.</p>
+        </div>
+      </div>
     </div>
 
     <!-- 처방전 발급 -->
@@ -737,7 +769,29 @@
       <div class="form-group"><label>마리수</label><input id="b-count" type="number" placeholder="예) 30000"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>동</label><input id="b-house" placeholder="예) 3동"></div>
+      <div class="form-group"><label>축종</label>
+        <select id="b-species" onchange="onBatchSpeciesChange()">
+          <option value="">선택 안 함</option>
+          <option value="육계">육계</option>
+          <option value="삼계">삼계</option>
+          <option value="산란계">산란계</option>
+          <option value="토종닭">토종닭</option>
+          <option value="오리">오리</option>
+          <option value="기타">기타</option>
+        </select>
+      </div>
+      <div class="form-group"><label>품종</label>
+        <select id="b-breed"><option value="">축종을 먼저 선택하세요</option></select>
+        <div class="text-muted" id="b-breed-hint" style="font-size:11px;margin-top:4px;display:none">이 축종은 표준 사양매뉴얼이 없어 대시보드 요약에는 표시되지 않습니다.</div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>동</label>
+        <select id="b-house" onchange="onBatchHouseSelectChange()"><option value="">동 선택</option></select>
+        <div id="b-house-custom" style="display:none;margin-top:6px">
+          <input id="b-house-custom-input" placeholder="예) 3동">
+        </div>
+      </div>
       <div class="form-group" id="b-status-wrap" style="display:none"><label>상태</label>
         <select id="b-status"><option value="active">사육중</option><option value="completed">완료</option></select>
       </div>
@@ -760,9 +814,17 @@
     <input type="hidden" id="ml-batch-id">
     <input type="hidden" id="ml-program-day">
     <div class="text-muted mb-16" id="ml-plan-summary"></div>
+    <div class="form-row" id="ml-farm-batch-row" style="display:none">
+      <div class="form-group"><label>농장 *</label>
+        <select id="ml-farm-sel" onchange="onConsultFarmSelChange()"><option value="">농장 선택</option></select>
+      </div>
+      <div class="form-group"><label>입추 *</label>
+        <select id="ml-batch-sel"><option value="">입추 선택</option></select>
+      </div>
+    </div>
     <div class="form-row">
-      <div class="form-group"><label>투약 날짜 *</label><input id="ml-log-date" type="date"></div>
-      <div class="form-group"><label>투여량/메모</label><input id="ml-dose-note" placeholder="예) 물 200L당 400cc"></div>
+      <div class="form-group"><label>상담 일자 *</label><input id="ml-log-date" type="date"></div>
+      <div class="form-group"><label>질병</label><input id="ml-disease" placeholder="예) 대장균증"></div>
     </div>
     <div class="form-group"><label>약품</label>
       <select id="ml-drug-sel" onchange="onLogDrugChange()"></select>
@@ -776,7 +838,8 @@
         <input id="ml-vaccine-custom-input" placeholder="백신명 직접 입력">
       </div>
     </div>
-    <div class="form-group"><label>비고</label><textarea id="ml-note" placeholder="특이사항을 입력하세요"></textarea></div>
+    <div class="form-group"><label>투여량/메모</label><input id="ml-dose-note" placeholder="예) 물 200L당 400cc, 제품명 등"></div>
+    <div class="form-group"><label>내용</label><textarea id="ml-note" placeholder="상담 내용을 입력하세요"></textarea></div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-medlog')">취소</button>
       <button class="btn btn-primary" onclick="saveMedicationLog()">저장</button>
@@ -818,22 +881,23 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=20260813f"></script>
-<script src="js/supabaseClient.js?v=20260813f"></script>
-<script src="js/auth.js?v=20260813f"></script>
-<script src="js/farms.js?v=20260813f"></script>
-<script src="js/masterdata.js?v=20260813f"></script>
-<script src="js/rxProducts.js?v=20260813f"></script>
-<script src="js/drugSearch.js?v=20260813f"></script>
-<script src="js/programs.js?v=20260813f"></script>
-<script src="js/batches.js?v=20260813f"></script>
-<script src="js/medicationLog.js?v=20260813f"></script>
-<script src="js/prescriptions.js?v=20260813f"></script>
-<script src="js/schedule.js?v=20260813f"></script>
-<script src="js/dashboard.js?v=20260813f"></script>
-<script src="js/reports.js?v=20260813f"></script>
-<script src="js/print.js?v=20260813f"></script>
-<script src="js/backup.js?v=20260813f"></script>
-<script src="js/app.js?v=20260813f"></script>
+<script src="js/config.js?v=20260813g"></script>
+<script src="js/supabaseClient.js?v=20260813g"></script>
+<script src="js/auth.js?v=20260813g"></script>
+<script src="js/breedStandards.js?v=20260813g"></script>
+<script src="js/farms.js?v=20260813g"></script>
+<script src="js/masterdata.js?v=20260813g"></script>
+<script src="js/rxProducts.js?v=20260813g"></script>
+<script src="js/drugSearch.js?v=20260813g"></script>
+<script src="js/programs.js?v=20260813g"></script>
+<script src="js/batches.js?v=20260813g"></script>
+<script src="js/medicationLog.js?v=20260813g"></script>
+<script src="js/prescriptions.js?v=20260813g"></script>
+<script src="js/schedule.js?v=20260813g"></script>
+<script src="js/dashboard.js?v=20260813g"></script>
+<script src="js/reports.js?v=20260813g"></script>
+<script src="js/print.js?v=20260813g"></script>
+<script src="js/backup.js?v=20260813g"></script>
+<script src="js/app.js?v=20260813g"></script>
 </body>
 </html>
