@@ -136,7 +136,9 @@ function fmtDate(d){ return `${d.getMonth()+1}/${d.getDate()}(${WEEK_DAYS[d.getD
 // ═══════════════════════════════════════════════════════════════════════════
 // 상태
 // ═══════════════════════════════════════════════════════════════════════════
-let state = { tab:"weather" };
+const VALID_TABS = ["weather","vent","consult"];
+const requestedTab = new URLSearchParams(location.search).get("tab");
+let state = { tab: VALID_TABS.includes(requestedTab) ? requestedTab : "weather" };
 
 // ── 날씨 상태 ──────────────────────────────────────────────────────────────
 let weatherState = {
@@ -1868,8 +1870,8 @@ function attachEvents(){
 }
 
 render();
-// 기본 탭이 날씨이므로, 저장된 위치가 있으면 페이지 로드 시 바로 불러온다
-if(state.tab==="weather" && weatherState.status==="idle"){
+// 날씨/환기가이드 탭은 날씨 데이터가 필요하므로, 저장된 위치가 있으면 페이지 로드 시 바로 불러온다
+if((state.tab==="weather" || state.tab==="vent") && weatherState.status==="idle"){
   const saved=loadWeatherLocation();
   if(saved) fetchWeather(saved.lat, saved.lng, saved.name);
 }

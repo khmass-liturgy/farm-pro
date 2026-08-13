@@ -26,6 +26,12 @@
     <div class="sidebar-item" onclick="showPage('weather-consult')">
       <span class="icon">🌤️</span> 날씨별 농장컨설팅
     </div>
+    <div class="sidebar-item" style="padding-left:28px" onclick="showPage('weather-vent')">
+      <span class="icon">🌬️</span> 환기가이드
+    </div>
+    <div class="sidebar-item" style="padding-left:28px" onclick="showPage('weather-livestock')">
+      <span class="icon">🐔🥚</span> 육계/산란계 컨설팅
+    </div>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-label">농장 관리</div>
@@ -115,6 +121,12 @@
     <!-- 날씨별 농장컨설팅 -->
     <div id="page-weather-consult" class="page">
       <iframe src="weather-consult.html" title="날씨별 농장컨설팅" style="width:100%; height:calc(100vh - 140px); border:1px solid var(--border); border-radius:var(--radius); background:#fff;"></iframe>
+    </div>
+    <div id="page-weather-vent" class="page">
+      <iframe src="weather-consult.html?tab=vent" title="환기가이드" style="width:100%; height:calc(100vh - 140px); border:1px solid var(--border); border-radius:var(--radius); background:#fff;"></iframe>
+    </div>
+    <div id="page-weather-livestock" class="page">
+      <iframe src="weather-consult.html?tab=consult" title="육계/산란계 컨설팅" style="width:100%; height:calc(100vh - 140px); border:1px solid var(--border); border-radius:var(--radius); background:#fff;"></iframe>
     </div>
 
     <!-- 농장 관리 -->

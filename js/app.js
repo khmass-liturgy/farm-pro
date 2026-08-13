@@ -2,6 +2,8 @@
 const PAGE_TITLES = {
   dashboard: '대시보드',
   'weather-consult': '날씨별 농장컨설팅',
+  'weather-vent': '환기가이드',
+  'weather-livestock': '육계/산란계 컨설팅',
   farms: '농장 등록/관리',
   programs: '투약 프로그램',
   batches: '입추(사육배치) 관리',
