@@ -8,7 +8,6 @@ const PAGE_TITLES = {
   programs: '투약 프로그램',
   batches: '입추(사육배치) 관리',
   'batch-detail': '입추 상세',
-  'medication-log': '투약 이력',
   prescriptions: '처방전 발급',
   schedule: '투약 일정',
   reports: '통계/리포트',
@@ -47,7 +46,6 @@ function showPage(name) {
   if (name === 'programs') { populateFarmFilter(); renderPrograms(); }
   if (name === 'batches') renderBatches();
   if (name === 'batch-detail') renderBatchDetail();
-  if (name === 'medication-log') populateMedLogFilters();
   if (name === 'prescriptions') { populateRxFarmFilter(); renderPrescriptions(); }
   if (name === 'schedule') populateScheduleSelects();
   if (name === 'reports') renderReports();

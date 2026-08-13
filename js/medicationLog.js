@@ -65,67 +65,10 @@ async function saveMedicationLog() {
   catch (e) { alert('저장 실패: ' + e.message); return; }
   closeModal('modal-medlog');
   if (document.getElementById('page-batch-detail')?.classList.contains('active')) renderBatchDetail();
-  if (document.getElementById('page-medication-log')?.classList.contains('active')) renderMedicationLogPage();
 }
 
 async function deleteMedicationLog(id) {
   if (!confirm('이 투약 기록을 삭제하시겠습니까?')) return;
   try { await deleteRow('medicationLogs', id); } catch (e) { alert('삭제 실패: ' + e.message); return; }
   if (document.getElementById('page-batch-detail')?.classList.contains('active')) renderBatchDetail();
-  if (document.getElementById('page-medication-log')?.classList.contains('active')) renderMedicationLogPage();
-}
-
-// ─── 투약 이력 조회 페이지 (필터: 농장/입추) ──────────────────────────────
-function populateMedLogFilters() {
-  const farms = load('farms');
-  const farmSel = document.getElementById('mlp-farm-filter');
-  const cur = farmSel.value;
-  farmSel.innerHTML = '<option value="">전체 농장</option>' + farms.map(f => `<option value="${f.id}"${f.id===cur?' selected':''}>${f.name}</option>`).join('');
-  renderMedLogFilterBatches();
-  renderMedicationLogPage();
-}
-function renderMedLogFilterBatches() {
-  const farmId = document.getElementById('mlp-farm-filter').value || '';
-  const batches = load('batches').filter(b => !farmId || b.farmId === farmId);
-  const farms = load('farms');
-  const sel = document.getElementById('mlp-batch-filter');
-  sel.innerHTML = '<option value="">전체 입추</option>' + batches.map(b => {
-    const farm = farms.find(f => f.id === b.farmId);
-    return `<option value="${b.id}">${farm?.name||''} · ${b.placementDate}</option>`;
-  }).join('');
-}
-function onMedLogFarmFilterChange() {
-  renderMedLogFilterBatches();
-  renderMedicationLogPage();
-}
-function renderMedicationLogPage() {
-  const farmId = document.getElementById('mlp-farm-filter')?.value || '';
-  const batchId = document.getElementById('mlp-batch-filter')?.value || '';
-  const batches = load('batches');
-  const farms = load('farms');
-  let logs = load('medicationLogs');
-  if (batchId) {
-    logs = logs.filter(l => l.batchId === batchId);
-  } else if (farmId) {
-    const idsInFarm = new Set(batches.filter(b => b.farmId === farmId).map(b => b.id));
-    logs = logs.filter(l => idsInFarm.has(l.batchId));
-  }
-  const tbody = document.getElementById('medlog-tbody');
-  const empty = document.getElementById('medlog-empty');
-  if (!logs.length) { tbody.innerHTML=''; empty.style.display=''; return; }
-  empty.style.display='none';
-  tbody.innerHTML = logs.map(l => {
-    const b = batches.find(x => x.id === l.batchId);
-    const farm = b ? farms.find(f => f.id === b.farmId) : null;
-    return `<tr>
-      <td>${l.logDate}</td>
-      <td>${farm?.name || '-'}</td>
-      <td>${l.programDay ? l.programDay+'일' : '-'}</td>
-      <td>${l.drugName||'-'}</td>
-      <td>${l.vaccineName||'-'}</td>
-      <td style="color:var(--text-secondary)">${l.note||'-'}</td>
-      <td style="color:var(--text-secondary);font-size:11px">${l.administeredByEmail||'-'}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="deleteMedicationLog('${l.id}')">삭제</button></td>
-    </tr>`;
-  }).join('');
 }
