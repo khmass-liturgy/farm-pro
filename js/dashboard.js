@@ -179,17 +179,6 @@ function renderDashboard() {
     </div>`;
   }
 
-  const farmRows = farms.slice(-5).reverse().map(f =>
-    `<tr><td><strong>${f.name}</strong></td><td>${f.owner}</td><td><span class="badge badge-blue">${f.type}</span></td><td style="color:var(--text-secondary)">${f.address}</td></tr>`
-  ).join('') || `<tr><td colspan="4" class="text-muted" style="text-align:center;padding:20px">등록된 농장이 없습니다</td></tr>`;
-  document.getElementById('dash-recent-farms').innerHTML = `<div class="tbl-wrap"><table><thead><tr><th>농장명</th><th>농장주</th><th>축종</th><th>주소</th></tr></thead><tbody>${farmRows}</tbody></table></div>`;
-
-  const drugTypeColors = { '항생제':'badge-blue', '콕시듐제':'badge-green', '영양제':'badge-amber', '소독제':'badge-teal', '성장촉진제':'badge-purple', '대사촉진제':'badge-red', '기타':'badge-red' };
-  const drugRows = drugs.slice(0,8).map(d =>
-    `<tr><td><strong>${d.name}</strong></td><td><span class="badge ${drugTypeColors[d.type]||'badge-blue'}">${d.type}</span></td><td style="color:var(--text-secondary)">${d.withdrawal||'-'}</td></tr>`
-  ).join('') || `<tr><td colspan="3" class="text-muted" style="text-align:center;padding:20px">등록된 약품이 없습니다</td></tr>`;
-  document.getElementById('dash-drugs').innerHTML = `<div class="tbl-wrap"><table><thead><tr><th>약품명</th><th>분류</th><th>휴약기간</th></tr></thead><tbody>${drugRows}</tbody></table></div>`;
-
   const next15 = computeProgramNext15Days();
   const next15El = document.getElementById('dash-program-15days');
   if (!next15.length) {
