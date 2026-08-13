@@ -129,7 +129,7 @@ function renderBatchDetail() {
         else statusCell = '<span class="text-muted">예정</span>';
       }
       rowsHtml += `<div class="day-plan-row ${isToday?'today':''} ${isFuture?'future':''}">
-        <div class="program-cell num">${i}일</div>
+        <div class="program-cell num">${i}일<div style="font-size:10px;color:var(--text-secondary);font-weight:400">${programDayDateShort(b.placementDate, i)}</div></div>
         <div class="program-cell">${dayDrugPillsHtml(d)}</div>
         <div class="program-cell">${dayVaccinePillHtml(d)}</div>
         <div class="program-cell" style="color:var(--text-secondary);font-size:11px">${d?.note||''}</div>
