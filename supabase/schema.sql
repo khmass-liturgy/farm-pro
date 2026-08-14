@@ -265,10 +265,12 @@ create table if not exists clinical_assessments (
   assessed_at date not null default current_date,
   farm_id uuid references farms(id) on delete set null,
   farm_name_snapshot text not null,
+  batch_id uuid references batches(id) on delete set null,
   subject_id text,
   house text,
   age_days int,
   temperature_c numeric(4,1),
+  humidity_pct numeric(4,1),
   scs jsonb not null default '{}'::jsonb,
   clinical jsonb not null default '{}'::jsonb,
   scs_score int not null default 0,
@@ -287,6 +289,12 @@ create table if not exists clinical_assessments (
 
 create index if not exists idx_clinical_assessments_farm_id on clinical_assessments(farm_id);
 create index if not exists idx_clinical_assessments_assessed_at on clinical_assessments(assessed_at);
+create index if not exists idx_clinical_assessments_batch_id on clinical_assessments(batch_id);
+
+-- 이미 clinical_assessments를 만든 배포본을 위한 컬럼 추가
+-- (계군 연결 = batch_id, 계사 습도 = humidity_pct)
+alter table clinical_assessments add column if not exists batch_id uuid references batches(id) on delete set null;
+alter table clinical_assessments add column if not exists humidity_pct numeric(4,1);
 
 drop trigger if exists trg_clinical_assessments_updated_at on clinical_assessments;
 create trigger trg_clinical_assessments_updated_at before update on clinical_assessments

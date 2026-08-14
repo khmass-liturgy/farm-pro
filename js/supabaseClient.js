@@ -160,9 +160,11 @@ const TABLES = {
     toRow(o) {
       return {
         assessed_at: o.assessedAt, farm_id: o.farmId || null, farm_name_snapshot: o.farmName,
+        batch_id: o.batchId || null,
         subject_id: o.subjectId || null, house: o.house || null,
         age_days: o.ageDays === '' || o.ageDays == null ? null : Number(o.ageDays),
         temperature_c: o.temperatureC === '' || o.temperatureC == null ? null : Number(o.temperatureC),
+        humidity_pct: o.humidityPct === '' || o.humidityPct == null ? null : Number(o.humidityPct),
         scs: o.scs || {}, clinical: o.clinical || {},
         scs_score: o.scsScore, scs_unknown: o.scsUnknown, clinical_score: o.clinicalScore,
         si: o.si, ci: o.ci, di: o.di, grade: o.grade, urgent_flags: o.urgentFlags || [],
@@ -172,7 +174,9 @@ const TABLES = {
     fromRow(r) {
       return {
         id: r.id, assessedAt: r.assessed_at, farmId: r.farm_id, farmName: r.farm_name_snapshot,
-        subjectId: r.subject_id, house: r.house, ageDays: r.age_days, temperatureC: r.temperature_c,
+        batchId: r.batch_id,
+        subjectId: r.subject_id, house: r.house, ageDays: r.age_days,
+        temperatureC: r.temperature_c, humidityPct: r.humidity_pct,
         scs: r.scs || {}, clinical: r.clinical || {},
         scsScore: r.scs_score, scsUnknown: r.scs_unknown, clinicalScore: r.clinical_score,
         si: Number(r.si), ci: Number(r.ci), di: Number(r.di), grade: r.grade,

@@ -120,6 +120,87 @@ function scsInterpretation(score) {
   return '징후 적음';
 }
 
+// ─── 계군(입추배치) 연동 ───────────────────────────────────────────────────
+// 농장을 고르면 그 농장에 등록된 계군을 불러오고, 계군을 고르면 계사동과 일령이
+// 자동으로 채워진다. 현장에서 손으로 다시 적을 필요가 없게 하려는 것.
+
+// 일령은 "오늘"이 아니라 "평가일" 기준으로 센다. 방문 후 나중에 입력하거나 날짜를
+// 소급해 기록할 때, computeDayAge(오늘 기준)를 쓰면 실제 관찰 시점의 일령과 어긋난다.
+function dayAgeOn(placementDate, onDate) {
+  if (!placementDate || !onDate) return null;
+  const start = new Date(placementDate + 'T00:00:00');
+  const end = new Date(onDate + 'T00:00:00');
+  return Math.floor((end - start) / 86400000) + 1;
+}
+
+function caBatchLabel(b) {
+  const speciesKey = b.species === '육계' ? 'broiler' : b.species === '산란계' ? 'layer' : null;
+  const breedName = speciesKey && b.breed ? (CONSULT_BREEDS[speciesKey]?.breeds[b.breed]?.name || b.breed) : '';
+  const parts = [
+    b.house || '동 미지정',
+    `${b.placementDate} 입추`,
+    [b.species, breedName].filter(Boolean).join(' '),
+    b.status === 'completed' ? '완료' : null,
+  ].filter(Boolean);
+  return parts.join(' · ');
+}
+
+// 사육중인 계군을 먼저, 그다음 완료된 계군(과거 기록 소급 입력용)을 보여준다.
+function populateClinicalBatchSelect(farmId, selectedId) {
+  const sel = document.getElementById('ca-batch');
+  if (!sel) return;
+  const batches = load('batches')
+    .filter(b => b.farmId === farmId)
+    .sort((a, b) => (a.status === b.status ? 0 : a.status === 'active' ? -1 : 1) ||
+                    b.placementDate.localeCompare(a.placementDate));
+  if (!farmId) {
+    sel.innerHTML = '<option value="">농장을 먼저 선택하세요</option>';
+    return;
+  }
+  if (!batches.length) {
+    sel.innerHTML = '<option value="">등록된 계군 없음 — 계사/일령 직접 입력</option>';
+    return;
+  }
+  sel.innerHTML = '<option value="">계군 선택 (직접 입력하려면 비워두세요)</option>' +
+    batches.map(b => `<option value="${b.id}"${b.id === selectedId ? ' selected' : ''}>${caBatchLabel(b)}</option>`).join('');
+}
+
+function onClinicalFarmChange() {
+  const farmId = document.getElementById('ca-farm').value;
+  populateClinicalBatchSelect(farmId, '');
+  // 이전 농장에서 채워둔 계사/일령은 새 농장과 무관하므로 지운다.
+  document.getElementById('ca-house').value = '';
+  document.getElementById('ca-age').value = '';
+  // 계군이 하나뿐이면 고민할 게 없으니 바로 선택해준다.
+  const batches = load('batches').filter(b => b.farmId === farmId && b.status === 'active');
+  if (batches.length === 1) {
+    document.getElementById('ca-batch').value = batches[0].id;
+    onClinicalBatchChange();
+  } else {
+    // 계군이 없거나 여러 개면, 농장에 적어둔 축사번호라도 힌트로 넣어준다.
+    const farm = load('farms').find(f => f.id === farmId);
+    if (farm?.barn_range) document.getElementById('ca-house').value = farm.barn_range;
+  }
+}
+
+function onClinicalBatchChange() {
+  const batchId = document.getElementById('ca-batch').value;
+  const b = load('batches').find(x => x.id === batchId);
+  if (!b) return;
+  document.getElementById('ca-house').value = b.house || '';
+  updateCaAgeFromBatch();
+}
+
+// 평가일이 바뀌면 일령도 다시 계산한다(같은 계군이라도 날짜가 다르면 일령이 다르다).
+function updateCaAgeFromBatch() {
+  const batchId = document.getElementById('ca-batch').value;
+  const b = load('batches').find(x => x.id === batchId);
+  if (!b) return;
+  const age = dayAgeOn(b.placementDate, document.getElementById('ca-date').value);
+  // 입추 전 날짜로 평가일을 잡으면 일령이 0 이하가 되는데, 그건 채워봐야 의미가 없다.
+  document.getElementById('ca-age').value = age != null && age >= 1 ? age : '';
+}
+
 // ─── 입력 폼 ───────────────────────────────────────────────────────────────
 // 현장에서 탭으로만 채점하도록, 모든 항목을 버튼 그리드로 그린다.
 let caDraft = { scs: {}, clinical: {} };
@@ -141,10 +222,14 @@ function openClinicalModal(id) {
   document.getElementById('modal-clinical-title').textContent = id ? '임상평가 편집' : '임상평가 입력';
   populateFarmSelect('ca-farm', rec?.farmId || '');
   document.getElementById('ca-date').value = rec?.assessedAt || new Date().toISOString().slice(0, 10);
+  populateClinicalBatchSelect(rec?.farmId || '', rec?.batchId || '');
   document.getElementById('ca-subject').value = rec?.subjectId || '';
+  // 편집일 때는 저장된 값을 그대로 둔다. 계군에서 다시 계산해 덮어쓰면 그때 기록한
+  // 계사/일령이 바뀌어버려, 과거 평가 기록이 사실과 달라진다.
   document.getElementById('ca-house').value = rec?.house || '';
   document.getElementById('ca-age').value = rec?.ageDays ?? '';
   document.getElementById('ca-temp').value = rec?.temperatureC ?? '';
+  document.getElementById('ca-humidity').value = rec?.humidityPct ?? '';
   document.getElementById('ca-notes').value = rec?.notes || '';
 
   renderScsInputs();
@@ -232,10 +317,12 @@ async function saveClinicalAssessment() {
   const s = scoreAssessment(caDraft.scs, caDraft.clinical);
   const data = {
     assessedAt, farmId, farmName: farm.name,
+    batchId: document.getElementById('ca-batch').value || null,
     subjectId: document.getElementById('ca-subject').value.trim(),
     house: document.getElementById('ca-house').value.trim(),
     ageDays: document.getElementById('ca-age').value,
     temperatureC: document.getElementById('ca-temp').value,
+    humidityPct: document.getElementById('ca-humidity').value,
     scs: caDraft.scs, clinical: caDraft.clinical,
     scsScore: s.scsScore, scsUnknown: s.scsUnknown, clinicalScore: s.clinicalScore,
     si: s.si, ci: s.ci, di: s.di, grade: s.grade, urgentFlags: s.urgentFlags,
@@ -250,12 +337,18 @@ async function saveClinicalAssessment() {
   closeModal('modal-clinical');
   populateClinicalFarmFilter();
   renderClinicalAssessments();
-  // 같은 농장에서 여러 마리를 연달아 보는 흐름이라, 저장 직후 바로 다음 개체를 열어준다.
+  // 같은 계사에서 여러 마리를 연달아 보는 흐름이라, 저장 직후 바로 다음 개체를 열어준다.
+  // 농장·계군·계사·일령·온습도는 같은 방문 안에서 그대로이므로 전부 이어받고,
+  // 개체 ID와 점수만 새로 입력하면 되게 한다.
   if (isNew && confirm(`저장했습니다. ${farm.name}에서 다른 개체를 이어서 평가하시겠습니까?`)) {
     openClinicalModal();
     document.getElementById('ca-farm').value = farmId;
     document.getElementById('ca-date').value = assessedAt;
+    populateClinicalBatchSelect(farmId, data.batchId || '');
     document.getElementById('ca-house').value = data.house;
+    document.getElementById('ca-age').value = data.ageDays;
+    document.getElementById('ca-temp').value = data.temperatureC;
+    document.getElementById('ca-humidity').value = data.humidityPct;
   }
 }
 
@@ -378,8 +471,22 @@ function printVisitReport(farmId, assessedAt) {
       <br>종합점수와 무관하게 즉시 격리하고 수의사 또는 방역기관에 연락하시기 바랍니다.
     </div>` : '';
 
-  const temps = records.map(r => r.temperatureC).filter(t => t != null);
-  const tempLabel = temps.length ? `${Math.min(...temps)}~${Math.max(...temps)}℃` : '-';
+  // 온습도는 방문 중 여러 계사를 돌면 값이 달라지므로 범위로 보여준다.
+  // (Supabase numeric은 문자열로 올 수 있어 Number()로 맞춘 뒤 계산한다.)
+  const range = (vals, unit) => {
+    const ns = vals.map(Number).filter(v => !Number.isNaN(v));
+    if (!ns.length) return '-';
+    const lo = Math.min(...ns), hi = Math.max(...ns);
+    return (lo === hi ? `${lo}` : `${lo}~${hi}`) + unit;
+  };
+  const tempLabel = range(records.map(r => r.temperatureC).filter(v => v != null), '℃');
+  const humidityLabel = range(records.map(r => r.humidityPct).filter(v => v != null), '%');
+  const envLabel = tempLabel === '-' && humidityLabel === '-' ? '-' : `${tempLabel} / ${humidityLabel}`;
+
+  // 방문에서 본 계군이 하나면 어떤 계군인지 헤더에 밝혀준다.
+  const batchIds = [...new Set(records.map(r => r.batchId).filter(Boolean))];
+  const batch = batchIds.length === 1 ? load('batches').find(b => b.id === batchIds[0]) : null;
+  const batchMeta = batch ? `<span>계군: ${caBatchLabel(batch)}</span>` : '';
 
   const html = `<div class="print-page">
     <div class="print-header">
@@ -389,6 +496,7 @@ function printVisitReport(farmId, assessedAt) {
         <span>농장주: ${farm?.owner || '-'}</span>
         <span>평가일: ${assessedAt}</span>
         <span>평가 개체수: ${n}수</span>
+        ${batchMeta}
       </div>
     </div>
 
@@ -396,7 +504,7 @@ function printVisitReport(farmId, assessedAt) {
       <div class="print-info-cell"><div class="lbl">평균 종합지수 DI</div><div class="val">${avgDi}</div></div>
       <div class="print-info-cell"><div class="lbl">최고 DI</div><div class="val">${maxDi}</div></div>
       <div class="print-info-cell"><div class="lbl">종합 판정</div><div class="val">${worstBand.grade}</div></div>
-      <div class="print-info-cell"><div class="lbl">관찰 기온</div><div class="val">${tempLabel}</div></div>
+      <div class="print-info-cell"><div class="lbl">관찰 기온 / 습도</div><div class="val">${envLabel}</div></div>
     </div>
 
     ${urgentBlock}

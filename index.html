@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>농장 투약관리 시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260814a">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260814a">
-<link rel="icon" href="img/favicon.ico?v=20260814a">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260814a">
-<link rel="stylesheet" href="css/styles.css?v=20260814a">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260814b">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260814b">
+<link rel="icon" href="img/favicon.ico?v=20260814b">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260814b">
+<link rel="stylesheet" href="css/styles.css?v=20260814b">
 </head>
 <body>
 
@@ -922,17 +922,25 @@
 
     <div class="form-row">
       <div class="form-group"><label>농장 *</label>
-        <select id="ca-farm"><option value="">농장 선택</option></select>
+        <select id="ca-farm" onchange="onClinicalFarmChange()"><option value="">농장 선택</option></select>
       </div>
-      <div class="form-group"><label>평가일 *</label><input id="ca-date" type="date"></div>
+      <div class="form-group"><label>평가일 *</label><input id="ca-date" type="date" onchange="updateCaAgeFromBatch()"></div>
+    </div>
+    <div class="form-group"><label>계군(입추) <span class="text-muted">(선택하면 계사·일령이 자동으로 채워집니다)</span></label>
+      <select id="ca-batch" onchange="onClinicalBatchChange()"><option value="">농장을 먼저 선택하세요</option></select>
     </div>
     <div class="form-row-3">
-      <div class="form-group"><label>개체/계군 ID</label><input id="ca-subject" placeholder="예) A-12"></div>
+      <div class="form-group"><label>개체 ID</label><input id="ca-subject" placeholder="예) A-12"></div>
       <div class="form-group"><label>계사(동)</label><input id="ca-house" placeholder="예) 3동"></div>
       <div class="form-group"><label>일령</label><input id="ca-age" type="number" min="0" placeholder="예) 24"></div>
     </div>
-    <div class="form-group"><label>계사 기온(℃) <span class="text-muted">(더위 스트레스와 질병 구분을 위해 기록)</span></label>
-      <input id="ca-temp" type="number" step="0.1" placeholder="예) 28.5">
+    <div class="form-row">
+      <div class="form-group"><label>계사 기온(℃) <span class="text-muted">(더위 스트레스 구분용)</span></label>
+        <input id="ca-temp" type="number" step="0.1" placeholder="예) 28.5">
+      </div>
+      <div class="form-group"><label>계사 습도(%) <span class="text-muted">(호흡기·깔짚 상태와 연관)</span></label>
+        <input id="ca-humidity" type="number" step="0.1" min="0" max="100" placeholder="예) 65">
+      </div>
     </div>
 
     <div id="ca-score-panel" class="ca-score-panel"></div>
@@ -957,24 +965,24 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=20260814a"></script>
-<script src="js/supabaseClient.js?v=20260814a"></script>
-<script src="js/auth.js?v=20260814a"></script>
-<script src="js/breedStandards.js?v=20260814a"></script>
-<script src="js/farms.js?v=20260814a"></script>
-<script src="js/masterdata.js?v=20260814a"></script>
-<script src="js/rxProducts.js?v=20260814a"></script>
-<script src="js/drugSearch.js?v=20260814a"></script>
-<script src="js/programs.js?v=20260814a"></script>
-<script src="js/batches.js?v=20260814a"></script>
-<script src="js/medicationLog.js?v=20260814a"></script>
-<script src="js/prescriptions.js?v=20260814a"></script>
-<script src="js/clinicalAssessment.js?v=20260814a"></script>
-<script src="js/schedule.js?v=20260814a"></script>
-<script src="js/dashboard.js?v=20260814a"></script>
-<script src="js/reports.js?v=20260814a"></script>
-<script src="js/print.js?v=20260814a"></script>
-<script src="js/backup.js?v=20260814a"></script>
-<script src="js/app.js?v=20260814a"></script>
+<script src="js/config.js?v=20260814b"></script>
+<script src="js/supabaseClient.js?v=20260814b"></script>
+<script src="js/auth.js?v=20260814b"></script>
+<script src="js/breedStandards.js?v=20260814b"></script>
+<script src="js/farms.js?v=20260814b"></script>
+<script src="js/masterdata.js?v=20260814b"></script>
+<script src="js/rxProducts.js?v=20260814b"></script>
+<script src="js/drugSearch.js?v=20260814b"></script>
+<script src="js/programs.js?v=20260814b"></script>
+<script src="js/batches.js?v=20260814b"></script>
+<script src="js/medicationLog.js?v=20260814b"></script>
+<script src="js/prescriptions.js?v=20260814b"></script>
+<script src="js/clinicalAssessment.js?v=20260814b"></script>
+<script src="js/schedule.js?v=20260814b"></script>
+<script src="js/dashboard.js?v=20260814b"></script>
+<script src="js/reports.js?v=20260814b"></script>
+<script src="js/print.js?v=20260814b"></script>
+<script src="js/backup.js?v=20260814b"></script>
+<script src="js/app.js?v=20260814b"></script>
 </body>
 </html>
