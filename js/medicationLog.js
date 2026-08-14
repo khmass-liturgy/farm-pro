@@ -51,8 +51,7 @@ function openConsultLogModal() {
   document.getElementById('ml-log-date').value = new Date().toISOString().slice(0,10);
   document.getElementById('ml-disease').value = '';
 
-  const farms = load('farms');
-  document.getElementById('ml-farm-sel').innerHTML = '<option value="">농장 선택</option>' + farms.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+  document.getElementById('ml-farm-sel').innerHTML = '<option value="">농장 선택</option>' + farmsByOwner().map(f => `<option value="${f.id}">${f.name} (${f.owner})</option>`).join('');
   document.getElementById('ml-batch-sel').innerHTML = '<option value="">입추 선택</option>';
 
   document.getElementById('ml-drug-sel').innerHTML = getDrugOptions('');
@@ -119,10 +118,9 @@ async function deleteMedicationLog(id) {
 
 // ─── 투약상담 및 처방 목록 페이지 (필터: 농장/입추) ────────────────────────
 function populateConsultFilters() {
-  const farms = load('farms');
   const farmSel = document.getElementById('mc-farm-filter');
   const cur = farmSel.value;
-  farmSel.innerHTML = '<option value="">전체 농장</option>' + farms.map(f => `<option value="${f.id}"${f.id===cur?' selected':''}>${f.name}</option>`).join('');
+  farmSel.innerHTML = '<option value="">전체 농장</option>' + farmsByOwner().map(f => `<option value="${f.id}"${f.id===cur?' selected':''}>${f.name} (${f.owner})</option>`).join('');
   renderConsultFilterBatches();
   renderConsultLogPage();
 }

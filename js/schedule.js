@@ -1,9 +1,8 @@
 // ─── 투약 일정 뷰 ──────────────────────────────────────────────────────────
 function populateScheduleSelects() {
-  const farms = load('farms');
   const sel = document.getElementById('sched-farm-select');
   if (!sel) return;
-  sel.innerHTML = '<option value="">농장을 선택하세요</option>' + farms.map(f =>
+  sel.innerHTML = '<option value="">농장을 선택하세요</option>' + farmsByOwner().map(f =>
     `<option value="${f.id}">${f.name} (${f.owner})</option>`
   ).join('');
   renderScheduleAlerts();

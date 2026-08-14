@@ -129,20 +129,18 @@ function programDayDateShort(placementDate, day) {
 
 // ─── 투약 프로그램 ─────────────────────────────────────────────────────────
 function populateFarmSelect(selectId, val) {
-  const farms = load('farms');
   const sel = document.getElementById(selectId);
   if (!sel) return;
-  sel.innerHTML = '<option value="">농장 선택</option>' + farms.map(f =>
+  sel.innerHTML = '<option value="">농장 선택</option>' + farmsByOwner().map(f =>
     `<option value="${f.id}"${f.id===val?' selected':''}>${f.name} (${f.owner})</option>`
   ).join('');
 }
 function populateFarmFilter() {
-  const farms = load('farms');
   const sel = document.getElementById('prog-filter-farm');
   if (!sel) return;
   const cur = sel.value;
-  sel.innerHTML = '<option value="">전체 농장</option>' + farms.map(f =>
-    `<option value="${f.id}"${f.id===cur?' selected':''}>${f.name}</option>`
+  sel.innerHTML = '<option value="">전체 농장</option>' + farmsByOwner().map(f =>
+    `<option value="${f.id}"${f.id===cur?' selected':''}>${f.name} (${f.owner})</option>`
   ).join('');
 }
 

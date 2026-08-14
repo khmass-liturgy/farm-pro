@@ -69,6 +69,19 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 // select에 없는 값을 .value로 넣으면 선택이 해제(selectedIndex = -1)되고, 그 상태로
 // 저장하면 빈 문자열이 써져 기존 데이터가 조용히 지워진다. 그래서 편집 모달을 열 때
 // 저장된 값이 목록에 없으면 "(기존 값)" 표시를 달아 임시 option으로 끼워 넣는다.
+// 농장 선택 드롭다운은 농장주 이름순으로 정렬한다.
+// STORE는 created_at 순이라 등록한 순서대로 나와서 농장이 늘어나면 찾기 어렵다.
+// 한글 정렬을 DB collation에 맡기지 않고 localeCompare('ko')로 맞추며,
+// 농장주가 같으면 농장명으로 한 번 더 정렬한다.
+// 정렬본을 새 배열로 만드는 것이 중요하다 — STORE.farms를 제자리에서 뒤집으면
+// 농장 관리 목록 등 다른 화면의 순서까지 딸려 바뀐다.
+function farmsByOwner() {
+  return [...load('farms')].sort((a, b) =>
+    (a.owner || '').localeCompare(b.owner || '', 'ko') ||
+    (a.name || '').localeCompare(b.name || '', 'ko')
+  );
+}
+
 // 모달은 한 번 만들어진 DOM을 계속 재사용하므로, 먼저 지난번에 끼워 넣은 option을
 // 걷어내야 다른 레코드를 열 때마다 찌꺼기가 쌓이지 않는다.
 function ensureSelectOption(el, value) {

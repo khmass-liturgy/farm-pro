@@ -5,12 +5,11 @@ const RX_PHARMACY = { name: '대한가축약품', ceo: '조민형', pharmacistNa
 const RX_MAX_ITEMS = 4; // 원본 서식의 처방내역/판매내역 표가 4행
 
 function populateRxFarmFilter() {
-  const farms = load('farms');
   const sel = document.getElementById('rx-filter-farm');
   if (!sel) return;
   const cur = sel.value;
-  sel.innerHTML = '<option value="">전체 농장</option>' + farms.map(f =>
-    `<option value="${f.id}"${f.id === cur ? ' selected' : ''}>${f.name}</option>`
+  sel.innerHTML = '<option value="">전체 농장</option>' + farmsByOwner().map(f =>
+    `<option value="${f.id}"${f.id === cur ? ' selected' : ''}>${f.name} (${f.owner})</option>`
   ).join('');
 }
 

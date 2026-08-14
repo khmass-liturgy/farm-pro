@@ -363,8 +363,8 @@ function populateClinicalFarmFilter() {
   const sel = document.getElementById('ca-filter-farm');
   if (!sel) return;
   const cur = sel.value;
-  sel.innerHTML = '<option value="">전체 농장</option>' + load('farms').map(f =>
-    `<option value="${f.id}"${f.id === cur ? ' selected' : ''}>${f.name}</option>`
+  sel.innerHTML = '<option value="">전체 농장</option>' + farmsByOwner().map(f =>
+    `<option value="${f.id}"${f.id === cur ? ' selected' : ''}>${f.name} (${f.owner})</option>`
   ).join('');
 }
 
