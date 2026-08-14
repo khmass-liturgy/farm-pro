@@ -8,10 +8,10 @@
 
 const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 
-const STORE = { farms: [], drugs: [], vaccines: [], feeds: [], programs: [], batches: [], medicationLogs: [], rxProducts: [], prescriptions: [] };
+const STORE = { farms: [], drugs: [], vaccines: [], feeds: [], programs: [], batches: [], medicationLogs: [], rxProducts: [], prescriptions: [], clinicalAssessments: [] };
 
 // 현재 편집 중인 각 엔티티의 id. 여러 feature 파일이 공유하는 전역 상태라 여기서 한 번만 선언한다.
-const editingId = { farm: null, drug: null, vaccine: null, feed: null, program: null, batch: null, medicationLog: null, rxProduct: null, prescription: null };
+const editingId = { farm: null, drug: null, vaccine: null, feed: null, program: null, batch: null, medicationLog: null, rxProduct: null, prescription: null, clinicalAssessment: null };
 
 // key(JS 쪽에서 쓰는 이름) -> { table, orderBy, ascending, columns(insert/update 시 허용 필드), toRow, fromRow }
 const TABLES = {
@@ -155,6 +155,32 @@ const TABLES = {
       };
     },
   },
+  clinicalAssessments: {
+    table: 'clinical_assessments', orderBy: 'assessed_at', ascending: false,
+    toRow(o) {
+      return {
+        assessed_at: o.assessedAt, farm_id: o.farmId || null, farm_name_snapshot: o.farmName,
+        subject_id: o.subjectId || null, house: o.house || null,
+        age_days: o.ageDays === '' || o.ageDays == null ? null : Number(o.ageDays),
+        temperature_c: o.temperatureC === '' || o.temperatureC == null ? null : Number(o.temperatureC),
+        scs: o.scs || {}, clinical: o.clinical || {},
+        scs_score: o.scsScore, scs_unknown: o.scsUnknown, clinical_score: o.clinicalScore,
+        si: o.si, ci: o.ci, di: o.di, grade: o.grade, urgent_flags: o.urgentFlags || [],
+        notes: o.notes || null, assessed_by_email: o.assessedByEmail || null,
+      };
+    },
+    fromRow(r) {
+      return {
+        id: r.id, assessedAt: r.assessed_at, farmId: r.farm_id, farmName: r.farm_name_snapshot,
+        subjectId: r.subject_id, house: r.house, ageDays: r.age_days, temperatureC: r.temperature_c,
+        scs: r.scs || {}, clinical: r.clinical || {},
+        scsScore: r.scs_score, scsUnknown: r.scs_unknown, clinicalScore: r.clinical_score,
+        si: Number(r.si), ci: Number(r.ci), di: Number(r.di), grade: r.grade,
+        urgentFlags: r.urgent_flags || [],
+        notes: r.notes, assessedByEmail: r.assessed_by_email, createdAt: r.created_at,
+      };
+    },
+  },
 };
 
 function load(key) {
@@ -169,8 +195,21 @@ async function refreshOne(key) {
   return STORE[key];
 }
 
+// 테이블 하나가 실패해도 앱 전체를 못 쓰게 만들지 않는다.
+// 새 기능을 배포한 직후 supabase/schema.sql을 아직 실행하지 않았으면 그 테이블만
+// 조회에 실패하는데, 예전처럼 Promise.all로 묶으면 부팅이 통째로 중단돼 화면이 뜨지 않았다.
+// 전부 실패한 경우(설정·네트워크·인증 문제)에만 호출부로 에러를 올린다.
 async function refreshAllStores() {
-  await Promise.all(Object.keys(TABLES).map(refreshOne));
+  const keys = Object.keys(TABLES);
+  const results = await Promise.allSettled(keys.map(refreshOne));
+  const failed = results
+    .map((r, i) => (r.status === 'rejected' ? { key: keys[i], table: TABLES[keys[i]].table, reason: r.reason } : null))
+    .filter(Boolean);
+  if (failed.length === keys.length) throw failed[0].reason;
+  failed.forEach(f => {
+    console.warn(`[farm-pro] '${f.table}' 테이블을 불러오지 못했습니다. supabase/schema.sql을 실행했는지 확인하세요.`, f.reason);
+  });
+  return failed;
 }
 
 async function insertRow(key, obj) {

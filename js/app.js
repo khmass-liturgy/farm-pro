@@ -4,6 +4,7 @@ const PAGE_TITLES = {
   'weather-consult': '날씨별 농장컨설팅',
   'weather-vent': '환기가이드',
   'weather-livestock': '육계/산란계 컨설팅',
+  clinical: '임상평가 (SCS + 확장 임상평가)',
   farms: '농장 등록/관리',
   programs: '투약 프로그램',
   batches: '입추(사육배치) 관리',
@@ -23,6 +24,7 @@ const PAGE_ACTIONS = {
   farms: `<button class="btn btn-primary" onclick="openFarmModal()">+ 농장 추가</button>`,
   programs: `<button class="btn btn-primary" onclick="openProgramModal()">+ 프로그램 추가</button>`,
   batches: `<button class="btn btn-primary" onclick="openBatchModal()">+ 입추 등록</button>`,
+  clinical: `<button class="btn btn-primary" onclick="openClinicalModal()">+ 임상평가 입력</button>`,
   medconsult: `<button class="btn btn-primary" onclick="openConsultLogModal()">+ 상담 기록 추가</button>`,
   prescriptions: `<button class="btn btn-primary" onclick="openRxPrescriptionModal()">+ 처방전 발급</button>`,
   drugs: `<button class="btn btn-primary" onclick="openDrugModal()">+ 약품 추가</button>`,
@@ -48,6 +50,7 @@ function showPage(name) {
   if (name === 'programs') { populateFarmFilter(); renderPrograms(); }
   if (name === 'batches') renderBatches();
   if (name === 'batch-detail') renderBatchDetail();
+  if (name === 'clinical') { populateClinicalFarmFilter(); renderClinicalAssessments(); }
   if (name === 'medconsult') populateConsultFilters();
   if (name === 'prescriptions') { populateRxFarmFilter(); renderPrescriptions(); }
   if (name === 'schedule') populateScheduleSelects();

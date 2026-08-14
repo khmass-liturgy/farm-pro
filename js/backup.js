@@ -24,7 +24,7 @@ async function restoreData(e) {
         return;
       }
       if (!confirm(`백업 파일을 복원하면 동일 id의 데이터가 덮어씌워집니다.\n내보낸 날짜: ${data._meta?.exportedAt||'알 수 없음'}\n\n계속하시겠습니까?`)) return;
-      for (const key of ['farms','drugs','vaccines','feeds','programs','batches','medicationLogs']) {
+      for (const key of ['farms','drugs','vaccines','feeds','programs','batches','medicationLogs','clinicalAssessments']) {
         const rows = data[key];
         if (!rows || !rows.length) continue;
         const cfg = TABLES[key];

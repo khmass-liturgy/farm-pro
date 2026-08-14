@@ -247,6 +247,51 @@ begin
   end if;
 end $$;
 
+-- ─────────────────────────────────────────────────────────────────────────
+-- 닭 임상평가 (SCS + 확장 임상평가 종합평가표)
+--
+-- 농장 방문 시 개체 단위로 기록한다. 원본 종합평가표(닭_임상평가_SCS_종합평가표.xlsx)의
+-- 구조를 그대로 옮긴 것으로, 채점 항목 정의와 계산식은 js/clinicalAssessment.js에 있다.
+--
+--   scs      : { tailPosition:0|1|null, headPosition:…, … } 7개 항목, null = 미상
+--   clinical : { activity:0-3, gait:0-3, … } 13개 항목, 합계 0–34
+--   SI = scs_score ÷ 7 × 100,  CI = clinical_score ÷ 34 × 100,  DI = SI×0.4 + CI×0.6
+--
+-- 점수/등급을 컬럼으로도 저장하는 이유: 평가 시점의 판정을 그대로 남기기 위함이다.
+-- 나중에 채점 기준이 바뀌어도 과거 기록의 판정이 소급해서 달라지면 안 된다.
+-- ─────────────────────────────────────────────────────────────────────────
+create table if not exists clinical_assessments (
+  id uuid primary key default gen_random_uuid(),
+  assessed_at date not null default current_date,
+  farm_id uuid references farms(id) on delete set null,
+  farm_name_snapshot text not null,
+  subject_id text,
+  house text,
+  age_days int,
+  temperature_c numeric(4,1),
+  scs jsonb not null default '{}'::jsonb,
+  clinical jsonb not null default '{}'::jsonb,
+  scs_score int not null default 0,
+  scs_unknown int not null default 0,
+  clinical_score int not null default 0,
+  si numeric(5,1) not null default 0,
+  ci numeric(5,1) not null default 0,
+  di numeric(5,1) not null default 0,
+  grade text not null default '저위험',
+  urgent_flags jsonb not null default '[]'::jsonb,
+  notes text,
+  assessed_by_email text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_clinical_assessments_farm_id on clinical_assessments(farm_id);
+create index if not exists idx_clinical_assessments_assessed_at on clinical_assessments(assessed_at);
+
+drop trigger if exists trg_clinical_assessments_updated_at on clinical_assessments;
+create trigger trg_clinical_assessments_updated_at before update on clinical_assessments
+  for each row execute function set_updated_at();
+
 -- 처방전용 제품 마스터 초기 데이터 (이미 같은 이름의 제품이 있으면 건너뜀)
 insert into prescription_products (name, ingredient, withdrawal_days, purpose, dose_amount, category, usage_method)
 select v.name, v.ingredient, v.withdrawal_days, v.purpose, v.dose_amount, v.category, v.usage_method
@@ -337,7 +382,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['farms','drugs','vaccines','feeds','programs','batches','medication_logs','prescription_products','prescriptions']
+  foreach t in array array['farms','drugs','vaccines','feeds','programs','batches','medication_logs','prescription_products','prescriptions','clinical_assessments']
   loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists authenticated_full_access on %I', t);
