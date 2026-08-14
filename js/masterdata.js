@@ -91,11 +91,14 @@ function openVaccineModal(id) {
   editingId.vaccine = id || null;
   const v = id ? load('vaccines').find(x => x.id === id) : null;
   document.getElementById('modal-vacc-title').textContent = id ? '백신 편집' : '백신 등록';
-  ['name','disease','method','age','dilution','maker','ingredient','notes'].forEach(k => {
+  // 스키마를 실행하기 전 데이터에는 species가 없다. 그때는 '공통'으로 봐서 어디서든 보이게 한다.
+  ensureSelectOption(document.getElementById('v-species'), v ? (v.species||'') : '');
+  ['name','disease','method','age','dilution','maker','ingredient','species','notes'].forEach(k => {
     const el = document.getElementById('v-'+k);
     if(el) el.value = v ? (v[k]||'') : '';
   });
   if(v) document.getElementById('v-method').value = v.method||'음수백신';
+  document.getElementById('v-species').value = v ? (v.species||'공통') : '공통';
   document.getElementById('v-name-search-results').innerHTML = '';
   openModal('modal-vaccine');
 }
@@ -110,6 +113,7 @@ async function saveVaccine() {
     dilution: document.getElementById('v-dilution').value.trim(),
     maker: document.getElementById('v-maker').value.trim(),
     ingredient: document.getElementById('v-ingredient').value.trim(),
+    species: document.getElementById('v-species').value || '공통',
     notes: document.getElementById('v-notes').value.trim(),
   };
   try {
@@ -126,17 +130,21 @@ async function deleteVaccine(id) {
 }
 function renderVaccines() {
   const q = (document.getElementById('vacc-search')?.value||'').toLowerCase();
+  const fs = document.getElementById('vacc-filter-species')?.value||'';
   let vaccines = load('vaccines').filter(v =>
-    !q || v.name.toLowerCase().includes(q) || (v.disease||'').toLowerCase().includes(q)
+    (!q || v.name.toLowerCase().includes(q) || (v.disease||'').toLowerCase().includes(q)) &&
+    (!fs || (v.species||'공통') === fs)
   );
   const tbody = document.getElementById('vacc-tbody');
   const empty = document.getElementById('vacc-empty');
   const methodColors = { '음수백신':'badge-blue', '분무백신':'badge-green', '점안':'badge-amber', '근육주사':'badge-red', '기타':'badge-purple' };
+  const speciesColors = { '육계':'badge-blue', '산란계':'badge-red', '공통':'badge-purple' };
   if (!vaccines.length) { tbody.innerHTML=''; empty.style.display=''; return; }
   empty.style.display='none';
   tbody.innerHTML = vaccines.map(v => `
     <tr>
       <td><strong>${v.name}</strong></td>
+      <td><span class="badge ${speciesColors[v.species||'공통']||'badge-purple'}">${v.species||'공통'}</span></td>
       <td>${v.maker||'-'}</td>
       <td style="color:var(--text-secondary)">${v.ingredient||'-'}</td>
       <td>${v.disease||'-'}</td>

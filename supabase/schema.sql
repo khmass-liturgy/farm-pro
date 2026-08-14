@@ -64,6 +64,7 @@ create table if not exists vaccines (
   dilution text,
   maker text,
   ingredient text,
+  species text not null default '공통',
   notes text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -72,6 +73,11 @@ create table if not exists vaccines (
 -- 기존 배포본에 이미 vaccines 테이블이 있을 경우를 위한 컬럼 추가
 alter table vaccines add column if not exists maker text;
 alter table vaccines add column if not exists ingredient text;
+
+-- 축종 구분(육계/산란계/공통) — 투약 프로그램에서 농장 축종에 맞는 백신만 고르게 한다.
+-- 기본값을 '공통'으로 둔 것은 의도적이다. 이미 등록된 백신은 축종 정보가 없으므로
+-- 잘못 감추는 것보다 전 축종에 그대로 보이는 편이 안전하다.
+alter table vaccines add column if not exists species text not null default '공통';
 
 create table if not exists feeds (
   id uuid primary key default gen_random_uuid(),

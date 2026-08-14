@@ -217,15 +217,55 @@ function getDrugOptions(selectedId) {
   return opts;
 }
 
-function getVaccineOptions(selectedId) {
-  const vaccines = load('vaccines');
+// 농장 축종 → 그 농장에서 고를 수 있는 백신 축종.
+// 백신은 육계/산란계/공통 세 가지로만 구분하므로, 삼계·토종닭·기타처럼 대응하는
+// 구분이 없는 축종은 거르지 않고 전부 보여준다(잘못 감추는 것보다 낫다).
+const VACCINE_SPECIES_BY_FARM_TYPE = { '육계': ['육계', '공통'], '산란계': ['산란계', '공통'] };
+function allowedVaccineSpecies(farmType) {
+  return VACCINE_SPECIES_BY_FARM_TYPE[farmType] || null; // null = 필터 없음
+}
+function currentProgramFarmType() {
+  const farmId = document.getElementById('p-farm')?.value;
+  if (!farmId) return '';
+  return load('farms').find(f => f.id === farmId)?.type || '';
+}
+
+// allowed를 넘기면 그 축종의 백신만 추린다(넘기지 않으면 전체 — 투약 이력 등 다른 화면용).
+// 이미 선택된 백신은 축종이 맞지 않아도 항상 남긴다. 농장을 바꿨다고 기존 선택이
+// 목록에서 사라지면 저장할 때 조용히 지워지기 때문이다.
+function getVaccineOptions(selectedId, allowed) {
+  const list = load('vaccines').filter(v =>
+    !allowed || allowed.includes(v.species || '공통') || v.id === selectedId
+  );
   let opts = `<option value="">백신 선택...</option>`;
-  vaccines.forEach(v => {
-    const sel = v.id === selectedId ? ' selected' : '';
-    opts += `<option value="${v.id}" data-name="${v.name}" data-method="${v.method||''}" data-dilution="${v.dilution||''}"${sel}>${v.name}</option>`;
+  const bySpecies = {};
+  list.forEach(v => { const s = v.species || '공통'; (bySpecies[s] = bySpecies[s] || []).push(v); });
+  const order = ['육계', '산란계', '공통'];
+  order.concat(Object.keys(bySpecies).filter(s => !order.includes(s))).forEach(s => {
+    if (!bySpecies[s]) return;
+    opts += `<optgroup label="${s}">`;
+    bySpecies[s].forEach(v => {
+      const sel = v.id === selectedId ? ' selected' : '';
+      opts += `<option value="${v.id}" data-name="${v.name}" data-method="${v.method||''}" data-dilution="${v.dilution||''}"${sel}>${v.name}</option>`;
+    });
+    opts += `</optgroup>`;
   });
   opts += `<optgroup label="─ 직접입력"><option value="__custom__"${selectedId==='__custom__'?' selected':''}>✏️ 직접 입력...</option></optgroup>`;
   return opts;
+}
+
+// 농장을 바꾸면 그 축종에 맞는 백신만 보이도록 일령별 백신 드롭다운을 다시 채운다.
+// 표를 통째로 다시 그리면 입력 중이던 약품·중요사항이 날아가므로 백신 select만 교체한다.
+function onProgramFarmChange() {
+  const allowed = allowedVaccineSpecies(currentProgramFarmType());
+  const n = parseInt(document.getElementById('p-duration').value) || 30;
+  for (let i = 1; i <= n; i++) {
+    const sel = document.getElementById(`day-vaccine-sel-${i}`);
+    if (!sel) continue;
+    const cur = sel.value;
+    sel.innerHTML = getVaccineOptions(cur, allowed);
+    sel.value = cur;
+  }
 }
 
 // 약품 선택 변경 → 용법 자동입력
@@ -304,6 +344,7 @@ function removeDrugSlot(dayNum, slotIdx) {
 function generateDayRows(existingDays) {
   const n = parseInt(document.getElementById('p-duration').value) || 30;
   const tbody = document.getElementById('day-rows-body');
+  const allowedVac = allowedVaccineSpecies(currentProgramFarmType());
   tbody.innerHTML = '';
   for (let i = 1; i <= n; i++) {
     const ex = existingDays ? existingDays.find(d => d.day === i) : null;
@@ -349,7 +390,7 @@ function generateDayRows(existingDays) {
       <td style="border:1px solid var(--border);padding:6px 8px;vertical-align:top">
         <select id="day-vaccine-sel-${i}" onchange="onVaccineSelectChange(${i})"
           style="width:100%;border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px;font-family:inherit;background:var(--bg-card)">
-          ${getVaccineOptions(isCustomV ? '__custom__' : (exVaccine?.vaccineId || ''))}
+          ${getVaccineOptions(isCustomV ? '__custom__' : (exVaccine?.vaccineId || ''), allowedVac)}
         </select>
         <div id="day-vaccine-custom-${i}" style="display:${isCustomV?'':'none'};margin-top:3px">
           <input type="text" id="day-vaccine-text-${i}" value="${isCustomV?(exVaccine.name||''):''}" placeholder="직접 입력"

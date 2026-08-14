@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>농장 투약관리 시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260814f">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260814f">
-<link rel="icon" href="img/favicon.ico?v=20260814f">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260814f">
-<link rel="stylesheet" href="css/styles.css?v=20260814f">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260814g">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260814g">
+<link rel="icon" href="img/favicon.ico?v=20260814g">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260814g">
+<link rel="stylesheet" href="css/styles.css?v=20260814g">
 </head>
 <body>
 
@@ -370,13 +370,19 @@
     <div id="page-vaccines" class="page">
       <div class="search-bar">
         <input class="search-input" id="vacc-search" placeholder="🔍  백신명, 대상질병 검색..." oninput="renderVaccines()">
+        <select id="vacc-filter-species" onchange="renderVaccines()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+          <option value="">전체 축종</option>
+          <option value="육계">육계</option>
+          <option value="산란계">산란계</option>
+          <option value="공통">공통</option>
+        </select>
       </div>
       <div class="card">
         <div class="tbl-wrap">
           <table>
             <thead>
               <tr>
-                <th>백신명</th><th>제조회사</th><th>성분</th><th>대상질병</th><th>투여방법</th><th>권장 일령</th><th>희석방법</th><th>비고</th><th>관리</th>
+                <th>백신명</th><th>축종</th><th>제조회사</th><th>성분</th><th>대상질병</th><th>투여방법</th><th>권장 일령</th><th>희석방법</th><th>비고</th><th>관리</th>
               </tr>
             </thead>
             <tbody id="vacc-tbody"></tbody>
@@ -653,15 +659,24 @@
       <div class="form-group"><label>성분</label><input id="v-ingredient" placeholder="예) 뉴캐슬병 생독 바이러스"></div>
     </div>
     <div class="form-row">
+      <div class="form-group"><label>축종 * <span class="text-muted">(투약 프로그램에서 농장 축종에 맞춰 표시됨)</span></label>
+        <select id="v-species">
+          <option value="공통">공통 (전 축종)</option>
+          <option value="육계">육계</option>
+          <option value="산란계">산란계</option>
+        </select>
+      </div>
       <div class="form-group"><label>투여방법</label>
         <select id="v-method">
           <option value="음수백신">음수백신</option><option value="분무백신">분무백신</option>
           <option value="점안">점안</option><option value="근육주사">근육주사</option><option value="기타">기타</option>
         </select>
       </div>
-      <div class="form-group"><label>권장 일령</label><input id="v-age" placeholder="예) 9-11일령"></div>
     </div>
-    <div class="form-group"><label>희석 방법</label><input id="v-dilution" placeholder="예) 중화제(탈지분유) 물 100리터에 1병"></div>
+    <div class="form-row">
+      <div class="form-group"><label>권장 일령</label><input id="v-age" placeholder="예) 9-11일령"></div>
+      <div class="form-group"><label>희석 방법</label><input id="v-dilution" placeholder="예) 중화제(탈지분유) 물 100리터에 1병"></div>
+    </div>
     <div class="form-group"><label>비고</label><textarea id="v-notes" placeholder="추가 정보를 입력하세요"></textarea></div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-vaccine')">취소</button>
@@ -740,7 +755,7 @@
     <div class="form-row">
       <div class="form-group"><label>프로그램명 *</label><input id="p-name" placeholder="예) 진흥농장 육계 30일 프로그램"></div>
       <div class="form-group"><label>농장 선택 *</label>
-        <select id="p-farm"><option value="">농장 선택</option></select>
+        <select id="p-farm" onchange="onProgramFarmChange()"><option value="">농장 선택</option></select>
       </div>
     </div>
     <div class="form-row">
@@ -766,7 +781,7 @@
             <th style="padding:8px; text-align:center; border:1px solid var(--border);">날짜</th>
             <th class="prog-ref-col" style="display:none; padding:8px; text-align:center; border:1px solid var(--border);">📌 원본 <span id="prog-ref-name" style="font-weight:400;color:var(--text-muted)"></span></th>
             <th style="padding:8px; text-align:center; border:1px solid var(--border);">💊 약품투약 <span style="font-weight:400;color:var(--text-muted)">(+ 버튼으로 추가)</span></th>
-            <th style="padding:8px; text-align:center; border:1px solid var(--border);">💉 백신사항</th>
+            <th style="padding:8px; text-align:center; border:1px solid var(--border);">💉 백신사항 <span style="font-weight:400;color:var(--text-muted)">(농장 축종에 맞는 백신)</span></th>
             <th style="padding:8px; text-align:center; border:1px solid var(--border);">⚠️ 중요사항/비고 <span style="font-weight:400;color:var(--text-muted)">(약품선택시 자동입력)</span></th>
           </tr>
         </thead>
@@ -989,24 +1004,24 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=20260814f"></script>
-<script src="js/supabaseClient.js?v=20260814f"></script>
-<script src="js/auth.js?v=20260814f"></script>
-<script src="js/breedStandards.js?v=20260814f"></script>
-<script src="js/farms.js?v=20260814f"></script>
-<script src="js/masterdata.js?v=20260814f"></script>
-<script src="js/rxProducts.js?v=20260814f"></script>
-<script src="js/drugSearch.js?v=20260814f"></script>
-<script src="js/programs.js?v=20260814f"></script>
-<script src="js/batches.js?v=20260814f"></script>
-<script src="js/medicationLog.js?v=20260814f"></script>
-<script src="js/prescriptions.js?v=20260814f"></script>
-<script src="js/clinicalAssessment.js?v=20260814f"></script>
-<script src="js/schedule.js?v=20260814f"></script>
-<script src="js/dashboard.js?v=20260814f"></script>
-<script src="js/reports.js?v=20260814f"></script>
-<script src="js/print.js?v=20260814f"></script>
-<script src="js/backup.js?v=20260814f"></script>
-<script src="js/app.js?v=20260814f"></script>
+<script src="js/config.js?v=20260814g"></script>
+<script src="js/supabaseClient.js?v=20260814g"></script>
+<script src="js/auth.js?v=20260814g"></script>
+<script src="js/breedStandards.js?v=20260814g"></script>
+<script src="js/farms.js?v=20260814g"></script>
+<script src="js/masterdata.js?v=20260814g"></script>
+<script src="js/rxProducts.js?v=20260814g"></script>
+<script src="js/drugSearch.js?v=20260814g"></script>
+<script src="js/programs.js?v=20260814g"></script>
+<script src="js/batches.js?v=20260814g"></script>
+<script src="js/medicationLog.js?v=20260814g"></script>
+<script src="js/prescriptions.js?v=20260814g"></script>
+<script src="js/clinicalAssessment.js?v=20260814g"></script>
+<script src="js/schedule.js?v=20260814g"></script>
+<script src="js/dashboard.js?v=20260814g"></script>
+<script src="js/reports.js?v=20260814g"></script>
+<script src="js/print.js?v=20260814g"></script>
+<script src="js/backup.js?v=20260814g"></script>
+<script src="js/app.js?v=20260814g"></script>
 </body>
 </html>

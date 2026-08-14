@@ -44,7 +44,8 @@ const TABLES = {
     toRow(o) {
       return {
         name: o.name, disease: o.disease || null, method: o.method, age: o.age || null, dilution: o.dilution || null,
-        maker: o.maker || null, ingredient: o.ingredient || null, notes: o.notes || null,
+        maker: o.maker || null, ingredient: o.ingredient || null,
+        species: o.species || '공통', notes: o.notes || null,
       };
     },
     fromRow(r) { return { ...r }; },
