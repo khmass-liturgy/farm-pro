@@ -24,7 +24,17 @@ async function restoreData(e) {
         return;
       }
       if (!confirm(`백업 파일을 복원하면 동일 id의 데이터가 덮어씌워집니다.\n내보낸 날짜: ${data._meta?.exportedAt||'알 수 없음'}\n\n계속하시겠습니까?`)) return;
-      for (const key of ['farms','drugs','vaccines','feeds','programs','batches','medicationLogs','clinicalAssessments']) {
+      // backupData()가 내보내는 TABLES 전체를 빠짐없이 복원한다(하나라도 빠지면
+      // 파일에는 있는데 조용히 사라진다). 순서는 FK 의존 순 — farms가 먼저 들어가야
+      // programs/batches/prescriptions/clinical_assessments의 farm_id가 살아남는다.
+      // rxProducts(prescription_products)는 prescriptions.items가 jsonb라 하드 FK는
+      // 없지만, 품목이 참조하는 제품 마스터가 먼저 있도록 앞에 둔다.
+      //
+      // 참고: prescriptions.issue_no(generated always as identity)와 valid_until(생성 컬럼)은
+      // TABLES.prescriptions.toRow()가 내보내지 않으므로 upsert 페이로드에 포함되지 않는다.
+      // 대신 새로 insert되는 처방전의 발급번호는 DB가 다시 채번하므로 백업 당시의
+      // 번호와 달라질 수 있다(이미 같은 id가 있으면 update라 기존 번호를 유지).
+      for (const key of ['farms','drugs','vaccines','feeds','programs','batches','medicationLogs','rxProducts','prescriptions','clinicalAssessments']) {
         const rows = data[key];
         if (!rows || !rows.length) continue;
         const cfg = TABLES[key];
@@ -41,11 +51,17 @@ async function restoreData(e) {
   e.target.value = '';
 }
 
+// 초기화 대상에서 prescription_products(처방 제품 마스터)는 일부러 제외한다.
+// 이 테이블만은 사용자가 입력한 데이터가 아니라 supabase/schema.sql이 심어주는
+// 기준 데이터라, 지우면 앱에서는 되살릴 방법이 없고 SQL Editor에서 schema.sql을
+// 다시 실행해야 한다. 확인 문구에도 유지된다는 사실을 명시한다.
 async function clearAllData() {
-  if (!confirm('⚠️ 모든 데이터가 삭제됩니다. 반드시 백업 후 진행하세요.\n\n정말로 삭제하시겠습니까?')) return;
+  if (!confirm('⚠️ 농장·약품·백신·사료첨가제·프로그램·입추·투약이력·처방전·임상평가가 모두 삭제됩니다.\n(처방 제품 마스터는 유지됩니다)\n반드시 백업 후 진행하세요.\n\n정말로 삭제하시겠습니까?')) return;
   if (!confirm('마지막 확인입니다. 정말 전체 데이터를 삭제할까요? 이 작업은 되돌릴 수 없습니다.')) return;
   try {
-    for (const table of ['medication_logs','batches','programs','feeds','vaccines','drugs','farms']) {
+    // FK 의존 순서 — 자식 테이블부터. batches는 farms를 on delete restrict로 참조하므로
+    // 반드시 farms보다 먼저 지워야 한다.
+    for (const table of ['medication_logs','clinical_assessments','prescriptions','batches','programs','feeds','vaccines','drugs','farms']) {
       const { error } = await sb.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
       if (error) throw error;
     }
