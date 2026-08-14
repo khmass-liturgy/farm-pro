@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>농장 투약관리 시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260814h">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260814h">
-<link rel="icon" href="img/favicon.ico?v=20260814h">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260814h">
-<link rel="stylesheet" href="css/styles.css?v=20260814h">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260814i">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260814i">
+<link rel="icon" href="img/favicon.ico?v=20260814i">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260814i">
+<link rel="stylesheet" href="css/styles.css?v=20260814i">
 </head>
 <body>
 
@@ -37,6 +37,9 @@
     </div>
     <div class="sidebar-item" onclick="showPage('clinical')">
       <span class="icon">🩺</span> 임상평가(SCS)
+    </div>
+    <div class="sidebar-item" onclick="showPage('rodent')">
+      <span class="icon">🐀</span> 구서작업 컨설팅
     </div>
   </div>
   <div class="sidebar-section">
@@ -153,6 +156,36 @@
         SCS(Stressed Chicken Scale) 7개 신호와 확장 임상평가 13개 항목을 종합해 질병징후 지수(DI)를 계산합니다.
         DI = SI×40% + CI×60% · 긴급징후는 DI보다 우선 적용됩니다.
         선별용 운영지표이며 수의사 진료·검사·법정 신고를 대체하지 않습니다.
+      </p>
+    </div>
+
+    <!-- 구서작업 컨설팅 평가 -->
+    <div id="page-rodent" class="page">
+      <div class="search-bar">
+        <input class="search-input" id="rc-search" placeholder="🔍  농장명 검색..." oninput="renderRodentAssessments()">
+        <select id="rc-filter-farm" onchange="renderRodentAssessments()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);"></select>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>평가일</th><th>농장</th><th>감사 위험도</th><th>직전 대비</th><th>긴급 중요항목</th><th>시정조치</th><th>판정</th><th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="rc-tbody"></tbody>
+          </table>
+        </div>
+        <div id="rc-empty" class="empty-state" style="display:none">
+          <div class="icon-big">🐀</div>
+          <p>기록된 구서 컨설팅 평가가 없습니다. 농장 방문 시 "+ 구서 평가 입력"으로 기록하세요.</p>
+        </div>
+      </div>
+      <p class="text-muted mt-16">
+        구서 감사표 20항목을 0(적합)~3(긴급)으로 채점해 가중위험도와 등급을 계산합니다.
+        중요항목은 가중치 ×2이며, 중요항목이 3점이면 위험도와 무관하게 "긴급 개선"으로 판정됩니다.
+        배제(exclusion) → 위생·먹이관리 → 모니터링 → 포획·미끼 → 검증 순서로 개선하며, 약제 투입을 먼저 하지 않습니다.
+        컨설팅용 운영도구이며 등록제품 라벨·국가 법규·수의사 지침이 우선합니다.
       </p>
     </div>
 
@@ -480,6 +513,33 @@
 
   </div><!-- /content -->
 </div><!-- /main -->
+
+<!-- 모달: 구서작업 컨설팅 평가 -->
+<div class="modal-bg" id="modal-rodent">
+  <div class="modal" style="width:900px; max-width:97vw;">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-rodent-title">구서 컨설팅 평가 입력</div>
+      <button class="modal-close" onclick="closeModal('modal-rodent')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>농장 *</label><select id="rc-farm"></select></div>
+      <div class="form-group"><label>평가일 *</label><input id="rc-date" type="date" min="1900-01-01" max="2999-12-31"></div>
+    </div>
+    <div class="ca-score-panel" id="rc-score-panel"></div>
+    <div class="text-muted mb-16" style="margin-top:10px">
+      모든 항목은 <strong>0(적합)</strong>에서 시작합니다. 문제가 있는 항목만 눌러 점수를 올리세요.
+      1점 이상이면 관찰 증거 메모칸과 권장 조치가 나타나며, 2점 이상은 보고서의 시정조치 실행계획에 자동으로 등록됩니다.
+    </div>
+    <div id="rc-items-wrap"></div>
+    <div class="form-group mt-16"><label>현장 메모 <span class="text-muted">(보고서 종합의견에 함께 인쇄됨)</span></label>
+      <textarea id="rc-notes" placeholder="예) 3동 뒤편 배수로에 굴 3개소 확인, 사료창고 문틈 15mm"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-rodent')">취소</button>
+      <button class="btn btn-primary" onclick="saveRodentAssessment()">저장</button>
+    </div>
+  </div>
+</div>
 
 <!-- 모달: 농장 등록/편집 -->
 <div class="modal-bg" id="modal-farm">
@@ -1004,24 +1064,25 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=20260814h"></script>
-<script src="js/supabaseClient.js?v=20260814h"></script>
-<script src="js/auth.js?v=20260814h"></script>
-<script src="js/breedStandards.js?v=20260814h"></script>
-<script src="js/farms.js?v=20260814h"></script>
-<script src="js/masterdata.js?v=20260814h"></script>
-<script src="js/rxProducts.js?v=20260814h"></script>
-<script src="js/drugSearch.js?v=20260814h"></script>
-<script src="js/programs.js?v=20260814h"></script>
-<script src="js/batches.js?v=20260814h"></script>
-<script src="js/medicationLog.js?v=20260814h"></script>
-<script src="js/prescriptions.js?v=20260814h"></script>
-<script src="js/clinicalAssessment.js?v=20260814h"></script>
-<script src="js/schedule.js?v=20260814h"></script>
-<script src="js/dashboard.js?v=20260814h"></script>
-<script src="js/reports.js?v=20260814h"></script>
-<script src="js/print.js?v=20260814h"></script>
-<script src="js/backup.js?v=20260814h"></script>
-<script src="js/app.js?v=20260814h"></script>
+<script src="js/config.js?v=20260814i"></script>
+<script src="js/supabaseClient.js?v=20260814i"></script>
+<script src="js/auth.js?v=20260814i"></script>
+<script src="js/breedStandards.js?v=20260814i"></script>
+<script src="js/farms.js?v=20260814i"></script>
+<script src="js/masterdata.js?v=20260814i"></script>
+<script src="js/rxProducts.js?v=20260814i"></script>
+<script src="js/drugSearch.js?v=20260814i"></script>
+<script src="js/programs.js?v=20260814i"></script>
+<script src="js/batches.js?v=20260814i"></script>
+<script src="js/medicationLog.js?v=20260814i"></script>
+<script src="js/prescriptions.js?v=20260814i"></script>
+<script src="js/clinicalAssessment.js?v=20260814i"></script>
+<script src="js/rodentControl.js?v=20260814i"></script>
+<script src="js/schedule.js?v=20260814i"></script>
+<script src="js/dashboard.js?v=20260814i"></script>
+<script src="js/reports.js?v=20260814i"></script>
+<script src="js/print.js?v=20260814i"></script>
+<script src="js/backup.js?v=20260814i"></script>
+<script src="js/app.js?v=20260814i"></script>
 </body>
 </html>

@@ -310,6 +310,43 @@ drop trigger if exists trg_clinical_assessments_updated_at on clinical_assessmen
 create trigger trg_clinical_assessments_updated_at before update on clinical_assessments
   for each row execute function set_updated_at();
 
+-- ─────────────────────────────────────────────────────────────────────────
+-- 농장 구서작업 컨설팅 평가 (구서 감사표 20항목)
+--
+-- 원본: 농장_구서작업_컨설팅_평가표.xlsx. 항목 정의와 계산식은 js/rodentControl.js에 있다.
+--   scores   : { 'R-01': 0|1|2|3, ... } 0=적합 1=부분개선 2=부적합 3=긴급
+--   evidence : { 'R-01': '관찰 메모', ... } 점수 1 이상인 항목의 현장 증거
+--   가중위험도(%) = Σ(점수 × 중요도) ÷ Σ(3 × 중요도) × 100
+--
+-- 임상평가와 같은 이유로 점수·등급을 컬럼으로도 저장한다. 나중에 채점 기준이나
+-- 항목이 바뀌어도 그때 농장주에게 전달한 보고서의 판정이 소급해 달라지면 안 된다.
+-- ─────────────────────────────────────────────────────────────────────────
+create table if not exists rodent_assessments (
+  id uuid primary key default gen_random_uuid(),
+  assessed_at date not null default current_date,
+  farm_id uuid references farms(id) on delete set null,
+  farm_name_snapshot text not null,
+  scores jsonb not null default '{}'::jsonb,
+  evidence jsonb not null default '{}'::jsonb,
+  risk_score int not null default 0,
+  max_score int not null default 0,
+  risk_pct numeric(5,1) not null default 0,
+  grade text not null default '양호',
+  critical_count int not null default 0,
+  area_scores jsonb not null default '{}'::jsonb,
+  notes text,
+  assessed_by_email text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_rodent_assessments_farm_id on rodent_assessments(farm_id);
+create index if not exists idx_rodent_assessments_assessed_at on rodent_assessments(assessed_at);
+
+drop trigger if exists trg_rodent_assessments_updated_at on rodent_assessments;
+create trigger trg_rodent_assessments_updated_at before update on rodent_assessments
+  for each row execute function set_updated_at();
+
 -- 처방전용 제품 마스터 초기 데이터 (이미 같은 이름의 제품이 있으면 건너뜀)
 insert into prescription_products (name, ingredient, withdrawal_days, purpose, dose_amount, category, usage_method)
 select v.name, v.ingredient, v.withdrawal_days, v.purpose, v.dose_amount, v.category, v.usage_method
@@ -400,7 +437,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['farms','drugs','vaccines','feeds','programs','batches','medication_logs','prescription_products','prescriptions','clinical_assessments']
+  foreach t in array array['farms','drugs','vaccines','feeds','programs','batches','medication_logs','prescription_products','prescriptions','clinical_assessments','rodent_assessments']
   loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists authenticated_full_access on %I', t);

@@ -8,10 +8,10 @@
 
 const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 
-const STORE = { farms: [], drugs: [], vaccines: [], feeds: [], programs: [], batches: [], medicationLogs: [], rxProducts: [], prescriptions: [], clinicalAssessments: [] };
+const STORE = { farms: [], drugs: [], vaccines: [], feeds: [], programs: [], batches: [], medicationLogs: [], rxProducts: [], prescriptions: [], clinicalAssessments: [], rodentAssessments: [] };
 
 // 현재 편집 중인 각 엔티티의 id. 여러 feature 파일이 공유하는 전역 상태라 여기서 한 번만 선언한다.
-const editingId = { farm: null, drug: null, vaccine: null, feed: null, program: null, batch: null, medicationLog: null, rxProduct: null, prescription: null, clinicalAssessment: null };
+const editingId = { farm: null, drug: null, vaccine: null, feed: null, program: null, batch: null, medicationLog: null, rxProduct: null, prescription: null, clinicalAssessment: null, rodentAssessment: null };
 
 // key(JS 쪽에서 쓰는 이름) -> { table, orderBy, ascending, columns(insert/update 시 허용 필드), toRow, fromRow }
 const TABLES = {
@@ -153,6 +153,27 @@ const TABLES = {
         animalType: r.animal_type_snapshot, headCount: r.head_count_snapshot, barnRange: r.barn_range_snapshot,
         items: r.items || [],
         issuedByEmail: r.issued_by_email, createdAt: r.created_at,
+      };
+    },
+  },
+  rodentAssessments: {
+    table: 'rodent_assessments', orderBy: 'assessed_at', ascending: false,
+    toRow(o) {
+      return {
+        assessed_at: o.assessedAt, farm_id: o.farmId || null, farm_name_snapshot: o.farmName,
+        scores: o.scores || {}, evidence: o.evidence || {},
+        risk_score: o.riskScore, max_score: o.maxScore, risk_pct: o.riskPct,
+        grade: o.grade, critical_count: o.criticalCount, area_scores: o.areaScores || {},
+        notes: o.notes || null, assessed_by_email: o.assessedByEmail || null,
+      };
+    },
+    fromRow(r) {
+      return {
+        id: r.id, assessedAt: r.assessed_at, farmId: r.farm_id, farmName: r.farm_name_snapshot,
+        scores: r.scores || {}, evidence: r.evidence || {},
+        riskScore: r.risk_score, maxScore: r.max_score, riskPct: Number(r.risk_pct),
+        grade: r.grade, criticalCount: r.critical_count, areaScores: r.area_scores || {},
+        notes: r.notes, assessedByEmail: r.assessed_by_email, createdAt: r.created_at,
       };
     },
   },
