@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>농장 투약관리 시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260814e">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260814e">
-<link rel="icon" href="img/favicon.ico?v=20260814e">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260814e">
-<link rel="stylesheet" href="css/styles.css?v=20260814e">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260814f">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260814f">
+<link rel="icon" href="img/favicon.ico?v=20260814f">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260814f">
+<link rel="stylesheet" href="css/styles.css?v=20260814f">
 </head>
 <body>
 
@@ -735,6 +735,7 @@
     <div id="prog-dup-hint" class="mb-16" style="display:none; padding:10px 14px; background:var(--accent-light); border:1px solid var(--accent); border-radius:8px; font-size:12px; color:var(--accent-dark);">
       📄 <strong>복제본입니다.</strong> 저장하면 원본은 그대로 두고 새 프로그램이 하나 만들어집니다.
       입추일을 새로 지정하면 일령별 날짜가 자동으로 다시 계산되고, 필요한 날짜만 골라 고쳐도 됩니다.
+      아래 표의 <strong>📌 원본</strong> 열에 복제한 프로그램의 내용이 일령별로 그대로 남아 있으니, 비교하면서 고치세요.
     </div>
     <div class="form-row">
       <div class="form-group"><label>프로그램명 *</label><input id="p-name" placeholder="예) 진흥농장 육계 30일 프로그램"></div>
@@ -754,14 +755,16 @@
         <colgroup>
           <col style="width:50px">
           <col style="width:80px">
-          <col style="width:34%">
-          <col style="width:25%">
+          <col class="prog-ref-col" style="width:20%; display:none">
+          <col style="width:30%">
+          <col style="width:22%">
           <col style="width:auto">
         </colgroup>
         <thead>
           <tr style="background:var(--bg);">
             <th style="padding:8px; text-align:center; border:1px solid var(--border);">일령</th>
             <th style="padding:8px; text-align:center; border:1px solid var(--border);">날짜</th>
+            <th class="prog-ref-col" style="display:none; padding:8px; text-align:center; border:1px solid var(--border);">📌 원본 <span id="prog-ref-name" style="font-weight:400;color:var(--text-muted)"></span></th>
             <th style="padding:8px; text-align:center; border:1px solid var(--border);">💊 약품투약 <span style="font-weight:400;color:var(--text-muted)">(+ 버튼으로 추가)</span></th>
             <th style="padding:8px; text-align:center; border:1px solid var(--border);">💉 백신사항</th>
             <th style="padding:8px; text-align:center; border:1px solid var(--border);">⚠️ 중요사항/비고 <span style="font-weight:400;color:var(--text-muted)">(약품선택시 자동입력)</span></th>
@@ -986,24 +989,24 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=20260814e"></script>
-<script src="js/supabaseClient.js?v=20260814e"></script>
-<script src="js/auth.js?v=20260814e"></script>
-<script src="js/breedStandards.js?v=20260814e"></script>
-<script src="js/farms.js?v=20260814e"></script>
-<script src="js/masterdata.js?v=20260814e"></script>
-<script src="js/rxProducts.js?v=20260814e"></script>
-<script src="js/drugSearch.js?v=20260814e"></script>
-<script src="js/programs.js?v=20260814e"></script>
-<script src="js/batches.js?v=20260814e"></script>
-<script src="js/medicationLog.js?v=20260814e"></script>
-<script src="js/prescriptions.js?v=20260814e"></script>
-<script src="js/clinicalAssessment.js?v=20260814e"></script>
-<script src="js/schedule.js?v=20260814e"></script>
-<script src="js/dashboard.js?v=20260814e"></script>
-<script src="js/reports.js?v=20260814e"></script>
-<script src="js/print.js?v=20260814e"></script>
-<script src="js/backup.js?v=20260814e"></script>
-<script src="js/app.js?v=20260814e"></script>
+<script src="js/config.js?v=20260814f"></script>
+<script src="js/supabaseClient.js?v=20260814f"></script>
+<script src="js/auth.js?v=20260814f"></script>
+<script src="js/breedStandards.js?v=20260814f"></script>
+<script src="js/farms.js?v=20260814f"></script>
+<script src="js/masterdata.js?v=20260814f"></script>
+<script src="js/rxProducts.js?v=20260814f"></script>
+<script src="js/drugSearch.js?v=20260814f"></script>
+<script src="js/programs.js?v=20260814f"></script>
+<script src="js/batches.js?v=20260814f"></script>
+<script src="js/medicationLog.js?v=20260814f"></script>
+<script src="js/prescriptions.js?v=20260814f"></script>
+<script src="js/clinicalAssessment.js?v=20260814f"></script>
+<script src="js/schedule.js?v=20260814f"></script>
+<script src="js/dashboard.js?v=20260814f"></script>
+<script src="js/reports.js?v=20260814f"></script>
+<script src="js/print.js?v=20260814f"></script>
+<script src="js/backup.js?v=20260814f"></script>
+<script src="js/app.js?v=20260814f"></script>
 </body>
 </html>

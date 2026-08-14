@@ -146,6 +146,22 @@ function populateFarmFilter() {
   ).join('');
 }
 
+// 복제 화면에서 일령별로 나란히 보여줄 원본 계획. 사육기간을 바꿔 표를 다시 그려도
+// (generateDayRows()가 인자 없이 호출됨) 비교 기준은 남아 있어야 하므로 모듈 변수로 둔다.
+let progRefDays = null;
+
+// 원본 열 한 칸: 그 일령에 원래 뭘 했는지 한눈에.
+function refDayCellHtml(d) {
+  if (!d) return '<span style="color:var(--text-muted)">-</span>';
+  const parts = [];
+  const drugs = dayDrugLabel(d);
+  if (drugs) parts.push(`<span style="color:var(--accent);font-weight:600">${drugs}</span>`);
+  const vac = dayVaccineLabel(d);
+  if (vac) parts.push(`<span style="color:var(--green);font-weight:600">💉 ${vac}</span>`);
+  if (d.note) parts.push(`<span style="color:var(--text-secondary)">${d.note}</span>`);
+  return parts.length ? parts.join('<br>') : '<span style="color:var(--text-muted)">-</span>';
+}
+
 // source를 넘기면 그 프로그램의 내용을 채운 채로 "새 프로그램" 화면을 연다(복제).
 // editingId.program을 null로 두는 것이 핵심 — saveProgram()이 update가 아니라
 // insert로 가서 원본은 그대로 남는다.
@@ -156,6 +172,10 @@ function openProgramModal(id, source) {
   document.getElementById('modal-prog-title').textContent =
     id ? '투약 프로그램 편집' : (isDup ? '투약 프로그램 복제' : '투약 프로그램 등록');
   document.getElementById('prog-dup-hint').style.display = isDup ? '' : 'none';
+  // 원본 비교 열은 복제할 때만 띄운다. generateDayRows()보다 먼저 세팅해야 표가 그려질 때 반영된다.
+  progRefDays = isDup ? (prog.days || []) : null;
+  document.querySelectorAll('.prog-ref-col').forEach(el => { el.style.display = isDup ? '' : 'none'; });
+  document.getElementById('prog-ref-name').textContent = isDup ? `(${prog.name})` : '';
   populateFarmSelect('p-farm', prog?.farmId || '');
   document.getElementById('p-name').value = isDup ? `${prog.name} (복사본)` : (prog?.name || '');
   document.getElementById('p-duration').value = prog?.duration || 30;
@@ -318,6 +338,7 @@ function generateDayRows(existingDays) {
     tr.innerHTML = `
       <td style="text-align:center;font-weight:700;color:var(--accent);background:var(--bg);border:1px solid var(--border);vertical-align:top;padding-top:10px">${i}</td>
       <td id="day-date-${i}" style="text-align:center;color:var(--text-secondary);font-size:11px;background:var(--bg);border:1px solid var(--border);vertical-align:top;padding-top:10px">${programDayDateShort(placementDate, i)}</td>
+      <td class="prog-ref-col" id="day-ref-${i}" style="display:${progRefDays?'':'none'};background:var(--bg);border:1px solid var(--border);padding:6px 8px;vertical-align:top;font-size:11px;line-height:1.5">${progRefDays ? refDayCellHtml(progRefDays.find(d => d.day === i)) : ''}</td>
       <td style="border:1px solid var(--border);padding:6px 8px;vertical-align:top">
         <div id="day-drug-slots-${i}" data-slots="${initialCount}">${slotsHtml}</div>
         <button onclick="addDrugSlot(${i})"
