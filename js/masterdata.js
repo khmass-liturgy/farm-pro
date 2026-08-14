@@ -22,6 +22,13 @@ function applyDoseSelects() {
   const amount = document.getElementById('d-dose-amount').value;
   if (!basis && !amount) return;
   if (doseEl.value !== '' && doseEl.value !== doseEl.dataset.autoValue) return;
+  // '기타'는 값이 아니라 "직접 입력하겠다"는 뜻이므로 기준만 채우고 커서를 넘겨준다.
+  if (amount === '기타') {
+    doseEl.value = basis;
+    doseEl.dataset.autoValue = basis;
+    doseEl.focus();
+    return;
+  }
   const combined = [basis, amount].filter(Boolean).join(' ');
   doseEl.value = combined;
   doseEl.dataset.autoValue = combined;
@@ -149,11 +156,16 @@ function openFeedModal(id) {
   editingId.feed = id || null;
   const f = id ? load('feeds').find(x => x.id === id) : null;
   document.getElementById('modal-feed-title').textContent = id ? '사료첨가제 편집' : '사료첨가제 등록';
+  // 표준 첨가량은 "사료 1톤당 N kg" 선택지로 고정돼 있다. 예전에 자유 입력으로
+  // 저장된 값(예: '사료톤당 2kg')은 목록에 없으므로 임시 option으로 살려둔다.
+  ensureSelectOption(document.getElementById('fd-dose'), f ? (f.dose||'') : '');
+  ensureSelectOption(document.getElementById('fd-type'), f ? (f.type||'') : '');
   ['name','type','ingredient','maker','dose','period','effect','notes'].forEach(k => {
     const el = document.getElementById('fd-'+k);
     if(el) el.value = f ? (f[k]||'') : '';
   });
   if(f) document.getElementById('fd-type').value = f.type||'영양제·비타민';
+  document.getElementById('fd-name-search-results').innerHTML = '';
   openModal('modal-feed');
 }
 async function saveFeed() {

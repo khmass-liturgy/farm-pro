@@ -65,6 +65,24 @@ function showPage(name) {
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
+// 선택지 목록을 바꾼 뒤에도 예전에 저장된 값이 사라지지 않게 한다.
+// select에 없는 값을 .value로 넣으면 선택이 해제(selectedIndex = -1)되고, 그 상태로
+// 저장하면 빈 문자열이 써져 기존 데이터가 조용히 지워진다. 그래서 편집 모달을 열 때
+// 저장된 값이 목록에 없으면 "(기존 값)" 표시를 달아 임시 option으로 끼워 넣는다.
+// 모달은 한 번 만들어진 DOM을 계속 재사용하므로, 먼저 지난번에 끼워 넣은 option을
+// 걷어내야 다른 레코드를 열 때마다 찌꺼기가 쌓이지 않는다.
+function ensureSelectOption(el, value) {
+  if (!el) return;
+  [...el.options].forEach(o => { if (o.dataset.legacyOption) o.remove(); });
+  if (!value) return;
+  if ([...el.options].some(o => o.value === value)) return;
+  const opt = document.createElement('option');
+  opt.value = value;
+  opt.textContent = value + ' (기존 값)';
+  opt.dataset.legacyOption = '1';
+  el.appendChild(opt);
+}
+
 // ─── 새로고침 (동시 편집 대비 수동 재조회) ─────────────────────────────────
 async function manualRefresh() {
   try { await refreshAllStores(); } catch (e) { alert('새로고침 실패: ' + e.message); return; }

@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>농장 투약관리 시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260814b">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260814b">
-<link rel="icon" href="img/favicon.ico?v=20260814b">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260814b">
-<link rel="stylesheet" href="css/styles.css?v=20260814b">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260814c">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260814c">
+<link rel="icon" href="img/favicon.ico?v=20260814c">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260814c">
+<link rel="stylesheet" href="css/styles.css?v=20260814c">
 </head>
 <body>
 
@@ -163,10 +163,9 @@
         <select id="farm-filter-type" onchange="renderFarms()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
           <option value="">전체 축종</option>
           <option value="육계">육계</option>
-          <option value="삼계">삼계</option>
           <option value="산란계">산란계</option>
+          <option value="삼계">삼계</option>
           <option value="토종닭">토종닭</option>
-          <option value="오리">오리</option>
         </select>
       </div>
       <div class="card">
@@ -490,8 +489,8 @@
     <div class="form-row">
       <div class="form-group"><label>축종 *</label>
         <select id="f-type">
-          <option value="육계">육계</option><option value="삼계">삼계</option><option value="산란계">산란계</option>
-          <option value="토종닭">토종닭</option><option value="오리">오리</option><option value="기타">기타</option>
+          <option value="육계">육계</option><option value="산란계">산란계</option><option value="삼계">삼계</option>
+          <option value="토종닭">토종닭</option><option value="기타">기타</option>
         </select>
       </div>
       <div class="form-group"><label>입추수수 (마리)</label><input id="f-count" type="number" placeholder="예) 30000"></div>
@@ -506,7 +505,7 @@
       <div class="form-group"><label>동수</label><input id="f-houses" type="number" placeholder="예) 4"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>농장주 생년월일 <span class="text-muted">(처방전 발급용)</span></label><input id="f-owner-birth" type="date"></div>
+      <div class="form-group"><label>농장주 생년월일 <span class="text-muted">(처방전 발급용)</span></label><input id="f-owner-birth" type="date" min="1900-01-01" max="2999-12-31"></div>
       <div class="form-group"><label>축사번호 <span class="text-muted">(처방전 발급용, 예: 1-3)</span></label><input id="f-barn-range" placeholder="예) 1-3"></div>
     </div>
     <div class="form-group"><label>중점 관리사항</label><input id="f-focus" placeholder="예) 콕시듐증, 괴사성장염 예방"></div>
@@ -566,6 +565,9 @@
           <option value="200cc">200cc</option>
           <option value="500cc">500cc</option>
           <option value="1L">1L</option>
+          <option value="500g">500g</option>
+          <option value="1kg">1kg</option>
+          <option value="기타">기타 (직접 입력)</option>
         </select>
       </div>
     </div>
@@ -676,7 +678,13 @@
       <button class="modal-close" onclick="closeModal('modal-feed')">✕</button>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>제품명 *</label><input id="fd-name" placeholder="예) 에드비타골드"></div>
+      <div class="form-group">
+        <label>제품명 *</label>
+        <div class="flex-gap">
+          <input id="fd-name" placeholder="예) 에드비타골드" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();searchFeedForRegister();}">
+          <button type="button" class="btn btn-outline btn-sm" onclick="searchFeedForRegister()">🔍 QIA검색</button>
+        </div>
+      </div>
       <div class="form-group"><label>분류 *</label>
         <select id="fd-type">
           <option value="영양제·비타민">영양제·비타민</option>
@@ -690,12 +698,22 @@
         </select>
       </div>
     </div>
+    <div id="fd-name-search-results"></div>
     <div class="form-row">
       <div class="form-group"><label>성분/특성</label><input id="fd-ingredient" placeholder="예) 분유유래 동물성 단백질/지방/탄수화물"></div>
       <div class="form-group"><label>제조사</label><input id="fd-maker" placeholder="예) 팜스코"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>표준 첨가량 *</label><input id="fd-dose" placeholder="예) 사료톤당 2kg"></div>
+      <div class="form-group"><label>표준 첨가량 * <span class="text-muted">(사료 1톤당 기준)</span></label>
+        <select id="fd-dose">
+          <option value="">첨가량 선택...</option>
+          <option value="사료 1톤당 1kg">사료 1톤당 1kg</option>
+          <option value="사료 1톤당 2kg">사료 1톤당 2kg</option>
+          <option value="사료 1톤당 3kg">사료 1톤당 3kg</option>
+          <option value="사료 1톤당 4kg">사료 1톤당 4kg</option>
+          <option value="사료 1톤당 5kg">사료 1톤당 5kg</option>
+        </select>
+      </div>
       <div class="form-group"><label>첨가 시기</label><input id="fd-period" placeholder="예) 전기사료부터 전 기간, 여름철(6-8월)"></div>
     </div>
     <div class="form-group"><label>효능/적용</label><input id="fd-effect" placeholder="예) 성장촉진, 면역증강, 에너지 보충"></div>
@@ -722,7 +740,7 @@
     </div>
     <div class="form-row">
       <div class="form-group"><label>사육 기간 (일령) <span class="text-muted">(산란계 등 장기 프로그램은 500까지)</span></label><input id="p-duration" type="number" value="30" min="1" max="500" onchange="generateDayRows()"></div>
-      <div class="form-group"><label>입추일 <span class="text-muted">(선택, 입력하면 일령별 날짜가 자동 계산됨)</span></label><input id="p-placement-date" type="date" onchange="updateProgramDayDates()"></div>
+      <div class="form-group"><label>입추일 <span class="text-muted">(선택, 입력하면 일령별 날짜가 자동 계산됨)</span></label><input id="p-placement-date" type="date" min="1900-01-01" max="2999-12-31" onchange="updateProgramDayDates()"></div>
     </div>
     <div class="form-group"><label>중점 관리사항</label><input id="p-focus" placeholder="예) 콕시듐증, 괴사성장염 예방"></div>
     <hr class="divider">
@@ -797,7 +815,7 @@
       </div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>입추일 *</label><input id="b-placement-date" type="date"></div>
+      <div class="form-group"><label>입추일 *</label><input id="b-placement-date" type="date" min="1900-01-01" max="2999-12-31"></div>
       <div class="form-group"><label>마리수</label><input id="b-count" type="number" placeholder="예) 30000"></div>
     </div>
     <div class="form-row">
@@ -805,10 +823,9 @@
         <select id="b-species" onchange="onBatchSpeciesChange()">
           <option value="">선택 안 함</option>
           <option value="육계">육계</option>
-          <option value="삼계">삼계</option>
           <option value="산란계">산란계</option>
+          <option value="삼계">삼계</option>
           <option value="토종닭">토종닭</option>
-          <option value="오리">오리</option>
           <option value="기타">기타</option>
         </select>
       </div>
@@ -855,7 +872,7 @@
       </div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>상담 일자 *</label><input id="ml-log-date" type="date"></div>
+      <div class="form-group"><label>상담 일자 *</label><input id="ml-log-date" type="date" min="1900-01-01" max="2999-12-31"></div>
       <div class="form-group"><label>질병</label><input id="ml-disease" placeholder="예) 대장균증"></div>
     </div>
     <div class="form-group"><label>약품</label>
@@ -890,7 +907,7 @@
       <div class="form-group"><label>농장 *</label>
         <select id="rx-farm" onchange="onRxFarmChange()"><option value="">농장 선택</option></select>
       </div>
-      <div class="form-group"><label>발급일 *</label><input id="rx-issue-date" type="date"></div>
+      <div class="form-group"><label>발급일 *</label><input id="rx-issue-date" type="date" min="1900-01-01" max="2999-12-31"></div>
     </div>
     <div class="text-muted mb-16" id="rx-farm-summary">농장을 선택하면 농장주/전화번호/축종/마릿수 정보가 자동으로 채워집니다.</div>
     <div class="form-group"><label>처방 구분</label>
@@ -924,7 +941,7 @@
       <div class="form-group"><label>농장 *</label>
         <select id="ca-farm" onchange="onClinicalFarmChange()"><option value="">농장 선택</option></select>
       </div>
-      <div class="form-group"><label>평가일 *</label><input id="ca-date" type="date" onchange="updateCaAgeFromBatch()"></div>
+      <div class="form-group"><label>평가일 *</label><input id="ca-date" type="date" min="1900-01-01" max="2999-12-31" onchange="updateCaAgeFromBatch()"></div>
     </div>
     <div class="form-group"><label>계군(입추) <span class="text-muted">(선택하면 계사·일령이 자동으로 채워집니다)</span></label>
       <select id="ca-batch" onchange="onClinicalBatchChange()"><option value="">농장을 먼저 선택하세요</option></select>
@@ -965,24 +982,24 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=20260814b"></script>
-<script src="js/supabaseClient.js?v=20260814b"></script>
-<script src="js/auth.js?v=20260814b"></script>
-<script src="js/breedStandards.js?v=20260814b"></script>
-<script src="js/farms.js?v=20260814b"></script>
-<script src="js/masterdata.js?v=20260814b"></script>
-<script src="js/rxProducts.js?v=20260814b"></script>
-<script src="js/drugSearch.js?v=20260814b"></script>
-<script src="js/programs.js?v=20260814b"></script>
-<script src="js/batches.js?v=20260814b"></script>
-<script src="js/medicationLog.js?v=20260814b"></script>
-<script src="js/prescriptions.js?v=20260814b"></script>
-<script src="js/clinicalAssessment.js?v=20260814b"></script>
-<script src="js/schedule.js?v=20260814b"></script>
-<script src="js/dashboard.js?v=20260814b"></script>
-<script src="js/reports.js?v=20260814b"></script>
-<script src="js/print.js?v=20260814b"></script>
-<script src="js/backup.js?v=20260814b"></script>
-<script src="js/app.js?v=20260814b"></script>
+<script src="js/config.js?v=20260814c"></script>
+<script src="js/supabaseClient.js?v=20260814c"></script>
+<script src="js/auth.js?v=20260814c"></script>
+<script src="js/breedStandards.js?v=20260814c"></script>
+<script src="js/farms.js?v=20260814c"></script>
+<script src="js/masterdata.js?v=20260814c"></script>
+<script src="js/rxProducts.js?v=20260814c"></script>
+<script src="js/drugSearch.js?v=20260814c"></script>
+<script src="js/programs.js?v=20260814c"></script>
+<script src="js/batches.js?v=20260814c"></script>
+<script src="js/medicationLog.js?v=20260814c"></script>
+<script src="js/prescriptions.js?v=20260814c"></script>
+<script src="js/clinicalAssessment.js?v=20260814c"></script>
+<script src="js/schedule.js?v=20260814c"></script>
+<script src="js/dashboard.js?v=20260814c"></script>
+<script src="js/reports.js?v=20260814c"></script>
+<script src="js/print.js?v=20260814c"></script>
+<script src="js/backup.js?v=20260814c"></script>
+<script src="js/app.js?v=20260814c"></script>
 </body>
 </html>

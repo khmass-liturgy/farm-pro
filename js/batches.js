@@ -24,6 +24,9 @@ function onBatchFarmChange() {
     document.getElementById('b-count').value = farm.count;
   }
   if (farm && farm.type && !document.getElementById('b-species').value) {
+    // 농장 축종이 목록에 없는 값(예: 예전 '오리')이면 그대로 넣었을 때 선택이 풀려
+    // 축종이 빈 값으로 저장되므로, 먼저 임시 option을 확보한다.
+    ensureSelectOption(document.getElementById('b-species'), farm.type);
     document.getElementById('b-species').value = farm.type;
     populateBatchBreedSelect(farm.type, '');
   }
@@ -80,6 +83,8 @@ function openBatchModal(id) {
   document.getElementById('modal-batch-title').textContent = id ? '입추 편집' : '입추 등록';
   populateFarmSelect('b-farm', b?.farmId || '');
   populateProgramSelectForFarm('b-program', b?.farmId || '', b?.programId || '');
+  // 축종 목록에서 '오리'를 뺐으므로, 이미 그 값으로 저장된 배치는 임시 option으로 살려둔다.
+  ensureSelectOption(document.getElementById('b-species'), b?.species || '');
   document.getElementById('b-species').value = b?.species || '';
   populateBatchBreedSelect(b?.species || '', b?.breed || '');
   populateBatchHouseSelect(b?.farmId || '', b?.house || '');

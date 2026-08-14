@@ -68,7 +68,7 @@ function addRxItemSlot(existing) {
       <div class="form-group"><label>제품 *</label>
         <select id="rxi-product-${idx}" onchange="onRxItemProductChange(${idx})">${rxProductOptionsHtml(existing?.productId || '')}</select>
       </div>
-      <div class="form-group"><label>유통기한 <span class="text-muted">(선택)</span></label><input id="rxi-expiry-${idx}" type="date" value="${existing?.expiryDate || ''}"></div>
+      <div class="form-group"><label>유통기한 <span class="text-muted">(선택)</span></label><input id="rxi-expiry-${idx}" type="date" min="1900-01-01" max="2999-12-31" value="${existing?.expiryDate || ''}"></div>
     </div>
     <div class="text-muted mb-16" id="rxi-summary-${idx}">제품을 선택하면 성분/용법/휴약기간이 자동으로 채워집니다.</div>
     <div class="form-row">

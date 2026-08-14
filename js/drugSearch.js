@@ -249,6 +249,11 @@ function searchDrugForRegister() {
 function searchVaccineForRegister() {
   return qiaSearchForRegister({ name: 'v-name', results: 'v-name-search-results', ingredient: 'v-ingredient', maker: 'v-maker' });
 }
+// 사료첨가제도 같은 흐름을 쓴다. 다만 QIA는 동물용의약품·의약외품 DB라 사료첨가제로만
+// 유통되는 제품은 검색되지 않을 수 있다(그때는 제품명을 직접 입력하면 된다).
+function searchFeedForRegister() {
+  return qiaSearchForRegister({ name: 'fd-name', results: 'fd-name-search-results', ingredient: 'fd-ingredient', maker: 'fd-maker' });
+}
 
 function renderDsearchResult() {
   const result = document.getElementById('dsearch-result');

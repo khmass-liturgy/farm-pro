@@ -12,6 +12,9 @@ function openFarmModal(id) {
     const el = document.getElementById('f-'+k);
     if (el) el.value = farm ? (farm[k.replace('-','_')] || '') : '';
   });
+  // 축종 목록에서 '오리'를 뺐지만, 이미 '오리'로 저장된 농장을 편집할 때 그 값이
+  // 사라지면 안 되므로 목록에 없는 값은 임시 option으로 살려둔다.
+  ensureSelectOption(document.getElementById('f-type'), farm ? (farm.type || '') : '');
   if (farm) document.getElementById('f-type').value = farm.type || '육계';
   if (!document.getElementById('f-vet').value) document.getElementById('f-vet').value = DEFAULT_VET_NAME;
   if (!document.getElementById('f-vet-phone').value) document.getElementById('f-vet-phone').value = DEFAULT_VET_PHONE;
