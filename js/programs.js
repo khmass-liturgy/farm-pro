@@ -12,7 +12,7 @@ function getFeedOptions(selectedId) {
     });
     opts += `</optgroup>`;
   });
-  opts += `<optgroup label="─ 직접입력"><option value="__custom__">✏️ 직접 입력...</option></optgroup>`;
+  opts += `<optgroup label="─ 직접입력"><option value="__custom__"${selectedId==='__custom__'?' selected':''}>✏️ 직접 입력...</option></optgroup>`;
   return opts;
 }
 function initFeedSlots(existing) {
@@ -34,12 +34,15 @@ function addFeedSlot(existing) {
   const selId = existing?.feedId || '';
   const customDose = existing?.customDose || '';
   const isCustom = selId === '__custom__' || (!selId && existing?.name);
+  // 직접입력 항목은 select에서도 '__custom__'이 선택돼 있어야 한다. 안 그러면
+  // collectFeedSlots()가 sel.value('')를 보고 제품명을 수집하지 못해 이름이 사라진다.
+  const optSelId = isCustom ? '__custom__' : selId;
   div.innerHTML = `
     <div>
       <div style="font-size:10px;color:var(--text-secondary);margin-bottom:3px">제품</div>
       <select id="fs-sel-${idx}" onchange="onFeedSlotChange(${idx})"
         style="width:100%;border:1px solid var(--border);border-radius:4px;padding:5px 7px;font-size:12px;font-family:inherit;background:var(--bg-card)">
-        ${getFeedOptions(selId)}
+        ${getFeedOptions(optSelId)}
       </select>
       <div id="fs-custom-${idx}" style="display:${isCustom?'':'none'};margin-top:4px">
         <input id="fs-custom-name-${idx}" value="${isCustom?(existing?.name||''):''}" placeholder="제품명 직접 입력"
@@ -143,20 +146,35 @@ function populateFarmFilter() {
   ).join('');
 }
 
-function openProgramModal(id) {
+// source를 넘기면 그 프로그램의 내용을 채운 채로 "새 프로그램" 화면을 연다(복제).
+// editingId.program을 null로 두는 것이 핵심 — saveProgram()이 update가 아니라
+// insert로 가서 원본은 그대로 남는다.
+function openProgramModal(id, source) {
   editingId.program = id || null;
-  const prog = id ? load('programs').find(p => p.id === id) : null;
-  document.getElementById('modal-prog-title').textContent = id ? '투약 프로그램 편집' : '투약 프로그램 등록';
+  const prog = id ? load('programs').find(p => p.id === id) : (source || null);
+  const isDup = !id && !!source;
+  document.getElementById('modal-prog-title').textContent =
+    id ? '투약 프로그램 편집' : (isDup ? '투약 프로그램 복제' : '투약 프로그램 등록');
+  document.getElementById('prog-dup-hint').style.display = isDup ? '' : 'none';
   populateFarmSelect('p-farm', prog?.farmId || '');
-  document.getElementById('p-name').value = prog?.name || '';
+  document.getElementById('p-name').value = isDup ? `${prog.name} (복사본)` : (prog?.name || '');
   document.getElementById('p-duration').value = prog?.duration || 30;
-  document.getElementById('p-placement-date').value = prog?.placementDate || '';
+  // 복제본은 다음 회차용이라 지난 회차의 입추일이 그대로 남아 있으면 일령별 날짜가
+  // 옛 날짜로 저장되기 쉽다. 비워서 새로 지정하게 한다.
+  document.getElementById('p-placement-date').value = isDup ? '' : (prog?.placementDate || '');
   document.getElementById('p-focus').value = prog?.focus || '';
   document.getElementById('p-notes').value = prog?.notes || '';
   document.getElementById('p-feed-memo').value = prog?.feedMemo || '';
   generateDayRows(prog?.days);
   initFeedSlots(prog?.feedItems || []);
   openModal('modal-program');
+  if (isDup) document.getElementById('p-placement-date').focus();
+}
+
+function duplicateProgram(id) {
+  const prog = load('programs').find(p => p.id === id);
+  if (!prog) { alert('프로그램을 찾을 수 없습니다.'); return; }
+  openProgramModal(null, prog);
 }
 
 // ─── 약품/백신 선택 드롭다운 옵션 생성 (value = id) ──────────────────────
@@ -175,7 +193,7 @@ function getDrugOptions(selectedId) {
       opts += `</optgroup>`;
     });
   }
-  opts += `<optgroup label="─ 직접입력"><option value="__custom__">✏️ 직접 입력...</option></optgroup>`;
+  opts += `<optgroup label="─ 직접입력"><option value="__custom__"${selectedId==='__custom__'?' selected':''}>✏️ 직접 입력...</option></optgroup>`;
   return opts;
 }
 
@@ -186,7 +204,7 @@ function getVaccineOptions(selectedId) {
     const sel = v.id === selectedId ? ' selected' : '';
     opts += `<option value="${v.id}" data-name="${v.name}" data-method="${v.method||''}" data-dilution="${v.dilution||''}"${sel}>${v.name}</option>`;
   });
-  opts += `<optgroup label="─ 직접입력"><option value="__custom__">✏️ 직접 입력...</option></optgroup>`;
+  opts += `<optgroup label="─ 직접입력"><option value="__custom__"${selectedId==='__custom__'?' selected':''}>✏️ 직접 입력...</option></optgroup>`;
   return opts;
 }
 
@@ -282,7 +300,7 @@ function generateDayRows(existingDays) {
         <div id="drug-slot-${i}-${s}" style="display:flex;align-items:center;gap:4px;${s>0?'margin-top:3px':''}">
           <select id="day-drug-sel-${i}-${s}" onchange="onDrugSelectChange(${i},${s})"
             style="flex:1;border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px;font-family:inherit;background:var(--bg-card)">
-            ${getDrugOptions(dEntry?.drugId || '')}
+            ${getDrugOptions(isCustom ? '__custom__' : (dEntry?.drugId || ''))}
           </select>
           <div id="day-drug-custom-${i}-${s}" style="display:${isCustom?'':'none'};flex:1">
             <input type="text" id="day-drug-text-${i}-${s}" value="${isCustom?(dEntry.name||''):''}" placeholder="직접 입력"
@@ -310,7 +328,7 @@ function generateDayRows(existingDays) {
       <td style="border:1px solid var(--border);padding:6px 8px;vertical-align:top">
         <select id="day-vaccine-sel-${i}" onchange="onVaccineSelectChange(${i})"
           style="width:100%;border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px;font-family:inherit;background:var(--bg-card)">
-          ${getVaccineOptions(exVaccine?.vaccineId || '')}
+          ${getVaccineOptions(isCustomV ? '__custom__' : (exVaccine?.vaccineId || ''))}
         </select>
         <div id="day-vaccine-custom-${i}" style="display:${isCustomV?'':'none'};margin-top:3px">
           <input type="text" id="day-vaccine-text-${i}" value="${isCustomV?(exVaccine.name||''):''}" placeholder="직접 입력"
@@ -511,6 +529,7 @@ function renderPrograms() {
         <div class="flex-gap">
           <button class="btn btn-outline btn-sm" onclick="viewProgram('${p.id}')">📋 상세보기</button>
           <button class="btn btn-primary btn-sm" onclick="printProgram('${p.id}')">🖨️ 인쇄</button>
+          <button class="btn btn-outline btn-sm" onclick="duplicateProgram('${p.id}')" title="이 프로그램을 그대로 복사해 새 회차로 등록">📄 복제</button>
           <button class="btn btn-outline btn-sm" onclick="openProgramModal('${p.id}')">편집</button>
           <button class="btn btn-danger btn-sm" onclick="deleteProgram('${p.id}')">삭제</button>
         </div>
