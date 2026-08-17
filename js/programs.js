@@ -607,19 +607,33 @@ function buildFeedSection(prog) {
 
 // 프로그램에 저장된 축종·품종으로 그 일령의 목표 온·습도를 찾는다.
 // 편집 모달·상세 보기·A4 인쇄가 모두 이 두 함수를 공유해야 세 화면이 어긋나지 않는다.
+// 프로그램에 저장된 축종·품종을 쓰되, 비어 있으면 그 농장 계군에 입력된 값으로 대체한다.
+// 축종·품종 컬럼이 생기기 전에 만든 프로그램은 이 값이 비어 있는데, 그것 때문에
+// 상세 보기·인쇄에서 온·습도가 통째로 빠지면 안 된다(편집 모달과 같은 기준을 쓴다).
+// 둘 중 하나만 있는 어중간한 상태에서 축종과 품종이 서로 어긋나지 않도록 쌍으로만 쓴다.
+function programEffectiveBreed(prog) {
+  if (prog?.species && prog?.breed) return { species: prog.species, breed: prog.breed };
+  return farmBreedDefault(prog?.farmId);
+}
 function programHasEnv(prog) {
-  return !!(prog && speciesKeyOf(prog.species) && prog.breed);
+  const e = programEffectiveBreed(prog);
+  return !!(e && speciesKeyOf(e.species) && e.breed);
 }
 function programBreedName(prog) {
-  const speciesKey = speciesKeyOf(prog?.species);
-  return (speciesKey && CONSULT_BREEDS[speciesKey]?.breeds[prog.breed]?.name) || prog?.breed || '';
+  const e = programEffectiveBreed(prog);
+  const speciesKey = speciesKeyOf(e?.species);
+  return (speciesKey && CONSULT_BREEDS[speciesKey]?.breeds[e.breed]?.name) || e?.breed || '';
+}
+function programSpeciesName(prog) {
+  return programEffectiveBreed(prog)?.species || '';
 }
 function programEnvFor(prog, day) {
-  const speciesKey = speciesKeyOf(prog?.species);
-  if (!speciesKey || !prog.breed) return null;
+  const e = programEffectiveBreed(prog);
+  const speciesKey = speciesKeyOf(e?.species);
+  if (!speciesKey || !e.breed) return null;
   // 산란계 매뉴얼은 주령 단위라 일령을 주령으로 바꿔 조회한다.
   const age = speciesKey === 'broiler' ? day : Math.ceil(day / 7);
-  return lookupEnvStandard(speciesKey, prog.breed, age);
+  return lookupEnvStandard(speciesKey, e.breed, age);
 }
 
 function viewProgram(id) {
@@ -655,7 +669,7 @@ function viewProgram(id) {
       <div style="background:var(--bg);border-radius:8px;padding:12px">
         <div style="font-size:11px;color:var(--text-secondary);font-weight:700;margin-bottom:4px">사육 기간</div>
         <div style="font-size:14px;font-weight:700">${prog.duration}일령${prog.placementDate ? ' · 입추일 '+prog.placementDate : ''}</div>
-        ${showEnv ? `<div style="font-size:12px;color:var(--text-secondary)">${prog.species} · ${programBreedName(prog)}</div>` : ''}
+        ${showEnv ? `<div style="font-size:12px;color:var(--text-secondary)">${programSpeciesName(prog)} · ${programBreedName(prog)}</div>` : ''}
         ${prog.focus ? `<div style="font-size:12px;color:var(--text-secondary)">${prog.focus}</div>` : ''}
       </div>
       <div style="background:var(--bg);border-radius:8px;padding:12px">
