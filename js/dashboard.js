@@ -365,7 +365,21 @@ function renderEnvStandardCard() {
   const el = document.getElementById('dash-env-standard');
   if (!el) return;
   const items = computeEnvStandards();
-  if (!items.length) { el.innerHTML = ''; return; }
+  if (!items.length) {
+    // 조건이 안 맞아 카드를 통째로 숨기면 "기능이 안 보인다"로만 보인다.
+    // 무엇이 빠져서 안 뜨는지 화면에서 바로 알 수 있게 안내한다.
+    const active = load('batches').filter(b => b.status === 'active');
+    if (!active.length) { el.innerHTML = ''; return; } // 사육중 계군이 없으면 할 말도 없음
+    const supported = active.filter(b => speciesKeyOf(b.species));
+    const msg = !supported.length
+      ? '사육중인 계군의 축종이 육계·산란계가 아니어서 표준 온·습도 매뉴얼이 없습니다.'
+      : '사육중인 계군에 <strong>품종</strong>이 입력되어 있지 않습니다. 「입추(사육배치) 관리 → 편집」에서 품종을 선택하면 그 품종 매뉴얼의 일령별 목표 온·습도가 여기에 표시됩니다.';
+    el.innerHTML = `<div class="card mt-16">
+      <div class="card-header"><div class="card-title">🌡️ 계사 목표 온·습도 (품종 매뉴얼 기준)</div></div>
+      <p class="text-muted">${msg}</p>
+    </div>`;
+    return;
+  }
 
   const wx = dashWeatherState;
   const outdoor = wx.today;
