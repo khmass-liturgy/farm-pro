@@ -719,6 +719,7 @@ function renderPrograms() {
   container.innerHTML = progs.map(p => {
     const drugDays = p.days.filter(d=>d.drugs&&d.drugs.length).length;
     const vaccDays = p.days.filter(d=>d.vaccine).length;
+    const showEnv = programHasEnv(p);
     return `
     <div class="card mb-16">
       <div class="card-header">
@@ -740,12 +741,13 @@ function renderPrograms() {
         <span><span class="badge badge-green">백신 ${vaccDays}일</span></span>
       </div>
       <div style="overflow-x:auto;border:1px solid var(--border);border-radius:8px">
-        <table class="schedule-table" style="border-collapse:collapse;font-size:12px;min-width:600px">
+        <table class="schedule-table" style="border-collapse:collapse;font-size:12px;min-width:${showEnv?700:600}px">
           <thead><tr style="background:var(--bg)">
             <th style="padding:7px 10px;border-bottom:1px solid var(--border);width:50px;text-align:center">일령</th>
             <th style="padding:7px 10px;border-bottom:1px solid var(--border);width:60px;text-align:center">날짜</th>
             <th style="padding:7px 10px;border-bottom:1px solid var(--border)">약품투약</th>
             <th style="padding:7px 10px;border-bottom:1px solid var(--border)">백신사항</th>
+            ${showEnv ? `<th style="padding:7px 10px;border-bottom:1px solid var(--border);width:92px;text-align:center">🌡️ 온·습도</th>` : ''}
             <th style="padding:7px 10px;border-bottom:1px solid var(--border)">비고</th>
           </tr></thead>
           <tbody>${p.days.map(d=>`
@@ -754,6 +756,10 @@ function renderPrograms() {
               <td style="text-align:center;color:var(--text-secondary);font-size:11px;padding:5px 8px">${programDayDateShort(p.placementDate, d.day)}</td>
               <td style="padding:5px 8px">${(d.drugs&&d.drugs.length)?dayDrugPillsHtml(d):''}</td>
               <td style="padding:5px 8px">${d.vaccine?dayVaccinePillHtml(d):''}</td>
+              ${showEnv ? (env => `<td style="padding:5px 8px;text-align:center;font-size:11px;line-height:1.4;white-space:nowrap">
+                <span style="color:var(--accent);font-weight:700">${env?env.tRange:'-'}</span><br>
+                <span style="color:var(--text-secondary)">${env?env.rhRange:'-'}</span>
+              </td>`)(programEnvFor(p, d.day)) : ''}
               <td style="padding:5px 8px;color:var(--text-secondary);font-size:11px">${d.note||''}</td>
             </tr>`).join('')}
           </tbody>

@@ -49,6 +49,11 @@ function renderScheduleView() {
   const refPlacementDate = activeBatch ? activeBatch.placementDate : prog.placementDate;
   const dayAge = refPlacementDate ? computeDayAge(refPlacementDate) : null;
 
+  // 품종이 정해져 있으면 일령별 목표 온·습도도 함께 보여준다
+  // (투약 프로그램 목록·상세·인쇄와 같은 기준: js/programs.js의 programHasEnv/programEnvFor).
+  const showEnv = programHasEnv(prog);
+  const envCls = showEnv ? ' with-env' : '';
+
   let rows = '';
   for (let i = 1; i <= prog.duration; i++) {
     const d = prog.days.find(x => x.day === i);
@@ -56,10 +61,15 @@ function renderScheduleView() {
     const isToday = dayAge != null && i === dayAge;
     const isUpcoming = dayAge != null && i > dayAge && i <= dayAge + DUE_SOON_HORIZON_DAYS;
     const rowClass = isToday ? 'today' : (isUpcoming ? 'upcoming' : '');
-    rows += `<div class="program-day-row ${rowClass}" style="${rowClass ? '' : 'background:' + (hasData ? 'var(--bg-card)' : 'var(--bg)')}">
+    const env = showEnv ? programEnvFor(prog, i) : null;
+    rows += `<div class="program-day-row${envCls} ${rowClass}" style="${rowClass ? '' : 'background:' + (hasData ? 'var(--bg-card)' : 'var(--bg)')}">
       <div class="program-cell num">${i}일${isToday ? ' (오늘)' : ''}<div style="font-size:10px;color:var(--text-secondary);font-weight:400">${programDayDateShort(refPlacementDate, i)}</div></div>
       <div class="program-cell">${(d && d.drugs && d.drugs.length) ? dayDrugPillsHtml(d) : ''}</div>
       <div class="program-cell">${(d && d.vaccine) ? dayVaccinePillHtml(d) : ''}</div>
+      ${showEnv ? `<div class="program-cell" style="text-align:center;font-size:11px;line-height:1.4;white-space:nowrap">
+        <span style="color:var(--accent);font-weight:700">${env ? env.tRange : '-'}</span><br>
+        <span style="color:var(--text-secondary)">${env ? env.rhRange : '-'}</span>
+      </div>` : ''}
       <div class="program-cell" style="color:var(--text-secondary);font-size:11px">${d?.note||''}</div>
     </div>`;
   }
@@ -76,10 +86,11 @@ function renderScheduleView() {
       </div>
       ${prog.focus ? `<div style="padding:8px 12px;background:var(--amber-bg);border-radius:6px;font-size:12px;color:var(--amber);margin-bottom:14px">⚠️ <strong>중점 관리사항:</strong> ${prog.focus}</div>` : ''}
       <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
-        <div class="program-day-row" style="background:var(--bg)">
+        <div class="program-day-row${envCls}" style="background:var(--bg)">
           <div class="program-cell head" style="text-align:center">일령</div>
           <div class="program-cell head">💊 약품투약</div>
           <div class="program-cell head">💉 백신사항</div>
+          ${showEnv ? `<div class="program-cell head" style="text-align:center">🌡️ 온·습도</div>` : ''}
           <div class="program-cell head">⚠️ 중요사항</div>
         </div>
         ${rows}
