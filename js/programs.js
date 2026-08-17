@@ -181,11 +181,15 @@ function openProgramModal(id, source) {
   // 옛 날짜로 저장되기 쉽다. 비워서 새로 지정하게 한다.
   document.getElementById('p-placement-date').value = isDup ? '' : (prog?.placementDate || '');
   // 축종/품종은 generateDayRows()보다 먼저 세팅해야 온·습도 칸이 처음부터 채워진다.
-  // 미지정이면 농장 축종을 기본값으로 제안한다(대개 농장 축종 = 프로그램 축종).
+  // 프로그램에 저장된 값이 있으면 그것을, 없으면 그 농장 계군에 입력된 품종을 쓴다.
   const farmType = prog?.farmId ? (load('farms').find(f => f.id === prog.farmId)?.type || '') : '';
-  const species = prog?.species || (speciesKeyOf(farmType) ? farmType : '');
+  const fallback = prog?.farmId ? farmBreedDefault(prog.farmId) : null;
+  const species = prog?.species || fallback?.species || (speciesKeyOf(farmType) ? farmType : '');
+  const breed = prog?.species
+    ? (prog.breed || '')
+    : (fallback?.species === species ? (fallback.breed || '') : '');
   document.getElementById('p-species').value = species;
-  populateProgramBreedSelect(species, prog?.breed || '');
+  populateProgramBreedSelect(species, breed);
   document.getElementById('p-focus').value = prog?.focus || '';
   document.getElementById('p-notes').value = prog?.notes || '';
   document.getElementById('p-feed-memo').value = prog?.feedMemo || '';
@@ -270,6 +274,34 @@ function onProgramFarmChange() {
     sel.innerHTML = getVaccineOptions(cur, allowed);
     sel.value = cur;
   }
+  applyProgramBreedDefault();
+}
+
+// 농장에 등록된 계군(입추배치)에서 축종·품종을 가져온다.
+// 품종은 입추 관리에서 이미 입력하므로, 프로그램에서 같은 값을 다시 고르게 하지 않는다.
+// 사육중 계군을 우선하고, 없으면 가장 최근 입추 건을 쓴다.
+function farmBreedDefault(farmId) {
+  if (!farmId) return null;
+  const b = load('batches')
+    .filter(x => x.farmId === farmId && x.species && x.breed)
+    .sort((a, c) => (a.status === c.status ? 0 : a.status === 'active' ? -1 : 1) ||
+                    (c.placementDate || '').localeCompare(a.placementDate || ''))[0];
+  return b ? { species: b.species, breed: b.breed } : null;
+}
+
+// 농장을 고르면 축종·품종을 자동으로 채운다. 사용자가 이미 직접 고른 값이 있으면
+// 덮어쓰지 않는다(농장만 바꿔 끼우는 경우에도 선택이 날아가지 않게).
+function applyProgramBreedDefault() {
+  const spEl = document.getElementById('p-species');
+  const brEl = document.getElementById('p-breed');
+  if (!spEl || !brEl || spEl.value || brEl.value) return;
+  const d = farmBreedDefault(document.getElementById('p-farm').value);
+  const farmType = currentProgramFarmType();
+  const species = d?.species || (speciesKeyOf(farmType) ? farmType : '');
+  if (!species) return;
+  spEl.value = species;
+  populateProgramBreedSelect(species, d?.species === species ? (d.breed || '') : '');
+  onProgramBreedChange();
 }
 
 // 약품 선택 변경 → 용법 자동입력
