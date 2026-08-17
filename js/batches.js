@@ -201,6 +201,10 @@ function renderBatchDetail() {
     }
   }
 
+  // 이 배치에 입력된 품종을 기준으로, 표준 매뉴얼에서 사육 전 기간의 목표 온·습도를
+  // 찾아 구간표로 정리한다. 오늘 해당하는 구간은 따로 표시해 현장에서 바로 보게 한다.
+  const envHtml = buildBatchEnvHtml(b, dayAge);
+
   const logsHtml = logs.length ? `<div class="tbl-wrap"><table><thead><tr><th>일령</th><th>날짜</th><th>약품</th><th>백신</th><th>메모</th><th>기록자</th><th>관리</th></tr></thead><tbody>
     ${logs.slice().sort((a,b2)=>(b2.programDay||0)-(a.programDay||0)).map(l => `<tr>
       <td>${l.programDay ? l.programDay+'일' : '-'}</td>
@@ -234,9 +238,65 @@ function renderBatchDetail() {
         ${rowsHtml}
       </div>` : '<div class="empty-state"><p>연결된 투약 프로그램이 없습니다. 편집에서 프로그램을 선택하세요.</p></div>'}
     </div>
+    ${envHtml}
     <div class="card">
       <div class="card-header"><div class="card-title">투약 이력</div></div>
       ${logsHtml}
     </div>
   `;
+}
+
+// 배치에 등록된 품종 → 표준 매뉴얼의 일령/주령별 목표 온·습도 구간표.
+// 품종이 없거나 매뉴얼이 없는 축종(오리·토종닭 등)이면 안내만 띄운다.
+function buildBatchEnvHtml(b, dayAge) {
+  const speciesKey = speciesKeyOf(b.species);
+  const breed = speciesKey ? CONSULT_BREEDS[speciesKey]?.breeds[b.breed] : null;
+  if (!speciesKey || !breed) {
+    return `<div class="card mb-16">
+      <div class="card-header"><div class="card-title">🌡️ 계사 목표 온·습도</div></div>
+      <p class="text-muted">${b.species && !speciesKey
+        ? `${b.species}는 육종회사 표준 온·습도 매뉴얼이 등록돼 있지 않습니다(육계·산란계만 지원).`
+        : '이 배치에 축종·품종이 입력되어 있지 않습니다. 편집에서 품종을 선택하면 매뉴얼 기준 온·습도가 표시됩니다.'}</p>
+    </div>`;
+  }
+  const isBroiler = speciesKey === 'broiler';
+  const table = isBroiler ? BROILER_ENV_DEFAULT : LAYER_ENV_DEFAULT;
+  const curAge = isBroiler ? dayAge : Math.ceil(dayAge / 7);
+  const curBand = dayAge >= 1 ? lookupEnvStandard(speciesKey, b.breed, curAge) : null;
+
+  let prev = 0;
+  const rows = table.map(band => {
+    const key = isBroiler ? 'maxDay' : 'maxWeek';
+    const lo = prev + 1;
+    const hi = band[key];
+    prev = hi;
+    const label = hi >= 999 ? `${lo}${isBroiler ? '일령' : '주령'}~` : `${lo}~${hi}${isBroiler ? '일령' : '주령'}`;
+    const isNow = curBand && band.stage === curBand.stage && curAge >= lo && (hi >= 999 || curAge <= hi);
+    return `<tr${isNow ? ' style="background:var(--accent-light);font-weight:700"' : ''}>
+      <td>${label}${isNow ? ' <span class="badge badge-blue">현재</span>' : ''}</td>
+      <td>${band.stage}</td>
+      <td><strong style="color:var(--accent)">${band.tMin}~${band.tMax}℃</strong> <span class="text-muted">(목표 ${band.t}℃)</span></td>
+      <td>${band.rhMin}~${band.rhMax}%</td>
+    </tr>`;
+  }).join('');
+
+  const nowLine = curBand
+    ? `<div class="mb-16" style="font-size:13px">오늘 <strong>${isBroiler ? dayAge + '일령' : curAge + '주령'}</strong> ·
+        목표 온도 <strong style="color:var(--accent)">${curBand.tRange}</strong> ·
+        목표 습도 <strong>${curBand.rhRange}</strong> <span class="text-muted">(${curBand.stage})</span></div>`
+    : '<div class="mb-16 text-muted" style="font-size:13px">아직 입추 전이라 현재 구간이 없습니다.</div>';
+
+  return `<div class="card mb-16">
+    <div class="card-header"><div class="card-title">🌡️ 계사 목표 온·습도 — ${breed.name}</div></div>
+    ${nowLine}
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>구간</th><th>단계</th><th>목표 온도</th><th>목표 습도</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <p class="text-muted mt-16" style="font-size:11px">
+      출처: ${curBand ? curBand.source : ENV_SOURCE[speciesKey]}<br>
+      계사 내부 기준값입니다. 온도계 수치보다 계군의 행동(헐떡임·웅크림·분산)을 최종 판단 기준으로 삼고,
+      농장이 보유한 매뉴얼 판본과 다르면 그 값을 우선하세요.
+    </p>
+  </div>`;
 }

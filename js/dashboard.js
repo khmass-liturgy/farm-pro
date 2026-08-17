@@ -201,6 +201,9 @@ function renderDashboard() {
 
   renderBreedSummaryCard();
 
+  renderEnvStandardCard();
+  if (dashWeatherState.status === 'idle') fetchDashboardWeather();
+
   if (poultryPriceState.status === 'idle') fetchPoultryPrices(); else renderPoultryPriceCard();
 }
 
@@ -266,6 +269,140 @@ function renderBreedSummaryCard() {
   el.innerHTML = `<div class="card mt-16">
     <div class="card-header"><div class="card-title">🧬 사양표준 요약 (육종회사 매뉴얼)</div></div>
     <div class="tbl-wrap"><table><thead><tr><th>농장</th><th>동</th><th>품종</th><th>일령/주령</th><th>표준 수치</th></tr></thead><tbody>${rows}</tbody></table></div>
+  </div>`;
+}
+
+// ── 계사 목표 온·습도 vs 오늘 날씨 ──────────────────────────────────────────
+// 사육중 배치의 품종·일령으로 매뉴얼상 계사 목표 온·습도를 찾고, 같은 날 외기 예보와
+// 나란히 보여준다.
+//
+// 중요: 목표값은 "계사 내부" 기준이고 예보는 "외기"라서 둘을 직접 비교해 정상/이상을
+// 판정하면 안 된다. 그래서 판정 대신 "외기가 목표보다 O℃ 낮음 → 난방 부하" 처럼
+// 그날 환경설비가 감당해야 할 부담으로 해석해서 보여준다.
+// 위치는 날씨별 농장컨설팅 화면이 localStorage('weather_loc')에 저장한 값을 그대로 쓴다
+// (같은 오리진의 iframe이라 저장소를 공유한다).
+let dashWeatherState = { status: 'idle', today: null, locationName: '' };
+
+async function fetchDashboardWeather() {
+  let loc = null;
+  try {
+    const s = localStorage.getItem('weather_loc');
+    if (s) loc = JSON.parse(s);
+  } catch (e) { /* 저장값이 깨졌으면 위치 미설정으로 취급 */ }
+  if (!loc || loc.lat == null || loc.lng == null) {
+    dashWeatherState = { status: 'nolocation', today: null, locationName: '' };
+    if (currentPage === 'dashboard') renderEnvStandardCard();
+    return;
+  }
+  dashWeatherState = { status: 'loading', today: null, locationName: loc.name || '' };
+  if (currentPage === 'dashboard') renderEnvStandardCard();
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lng}` +
+      `&daily=temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean&timezone=Asia%2FSeoul&forecast_days=1`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const j = await resp.json();
+    dashWeatherState = {
+      status: 'done',
+      today: {
+        tMax: j.daily.temperature_2m_max?.[0],
+        tMin: j.daily.temperature_2m_min?.[0],
+        rh: j.daily.relative_humidity_2m_mean?.[0],
+      },
+      locationName: loc.name || '',
+    };
+  } catch (e) {
+    console.warn('대시보드 날씨 조회 실패:', e.message);
+    dashWeatherState = { status: 'error', today: null, locationName: loc.name || '' };
+  }
+  if (currentPage === 'dashboard') renderEnvStandardCard();
+}
+
+// 사육중 배치별로 오늘 일령의 목표 온·습도를 뽑는다.
+function computeEnvStandards() {
+  const farms = load('farms');
+  return load('batches')
+    .filter(b => b.status === 'active' && b.species && b.breed)
+    .map(b => {
+      const speciesKey = speciesKeyOf(b.species);
+      if (!speciesKey) return null;
+      const breed = CONSULT_BREEDS[speciesKey]?.breeds[b.breed];
+      if (!breed) return null;
+      const dayAge = computeDayAge(b.placementDate);
+      if (dayAge < 1) return null;
+      const age = speciesKey === 'broiler' ? dayAge : Math.ceil(dayAge / 7);
+      const env = lookupEnvStandard(speciesKey, b.breed, age);
+      if (!env) return null;
+      return {
+        batchId: b.id, farmName: farms.find(f => f.id === b.farmId)?.name || '',
+        house: b.house || '-', breedName: breed.name,
+        ageLabel: speciesKey === 'broiler' ? `${dayAge}일령` : `${age}주령`,
+        env,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.farmName.localeCompare(b.farmName));
+}
+
+// 외기와 계사 목표의 차이를 "설비 부하" 문구로 바꾼다.
+function envLoadLabel(outdoor, env) {
+  if (outdoor?.tMax == null || outdoor?.tMin == null) return '';
+  const notes = [];
+  if (outdoor.tMin < env.tMin) {
+    notes.push(`<span style="color:var(--accent)">🔥 난방 부하 (외기 최저 ${outdoor.tMin}℃ · 목표보다 ${Math.round((env.tMin - outdoor.tMin) * 10) / 10}℃ 낮음)</span>`);
+  }
+  if (outdoor.tMax > env.tMax) {
+    notes.push(`<span style="color:var(--red)">🌀 환기·냉방 부하 (외기 최고 ${outdoor.tMax}℃ · 목표보다 ${Math.round((outdoor.tMax - env.tMax) * 10) / 10}℃ 높음)</span>`);
+  }
+  if (!notes.length) notes.push('<span style="color:var(--green)">외기가 목표 온도 범위 안 — 최소환기로 유지 가능</span>');
+  if (outdoor.rh != null && outdoor.rh > env.rhMax) {
+    notes.push(`<span style="color:var(--amber)">💧 외기 습도 ${Math.round(outdoor.rh)}% — 목표 상한(${env.rhMax}%) 초과, 제습·환기 주의</span>`);
+  }
+  return notes.join('<br>');
+}
+
+function renderEnvStandardCard() {
+  const el = document.getElementById('dash-env-standard');
+  if (!el) return;
+  const items = computeEnvStandards();
+  if (!items.length) { el.innerHTML = ''; return; }
+
+  const wx = dashWeatherState;
+  const outdoor = wx.today;
+  let wxLine;
+  if (wx.status === 'nolocation') {
+    wxLine = `<span class="text-muted">오늘 날씨 미설정 — 「가금컨설팅 → 날씨」에서 지역을 한 번 선택하면 여기에 함께 표시됩니다.</span>`;
+  } else if (wx.status === 'loading' || wx.status === 'idle') {
+    wxLine = `<span class="text-muted">오늘 날씨 조회 중...</span>`;
+  } else if (wx.status === 'error') {
+    wxLine = `<span class="text-muted">오늘 날씨를 불러오지 못했습니다.</span>`;
+  } else {
+    wxLine = `<strong>${wx.locationName}</strong> 오늘 외기 <strong>${outdoor.tMin}~${outdoor.tMax}℃</strong>` +
+      (outdoor.rh != null ? ` · 평균습도 <strong>${Math.round(outdoor.rh)}%</strong>` : '');
+  }
+
+  const rows = items.map(it => `
+    <tr onclick="openBatchDetail('${it.batchId}')" style="cursor:pointer">
+      <td><strong>${it.farmName}</strong></td>
+      <td style="color:var(--text-secondary)">${it.house}</td>
+      <td>${it.breedName}</td>
+      <td>${it.ageLabel}</td>
+      <td><strong style="color:var(--accent)">${it.env.tRange}</strong><div class="text-muted" style="font-size:11px">${it.env.stage}</div></td>
+      <td><strong>${it.env.rhRange}</strong></td>
+      <td style="font-size:11px;line-height:1.6">${outdoor ? envLoadLabel(outdoor, it.env) : '-'}</td>
+    </tr>`).join('');
+
+  el.innerHTML = `<div class="card mt-16">
+    <div class="card-header"><div class="card-title">🌡️ 계사 목표 온·습도 (품종 매뉴얼 기준)</div></div>
+    <div class="mb-16" style="font-size:12px">${wxLine}</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>농장</th><th>동</th><th>품종</th><th>일령/주령</th><th>목표 온도</th><th>목표 습도</th><th>오늘 외기 대비</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <p class="text-muted mt-16" style="font-size:11px">
+      목표값은 <strong>계사 내부</strong> 기준이고 위 날씨는 <strong>외기</strong> 예보입니다. 두 값을 직접 비교해 정상/이상을 판단하는 것이 아니라,
+      그날 난방·환기 설비가 감당해야 할 부담을 가늠하는 용도입니다. 실제 조절은 온도계 수치보다 계군의 행동(헐떡임·웅크림·분산)을 우선 기준으로 삼으세요.
+    </p>
   </div>`;
 }
 

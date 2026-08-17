@@ -180,6 +180,12 @@ function openProgramModal(id, source) {
   // 복제본은 다음 회차용이라 지난 회차의 입추일이 그대로 남아 있으면 일령별 날짜가
   // 옛 날짜로 저장되기 쉽다. 비워서 새로 지정하게 한다.
   document.getElementById('p-placement-date').value = isDup ? '' : (prog?.placementDate || '');
+  // 축종/품종은 generateDayRows()보다 먼저 세팅해야 온·습도 칸이 처음부터 채워진다.
+  // 미지정이면 농장 축종을 기본값으로 제안한다(대개 농장 축종 = 프로그램 축종).
+  const farmType = prog?.farmId ? (load('farms').find(f => f.id === prog.farmId)?.type || '') : '';
+  const species = prog?.species || (speciesKeyOf(farmType) ? farmType : '');
+  document.getElementById('p-species').value = species;
+  populateProgramBreedSelect(species, prog?.breed || '');
   document.getElementById('p-focus').value = prog?.focus || '';
   document.getElementById('p-notes').value = prog?.notes || '';
   document.getElementById('p-feed-memo').value = prog?.feedMemo || '';
@@ -395,12 +401,73 @@ function generateDayRows(existingDays) {
             style="width:100%;border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px;font-family:inherit">
         </div>
       </td>
+      <td class="prog-env-col" id="day-env-${i}" style="display:none;background:var(--bg);border:1px solid var(--border);padding:6px 8px;vertical-align:top;font-size:11px;line-height:1.5"></td>
       <td style="border:1px solid var(--border);padding:6px 8px;vertical-align:top">
         <textarea id="day-note-${i}" rows="2" placeholder="약품 선택시 자동입력. 직접 수정 가능"
           oninput="this.dataset.manualEdit='1'"
           style="width:100%;border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px;font-family:inherit;resize:vertical;min-height:48px">${exNote}</textarea>
       </td>`;
     tbody.appendChild(tr);
+  }
+  updateProgramEnvColumn();
+}
+
+// ─── 축종/품종 → 일령별 목표 온·습도 ───────────────────────────────────────
+// 품종을 고르면 일령별 계획표 오른쪽에 그 일령의 계사 목표 온도·습도가 붙는다.
+// 값은 js/breedStandards.js의 lookupEnvStandard() 한 곳에서만 관리한다.
+function populateProgramBreedSelect(species, selectedBreed) {
+  const sel = document.getElementById('p-breed');
+  const hint = document.getElementById('p-breed-hint');
+  const speciesKey = speciesKeyOf(species);
+  if (!speciesKey) {
+    sel.innerHTML = '<option value="">축종을 먼저 선택하세요</option>';
+    sel.disabled = true;
+    hint.style.display = 'none';
+    return;
+  }
+  sel.disabled = false;
+  const breeds = CONSULT_BREEDS[speciesKey].breeds;
+  sel.innerHTML = '<option value="">품종 선택</option>' + Object.entries(breeds).map(([key, b]) =>
+    `<option value="${key}"${key === selectedBreed ? ' selected' : ''}>${b.name}</option>`).join('');
+  const cur = breeds[sel.value];
+  hint.textContent = cur ? `출처: ${cur.source}` : '';
+  hint.style.display = cur ? '' : 'none';
+}
+
+function onProgramSpeciesChange() {
+  populateProgramBreedSelect(document.getElementById('p-species').value, '');
+  updateProgramEnvColumn();
+}
+
+function onProgramBreedChange() {
+  const speciesKey = speciesKeyOf(document.getElementById('p-species').value);
+  const breedKey = document.getElementById('p-breed').value;
+  const hint = document.getElementById('p-breed-hint');
+  const breed = speciesKey && breedKey ? CONSULT_BREEDS[speciesKey].breeds[breedKey] : null;
+  hint.textContent = breed ? `출처: ${breed.source}` : '';
+  hint.style.display = breed ? '' : 'none';
+  updateProgramEnvColumn();
+}
+
+// 온·습도 칸은 품종이 선택됐을 때만 보이게 하고, 각 일령 행에 해당 구간 값을 채운다.
+function updateProgramEnvColumn() {
+  const speciesKey = speciesKeyOf(document.getElementById('p-species')?.value);
+  const breedKey = document.getElementById('p-breed')?.value || '';
+  const show = !!(speciesKey && breedKey);
+  document.querySelectorAll('.prog-env-col').forEach(el => { el.style.display = show ? '' : 'none'; });
+  if (!show) return;
+  const n = parseInt(document.getElementById('p-duration').value) || 30;
+  for (let i = 1; i <= n; i++) {
+    const cell = document.getElementById(`day-env-${i}`);
+    if (!cell) continue;
+    // 산란계 매뉴얼은 주령 단위라 일령을 주령으로 바꿔 조회한다.
+    const age = speciesKey === 'broiler' ? i : Math.ceil(i / 7);
+    const env = lookupEnvStandard(speciesKey, breedKey, age);
+    cell.innerHTML = env
+      ? `<div style="font-weight:700;color:var(--accent)">🌡️ ${env.tRange}</div>
+         <div style="color:var(--text-secondary)">💧 ${env.rhRange}</div>
+         <div style="color:var(--text-muted);font-size:10px">${env.stage}${speciesKey === 'layer' ? ` · ${age}주령` : ''}</div>`
+      : '';
   }
 }
 
@@ -458,6 +525,8 @@ async function saveProgram() {
     name, farmId, farmName,
     duration: n,
     placementDate: document.getElementById('p-placement-date').value || null,
+    species: document.getElementById('p-species').value || null,
+    breed: document.getElementById('p-breed').value || null,
     focus: document.getElementById('p-focus').value.trim(),
     notes: document.getElementById('p-notes').value.trim(),
     feedItems: collectFeedSlots(),

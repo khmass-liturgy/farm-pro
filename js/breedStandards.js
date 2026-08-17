@@ -85,3 +85,82 @@ const CONSULT_BREEDS = {
     },
   },
 };
+
+// ── 일령/주령별 계사 목표 온·습도 ────────────────────────────────────────────
+// 목표 온도는 weather-consult.html의 환기가이드 탭이 쓰는 BROILER_TARGET_TEMP /
+// LAYER_TARGET_TEMP와 같은 값을 쓴다. 같은 앱 안에서 환기가이드와 프로그램·대시보드가
+// 서로 다른 목표온도를 말하면 안 되기 때문이다. 여기에 각 매뉴얼의 상대습도 기준을 더했다.
+//
+// ⚠️ 데이터 성격: 온도는 육종회사 매뉴얼의 표준 구간값, 습도는 각 매뉴얼이 제시하는
+// 권장 상대습도 범위다. 품종 간 목표온도 차이는 대체로 1℃ 안쪽이라 축종 단위로 하나의
+// 표를 쓰고, 품종별로 다른 값을 쓰고 싶으면 BROILER_ENV_BY_BREED / LAYER_ENV_BY_BREED에
+// 해당 품종 키만 넣으면 그 품종에만 적용된다(없으면 축종 기본표 사용).
+// 실제 계사는 계군 행동(헐떡임·웅크림·분산)을 최종 판단 기준으로 삼아야 하며,
+// 농장이 보유한 매뉴얼 판본과 다르면 아래 표를 그 값으로 고쳐 쓸 것.
+
+// 육계: [최대일령, 목표온도, 온도하한, 온도상한, 습도하한, 습도상한, 단계]
+const BROILER_ENV_DEFAULT = [
+  { maxDay:  3, t:33, tMin:32, tMax:34, rhMin:60, rhMax:70, stage:'육추 초기' },
+  { maxDay:  7, t:31, tMin:30, tMax:32, rhMin:60, rhMax:70, stage:'육추' },
+  { maxDay: 14, t:29, tMin:28, tMax:30, rhMin:55, rhMax:65, stage:'육추 후기' },
+  { maxDay: 21, t:27, tMin:26, tMax:28, rhMin:50, rhMax:60, stage:'전환기' },
+  { maxDay: 28, t:25, tMin:24, tMax:26, rhMin:50, rhMax:60, stage:'육성' },
+  { maxDay: 35, t:22, tMin:21, tMax:24, rhMin:50, rhMax:60, stage:'육성 후기' },
+  { maxDay: 999, t:20, tMin:18, tMax:22, rhMin:50, rhMax:65, stage:'출하 전' },
+];
+// 품종별로 매뉴얼 값이 다를 때만 여기에 추가한다(예: cobb500: [...]).
+const BROILER_ENV_BY_BREED = {};
+
+// 산란계: [최대주령, ...] — 육추 33~35℃에서 주당 2~3℃ 하향, 8주 이후 21℃ 유지, 산란기 21~27℃
+const LAYER_ENV_DEFAULT = [
+  { maxWeek:  1, t:34, tMin:33, tMax:35, rhMin:55, rhMax:65, stage:'육추' },
+  { maxWeek:  2, t:32, tMin:31, tMax:33, rhMin:55, rhMax:65, stage:'육추' },
+  { maxWeek:  3, t:30, tMin:29, tMax:31, rhMin:50, rhMax:60, stage:'육추' },
+  { maxWeek:  4, t:28, tMin:27, tMax:29, rhMin:50, rhMax:60, stage:'육추' },
+  { maxWeek:  5, t:26, tMin:25, tMax:27, rhMin:50, rhMax:60, stage:'육추' },
+  { maxWeek:  6, t:24, tMin:23, tMax:25, rhMin:50, rhMax:60, stage:'육추' },
+  { maxWeek:  7, t:22, tMin:21, tMax:23, rhMin:40, rhMax:60, stage:'육추 후기' },
+  { maxWeek: 17, t:21, tMin:20, tMax:22, rhMin:40, rhMax:60, stage:'육성' },
+  { maxWeek: 999, t:24, tMin:21, tMax:27, rhMin:40, rhMax:60, stage:'산란' },
+];
+const LAYER_ENV_BY_BREED = {};
+
+// 온·습도 기준 출처 (품종별 성능표 출처와 구분해 표기한다)
+const ENV_SOURCE = {
+  broiler: 'Aviagen 「Environmental Management in the Broiler House」 · Cobb 「Broiler Management Guide」',
+  layer: 'Hy-Line International 「Commercial Layer Management Guide」 (브루딩 온도·상대습도 40~60%)',
+};
+
+// 축종·품종·나이로 목표 온습도 한 구간을 찾는다.
+// broiler는 일령(day), layer는 주령(week)을 age로 넘긴다.
+function lookupEnvStandard(speciesKey, breedKey, age) {
+  if (speciesKey !== 'broiler' && speciesKey !== 'layer') return null;
+  if (age == null || age < 1) return null;
+  const isBroiler = speciesKey === 'broiler';
+  const table = isBroiler
+    ? (BROILER_ENV_BY_BREED[breedKey] || BROILER_ENV_DEFAULT)
+    : (LAYER_ENV_BY_BREED[breedKey] || LAYER_ENV_DEFAULT);
+  const key = isBroiler ? 'maxDay' : 'maxWeek';
+  const band = table.find(r => age <= r[key]) || table[table.length - 1];
+  return {
+    ...band,
+    tRange: band.tMin === band.tMax ? `${band.t}℃` : `${band.tMin}~${band.tMax}℃`,
+    rhRange: `${band.rhMin}~${band.rhMax}%`,
+    source: ENV_SOURCE[speciesKey],
+    unit: isBroiler ? '일령' : '주령',
+  };
+}
+
+// 축종 라벨(육계/산란계) → CONSULT_BREEDS 키. 여러 파일이 같은 변환을 반복해서 쓴다.
+function speciesKeyOf(species) {
+  return species === '육계' ? 'broiler' : species === '산란계' ? 'layer' : null;
+}
+
+// 실측 온습도가 목표 범위 대비 어떤 상태인지 (색/문구는 호출부에서 결정)
+function compareToEnvBand(value, min, max) {
+  if (value == null || Number.isNaN(Number(value))) return null;
+  const v = Number(value);
+  if (v < min) return { state: 'low', diff: Math.round((min - v) * 10) / 10 };
+  if (v > max) return { state: 'high', diff: Math.round((v - max) * 10) / 10 };
+  return { state: 'ok', diff: 0 };
+}
