@@ -5,22 +5,27 @@ function printProgram(id) {
   const farm = load('farms').find(f => f.id === prog.farmId);
   const today = new Date().toLocaleDateString('ko-KR');
 
+  // 품종이 지정된 프로그램만 목표 온·습도 열을 함께 인쇄한다(편집 화면과 같은 기준).
+  const showEnv = programHasEnv(prog);
+
   // 약품투약이나 백신사항이 있는 날짜만 출력한다(빈 날짜는 생략).
   let tableRows = '';
   for (let i = 1; i <= prog.duration; i++) {
     const d = prog.days.find(x => x.day === i);
     const hasPlan = d && ((d.drugs && d.drugs.length) || d.vaccine);
     if (!hasPlan) continue;
+    const env = showEnv ? programEnvFor(prog, i) : null;
     tableRows += `<tr>
       <td class="day-no">${i}</td>
       <td class="day-date">${programDayDateShort(prog.placementDate, i)}</td>
       <td class="drug-cell">${dayDrugLabel(d)}</td>
       <td class="vacc-cell">${dayVaccineLabel(d)}</td>
+      ${showEnv ? `<td class="env-cell">${env ? `${env.tRange}<br>${env.rhRange}` : '-'}</td>` : ''}
       <td>${d?.note || ''}</td>
     </tr>`;
   }
   if (!tableRows) {
-    tableRows = '<tr><td colspan="5" style="text-align:center;color:#999;padding:10pt">약품투약/백신사항이 등록된 날짜가 없습니다.</td></tr>';
+    tableRows = `<tr><td colspan="${showEnv ? 6 : 5}" style="text-align:center;color:#999;padding:10pt">약품투약/백신사항이 등록된 날짜가 없습니다.</td></tr>`;
   }
 
   const feedItems = prog.feedItems || [];
@@ -67,14 +72,17 @@ function printProgram(id) {
 
     <div class="print-section-title">일령별 투약 계획 <span style="font-weight:400;font-size:7pt">(약품투약/백신사항이 있는 날짜만 표시)</span></div>
     <table class="print-table">
-      <colgroup><col style="width:22pt"><col style="width:30pt"><col style="width:28%"><col style="width:20%"><col></colgroup>
+      <colgroup><col style="width:22pt"><col style="width:30pt"><col style="width:${showEnv ? 24 : 28}%"><col style="width:${showEnv ? 18 : 20}%">${showEnv ? '<col style="width:46pt">' : ''}<col></colgroup>
       <thead>
         <tr>
-          <th>일령</th><th>날짜</th><th>약품투약</th><th>백신사항</th><th>중요사항 / 비고</th>
+          <th>일령</th><th>날짜</th><th>약품투약</th><th>백신사항</th>${showEnv ? '<th>목표 온·습도</th>' : ''}<th>중요사항 / 비고</th>
         </tr>
       </thead>
       <tbody>${tableRows}</tbody>
     </table>
+    ${showEnv ? `<div style="font-size:6.5pt;color:#666;margin-top:3pt">
+      목표 온·습도는 ${programBreedName(prog)} 사양매뉴얼 기준의 계사 내부 값입니다. 온도계 수치보다 계군의 행동(헐떡임·웅크림·분산)을 우선 판단 기준으로 삼으세요.
+    </div>` : ''}
 
     <div class="print-bottom">
       <div class="print-box">

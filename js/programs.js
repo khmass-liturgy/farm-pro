@@ -605,19 +605,42 @@ function buildFeedSection(prog) {
   </div>`;
 }
 
+// 프로그램에 저장된 축종·품종으로 그 일령의 목표 온·습도를 찾는다.
+// 편집 모달·상세 보기·A4 인쇄가 모두 이 두 함수를 공유해야 세 화면이 어긋나지 않는다.
+function programHasEnv(prog) {
+  return !!(prog && speciesKeyOf(prog.species) && prog.breed);
+}
+function programBreedName(prog) {
+  const speciesKey = speciesKeyOf(prog?.species);
+  return (speciesKey && CONSULT_BREEDS[speciesKey]?.breeds[prog.breed]?.name) || prog?.breed || '';
+}
+function programEnvFor(prog, day) {
+  const speciesKey = speciesKeyOf(prog?.species);
+  if (!speciesKey || !prog.breed) return null;
+  // 산란계 매뉴얼은 주령 단위라 일령을 주령으로 바꿔 조회한다.
+  const age = speciesKey === 'broiler' ? day : Math.ceil(day / 7);
+  return lookupEnvStandard(speciesKey, prog.breed, age);
+}
+
 function viewProgram(id) {
   const prog = load('programs').find(p => p.id === id);
   if (!prog) return;
   const farm = load('farms').find(f => f.id === prog.farmId);
+  const showEnv = programHasEnv(prog);
   let rows = '';
   for (let i = 1; i <= prog.duration; i++) {
     const d = prog.days.find(x => x.day === i);
     const hasData = d && ((d.drugs && d.drugs.length) || d.vaccine || d.note);
+    const env = showEnv ? programEnvFor(prog, i) : null;
     rows += `<tr style="background:${hasData?'':'var(--bg)'}">
       <td style="text-align:center;font-weight:700;color:var(--accent);background:var(--bg);width:55px">${i}</td>
       <td style="text-align:center;color:var(--text-secondary);font-size:12px;width:60px">${programDayDateShort(prog.placementDate, i)}</td>
       <td>${dayDrugPillsHtml(d)}</td>
       <td>${dayVaccinePillHtml(d)}</td>
+      ${showEnv ? `<td style="font-size:11px;line-height:1.5;white-space:nowrap">
+        <span style="color:var(--accent);font-weight:700">🌡️ ${env ? env.tRange : '-'}</span><br>
+        <span style="color:var(--text-secondary)">💧 ${env ? env.rhRange : '-'}</span>
+      </td>` : ''}
       <td style="color:var(--text-secondary);font-size:12px">${d?.note||''}</td>
     </tr>`;
   }
@@ -632,6 +655,7 @@ function viewProgram(id) {
       <div style="background:var(--bg);border-radius:8px;padding:12px">
         <div style="font-size:11px;color:var(--text-secondary);font-weight:700;margin-bottom:4px">사육 기간</div>
         <div style="font-size:14px;font-weight:700">${prog.duration}일령${prog.placementDate ? ' · 입추일 '+prog.placementDate : ''}</div>
+        ${showEnv ? `<div style="font-size:12px;color:var(--text-secondary)">${prog.species} · ${programBreedName(prog)}</div>` : ''}
         ${prog.focus ? `<div style="font-size:12px;color:var(--text-secondary)">${prog.focus}</div>` : ''}
       </div>
       <div style="background:var(--bg);border-radius:8px;padding:12px">
@@ -648,6 +672,7 @@ function viewProgram(id) {
             <th style="padding:9px 10px;text-align:center;border-bottom:1.5px solid var(--border);width:60px">날짜</th>
             <th style="padding:9px 10px;border-bottom:1.5px solid var(--border)">약품투약</th>
             <th style="padding:9px 10px;border-bottom:1.5px solid var(--border)">백신사항</th>
+            ${showEnv ? `<th style="padding:9px 10px;border-bottom:1.5px solid var(--border);width:96px">🌡️ 온·습도</th>` : ''}
             <th style="padding:9px 10px;border-bottom:1.5px solid var(--border)">중요사항</th>
           </tr>
         </thead>
