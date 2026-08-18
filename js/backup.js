@@ -56,7 +56,7 @@ async function restoreData(e) {
 // 기준 데이터라, 지우면 앱에서는 되살릴 방법이 없고 SQL Editor에서 schema.sql을
 // 다시 실행해야 한다. 확인 문구에도 유지된다는 사실을 명시한다.
 async function clearAllData() {
-  if (!confirm('⚠️ 농장·약품·백신·사료첨가제·프로그램·입추·투약이력·처방전·임상평가가 모두 삭제됩니다.\n(처방 제품 마스터는 유지됩니다)\n반드시 백업 후 진행하세요.\n\n정말로 삭제하시겠습니까?')) return;
+  if (!confirm('⚠️ 농장·약품·백신·사료첨가제·프로그램·입추·투약이력·처방전·계군 임상평가가 모두 삭제됩니다.\n(처방 제품 마스터는 유지됩니다)\n반드시 백업 후 진행하세요.\n\n정말로 삭제하시겠습니까?')) return;
   if (!confirm('마지막 확인입니다. 정말 전체 데이터를 삭제할까요? 이 작업은 되돌릴 수 없습니다.')) return;
   try {
     // FK 의존 순서 — 자식 테이블부터. batches는 farms를 on delete restrict로 참조하므로

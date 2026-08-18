@@ -2,7 +2,7 @@
 const PAGE_TITLES = {
   dashboard: '대시보드',
   'weather-consult': '날씨별 컨설팅',
-  clinical: '임상평가 (SCS + 확장 임상평가)',
+  clinical: '계군 임상평가',
   rodent: '구서작업 컨설팅 평가',
   farms: '농장 등록/관리',
   programs: '투약 프로그램',
@@ -23,7 +23,7 @@ const PAGE_ACTIONS = {
   farms: `<button class="btn btn-primary" onclick="openFarmModal()">+ 농장 추가</button>`,
   programs: `<button class="btn btn-primary" onclick="openProgramModal()">+ 프로그램 추가</button>`,
   batches: `<button class="btn btn-primary" onclick="openBatchModal()">+ 입추 등록</button>`,
-  clinical: `<button class="btn btn-primary" onclick="openClinicalModal()">+ 임상평가 입력</button>`,
+  clinical: `<button class="btn btn-primary" onclick="openClinicalModal()">+ 계군 임상평가 입력</button>`,
   rodent: `<button class="btn btn-primary" onclick="openRodentModal()">+ 구서 평가 입력</button>`,
   medconsult: `<button class="btn btn-primary" onclick="openConsultLogModal()">+ 상담 기록 추가</button>`,
   prescriptions: `<button class="btn btn-primary" onclick="openRxPrescriptionModal()">+ 처방전 발급</button>`,

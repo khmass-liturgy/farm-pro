@@ -219,7 +219,7 @@ function openClinicalModal(id) {
     CLINICAL_ITEMS.forEach(it => { caDraft.clinical[it.key] = 0; });
   }
 
-  document.getElementById('modal-clinical-title').textContent = id ? '임상평가 편집' : '임상평가 입력';
+  document.getElementById('modal-clinical-title').textContent = id ? '계군 임상평가 편집' : '계군 임상평가 입력';
   populateFarmSelect('ca-farm', rec?.farmId || '');
   document.getElementById('ca-date').value = rec?.assessedAt || new Date().toISOString().slice(0, 10);
   populateClinicalBatchSelect(rec?.farmId || '', rec?.batchId || '');
@@ -353,7 +353,7 @@ async function saveClinicalAssessment() {
 }
 
 async function deleteClinicalAssessment(id) {
-  if (!confirm('이 임상평가 기록을 삭제하시겠습니까?')) return;
+  if (!confirm('이 계군 임상평가 기록을 삭제하시겠습니까?')) return;
   try { await deleteRow('clinicalAssessments', id); } catch (e) { alert('삭제 실패: ' + e.message); return; }
   renderClinicalAssessments();
 }
@@ -490,7 +490,7 @@ function printVisitReport(farmId, assessedAt) {
 
   const html = `<div class="print-page">
     <div class="print-header">
-      <h1>농장 임상평가 컨설팅 리포트</h1>
+      <h1>농장 계군 임상평가 컨설팅 리포트</h1>
       <div class="ph-meta">
         <span>농장: <strong>${farmName}</strong></span>
         <span>농장주: ${farm?.owner || '-'}</span>
