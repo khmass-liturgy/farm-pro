@@ -1,9 +1,7 @@
 // ─── 네비게이션 / 부팅 ──────────────────────────────────────────────────────
 const PAGE_TITLES = {
   dashboard: '대시보드',
-  'weather-consult': '날씨별 농장컨설팅',
-  'weather-vent': '환기가이드',
-  'weather-livestock': '육계/산란계 컨설팅',
+  'weather-consult': '날씨별 컨설팅',
   clinical: '임상평가 (SCS + 확장 임상평가)',
   rodent: '구서작업 컨설팅 평가',
   farms: '농장 등록/관리',
