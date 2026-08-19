@@ -176,6 +176,9 @@ function openProgramModal(id, source) {
   document.getElementById('prog-ref-name').textContent = isDup ? `(${prog.name})` : '';
   populateFarmSelect('p-farm', prog?.farmId || '');
   document.getElementById('p-name').value = isDup ? `${prog.name} (복사본)` : (prog?.name || '');
+  // 편집·복제로 열었을 때 기존 이름이 자동 생성으로 덮이지 않도록 추적값을 비운다.
+  // 새 등록이면 농장을 고르는 순간 applyProgramAutoName()이 채운다.
+  progLastAutoName = '';
   document.getElementById('p-duration').value = prog?.duration || 30;
   // 복제본은 다음 회차용이라 지난 회차의 입추일이 그대로 남아 있으면 일령별 날짜가
   // 옛 날짜로 저장되기 쉽다. 비워서 새로 지정하게 한다.
@@ -275,6 +278,37 @@ function onProgramFarmChange() {
     sel.value = cur;
   }
   applyProgramBreedDefault();
+  applyProgramAutoName();
+}
+
+// ─── 프로그램명 자동 입력 (yy-mm-dd-농장주) ────────────────────────────────
+// 농장과 입추일을 고르면 프로그램명을 자동으로 채운다. 사용자가 직접 고친 이름은
+// 덮어쓰면 안 되므로, 마지막으로 자동 생성해 넣은 값을 기억해 두고 그것과 같을 때만
+// 다시 만든다(빈 칸일 때도 채운다).
+let progLastAutoName = '';
+
+function programAutoName() {
+  const farm = load('farms').find(f => f.id === document.getElementById('p-farm')?.value);
+  if (!farm?.owner) return '';
+  // 입추일이 아직 없으면 오늘 날짜로 만들어 두고, 입추일을 넣으면 그 날짜로 다시 만든다.
+  const ymd = document.getElementById('p-placement-date')?.value || new Date().toISOString().slice(0, 10);
+  return `${ymd.slice(2)}-${farm.owner}`; // 2026-08-19 → 26-08-19-홍길동
+}
+
+function applyProgramAutoName() {
+  const el = document.getElementById('p-name');
+  if (!el) return;
+  if (el.value && el.value !== progLastAutoName) return; // 직접 입력한 이름은 보존
+  const next = programAutoName();
+  if (!next) return;
+  el.value = next;
+  progLastAutoName = next;
+}
+
+// 사용자가 이름을 직접 손대면 그 순간부터 자동 생성 대상에서 제외한다.
+function onProgramNameInput() {
+  const el = document.getElementById('p-name');
+  if (el && el.value !== progLastAutoName) progLastAutoName = '';
 }
 
 // 농장에 등록된 계군(입추배치)에서 축종·품종을 가져온다.
