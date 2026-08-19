@@ -309,7 +309,13 @@ function onDrugSelectChange(dayNum, slotIdx) {
   const sel = document.getElementById(`day-drug-sel-${dayNum}-${slotIdx}`);
   const customWrap = document.getElementById(`day-drug-custom-${dayNum}-${slotIdx}`);
   if (!sel) return;
-  if (sel.value === '__custom__') { customWrap.style.display = ''; updateDayNote(dayNum); return; }
+  if (sel.value === '__custom__') {
+    customWrap.style.display = '';
+    // 직접입력을 고른 목적이 곧 타이핑이므로 커서를 바로 넣어준다.
+    document.getElementById(`day-drug-text-${dayNum}-${slotIdx}`)?.focus();
+    updateDayNote(dayNum);
+    return;
+  }
   customWrap.style.display = 'none';
   updateDayNote(dayNum);
 }
@@ -318,7 +324,9 @@ function onVaccineSelectChange(dayNum) {
   const sel = document.getElementById(`day-vaccine-sel-${dayNum}`);
   const customWrap = document.getElementById(`day-vaccine-custom-${dayNum}`);
   if (!sel) return;
-  customWrap.style.display = sel.value === '__custom__' ? '' : 'none';
+  const isCustom = sel.value === '__custom__';
+  customWrap.style.display = isCustom ? '' : 'none';
+  if (isCustom) document.getElementById(`day-vaccine-text-${dayNum}`)?.focus();
   updateDayNote(dayNum);
 }
 
@@ -357,18 +365,21 @@ function addDrugSlot(dayNum) {
   wrap.dataset.slots = current + 1;
   const div = document.createElement('div');
   div.id = `drug-slot-${dayNum}-${newIdx}`;
-  div.style.cssText = 'display:flex;align-items:center;gap:4px;margin-top:3px';
+  // 마크업은 generateDayRows()의 슬롯과 반드시 같아야 한다(직접입력 칸은 select 아래 전체폭).
+  div.style.cssText = 'margin-top:3px';
   div.innerHTML = `
-    <select id="day-drug-sel-${dayNum}-${newIdx}" onchange="onDrugSelectChange(${dayNum},${newIdx})"
-      style="flex:1;border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px;font-family:inherit;background:var(--bg-card)">
-      ${getDrugOptions('')}
-    </select>
-    <div id="day-drug-custom-${dayNum}-${newIdx}" style="display:none;flex:1">
-      <input type="text" id="day-drug-text-${dayNum}-${newIdx}" placeholder="직접 입력"
-        style="width:100%;border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px;font-family:inherit">
+    <div style="display:flex;align-items:center;gap:4px">
+      <select id="day-drug-sel-${dayNum}-${newIdx}" onchange="onDrugSelectChange(${dayNum},${newIdx})"
+        style="flex:1;min-width:0;border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px;font-family:inherit;background:var(--bg-card)">
+        ${getDrugOptions('')}
+      </select>
+      <button onclick="removeDrugSlot(${dayNum},${newIdx})" title="삭제"
+        style="flex:none;background:var(--red-bg);color:var(--red);border:none;border-radius:4px;padding:2px 6px;cursor:pointer;font-size:13px;line-height:1">×</button>
     </div>
-    <button onclick="removeDrugSlot(${dayNum},${newIdx})" title="삭제"
-      style="background:var(--red-bg);color:var(--red);border:none;border-radius:4px;padding:2px 6px;cursor:pointer;font-size:13px;line-height:1">×</button>`;
+    <div id="day-drug-custom-${dayNum}-${newIdx}" style="display:none;margin-top:3px">
+      <input type="text" id="day-drug-text-${dayNum}-${newIdx}" placeholder="약품명 직접 입력"
+        style="width:100%;border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px;font-family:inherit">
+    </div>`;
   wrap.appendChild(div);
 }
 function removeDrugSlot(dayNum, slotIdx) {
@@ -393,18 +404,22 @@ function generateDayRows(existingDays) {
     for (let s = 0; s < initialCount; s++) {
       const dEntry = exDrugs[s] || null;
       const isCustom = !!(dEntry && !dEntry.drugId);
+      // 직접입력 칸은 select 아래에 전체폭으로 놓는다. select와 나란히 두면 좁은
+      // 약품 열에서 반칸씩 나눠 가져 글자를 못 넣는다(백신·사료·계사동과 같은 구조).
       slotsHtml += `
-        <div id="drug-slot-${i}-${s}" style="display:flex;align-items:center;gap:4px;${s>0?'margin-top:3px':''}">
-          <select id="day-drug-sel-${i}-${s}" onchange="onDrugSelectChange(${i},${s})"
-            style="flex:1;border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px;font-family:inherit;background:var(--bg-card)">
-            ${getDrugOptions(isCustom ? '__custom__' : (dEntry?.drugId || ''))}
-          </select>
-          <div id="day-drug-custom-${i}-${s}" style="display:${isCustom?'':'none'};flex:1">
-            <input type="text" id="day-drug-text-${i}-${s}" value="${isCustom?(dEntry.name||''):''}" placeholder="직접 입력"
+        <div id="drug-slot-${i}-${s}" style="${s>0?'margin-top:3px':''}">
+          <div style="display:flex;align-items:center;gap:4px">
+            <select id="day-drug-sel-${i}-${s}" onchange="onDrugSelectChange(${i},${s})"
+              style="flex:1;min-width:0;border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px;font-family:inherit;background:var(--bg-card)">
+              ${getDrugOptions(isCustom ? '__custom__' : (dEntry?.drugId || ''))}
+            </select>
+            ${s>0?`<button onclick="removeDrugSlot(${i},${s})" title="삭제"
+              style="flex:none;background:var(--red-bg);color:var(--red);border:none;border-radius:4px;padding:2px 6px;cursor:pointer;font-size:13px;line-height:1">×</button>`:''}
+          </div>
+          <div id="day-drug-custom-${i}-${s}" style="display:${isCustom?'':'none'};margin-top:3px">
+            <input type="text" id="day-drug-text-${i}-${s}" value="${isCustom?(dEntry.name||''):''}" placeholder="약품명 직접 입력"
               style="width:100%;border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:11px;font-family:inherit">
           </div>
-          ${s>0?`<button onclick="removeDrugSlot(${i},${s})" title="삭제"
-            style="background:var(--red-bg);color:var(--red);border:none;border-radius:4px;padding:2px 6px;cursor:pointer;font-size:13px;line-height:1">×</button>`:''}
         </div>`;
     }
 
