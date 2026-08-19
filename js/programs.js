@@ -193,6 +193,11 @@ function openProgramModal(id, source) {
     : (fallback?.species === species ? (fallback.breed || '') : '');
   document.getElementById('p-species').value = species;
   populateProgramBreedSelect(species, breed);
+  // 사육동수·마릿수. 복제본은 다음 회차라 마릿수를 그대로 물려주면 틀린 값이 되기 쉽지만,
+  // 동수는 같은 농장이면 대개 그대로라 유지한다.
+  document.getElementById('p-houses').value = prog?.houses ?? '';
+  document.getElementById('p-count').value = isDup ? '' : (prog?.birdCount ?? '');
+  updateProgramBatchHint();
   document.getElementById('p-focus').value = prog?.focus || '';
   document.getElementById('p-notes').value = prog?.notes || '';
   document.getElementById('p-feed-memo').value = prog?.feedMemo || '';
@@ -279,6 +284,74 @@ function onProgramFarmChange() {
   }
   applyProgramBreedDefault();
   applyProgramAutoName();
+}
+
+// ─── 사육동수·마릿수 → 입추(사육배치) 자동 등록 ────────────────────────────
+// 프로그램에 사육동수·마릿수를 넣어두면 저장할 때 입추를 한 건으로 묶어 만든다
+// (계사는 "3개동"처럼 동수로 기록). 저장 전에 무엇이 만들어질지 화면에 미리 보여준다.
+function programBatchHouseLabel(houses) {
+  return houses ? `${Number(houses)}개동` : '';
+}
+
+function updateProgramBatchHint() {
+  const hint = document.getElementById('p-batch-hint');
+  if (!hint) return;
+  const houses = document.getElementById('p-houses').value;
+  const count = document.getElementById('p-count').value;
+  if (!houses && !count) {
+    hint.textContent = '사육동수·마릿수를 입력하면 저장할 때 입추(사육배치)가 자동으로 등록됩니다.';
+    return;
+  }
+  // 입추는 입추일이 필수라 날짜가 없으면 만들 수 없다. 왜 안 되는지 미리 알려준다.
+  if (!document.getElementById('p-placement-date').value) {
+    hint.innerHTML = '⚠️ 입추를 자동 등록하려면 <strong>입추일</strong>도 입력해야 합니다.';
+    return;
+  }
+  const farm = load('farms').find(f => f.id === document.getElementById('p-farm').value);
+  const parts = [farm?.name, programBatchHouseLabel(houses), count ? Number(count).toLocaleString() + '수' : null]
+    .filter(Boolean).join(' · ');
+  const existing = existingProgramBatch(editingId.program);
+  hint.textContent = existing
+    ? `저장하면 이미 연결된 입추 기록이 갱신됩니다 → ${parts}`
+    : `저장하면 입추가 등록됩니다 → ${parts}`;
+}
+
+// 이 프로그램으로 이미 만들어 둔 입추(있으면). 다시 저장할 때 중복 생성하지 않기 위함.
+function existingProgramBatch(programId) {
+  if (!programId) return null;
+  return load('batches').find(b => b.programId === programId) || null;
+}
+
+// 프로그램 저장 직후 호출. 입추를 새로 만들거나(없으면) 기존 것을 갱신한다.
+// 반환값은 사용자에게 무슨 일이 있었는지 알려주기 위한 결과 요약.
+async function syncProgramBatch(saved) {
+  const houses = document.getElementById('p-houses').value;
+  const count = document.getElementById('p-count').value;
+  if (!houses && !count) return null;                       // 입력이 없으면 아무것도 만들지 않는다
+  if (!saved.placementDate) return { skipped: 'no-date' };   // batches.placement_date는 필수
+
+  const existing = existingProgramBatch(saved.id);
+  const data = {
+    farmId: saved.farmId,
+    programId: saved.id, programName: saved.name,
+    // 동수를 안 적었으면 기존 계사 표기를 그대로 둔다(사용자가 손으로 고쳐둔 값 보존).
+    house: houses ? programBatchHouseLabel(houses) : (existing?.house || null),
+    placementDate: saved.placementDate,
+    birdCount: count === '' ? (existing?.birdCount ?? null) : Number(count),
+    species: saved.species || existing?.species || null,
+    breed: saved.breed || existing?.breed || null,
+    // 사육 종료 처리 등 입추 쪽에서 바꿔둔 상태는 덮어쓰지 않는다.
+    status: existing?.status || 'active',
+    endDate: existing?.endDate || null,
+    notes: existing?.notes || null,
+  };
+  try {
+    if (existing) { await updateRow('batches', existing.id, data); return { updated: true }; }
+    await insertRow('batches', data);
+    return { created: true };
+  } catch (e) {
+    return { error: e.message };
+  }
 }
 
 // ─── 프로그램명 자동 입력 (yy-mm-dd-농장주) ────────────────────────────────
@@ -608,19 +681,31 @@ async function saveProgram() {
     placementDate: document.getElementById('p-placement-date').value || null,
     species: document.getElementById('p-species').value || null,
     breed: document.getElementById('p-breed').value || null,
+    houses: document.getElementById('p-houses').value,
+    birdCount: document.getElementById('p-count').value,
     focus: document.getElementById('p-focus').value.trim(),
     notes: document.getElementById('p-notes').value.trim(),
     feedItems: collectFeedSlots(),
     feedMemo: document.getElementById('p-feed-memo').value.trim(),
     days,
   };
+  let saved;
   try {
-    if (editingId.program) await updateRow('programs', editingId.program, data);
-    else await insertRow('programs', data);
+    if (editingId.program) saved = await updateRow('programs', editingId.program, data);
+    else saved = await insertRow('programs', data);
   } catch (e) { alert('저장 실패: ' + e.message); return; }
+
+  // 사육동수·마릿수를 넣었으면 입추(사육배치)까지 이어서 만든다.
+  // 프로그램 저장은 이미 끝났으므로, 입추 쪽이 실패해도 프로그램은 그대로 두고 알리기만 한다.
+  const batchResult = await syncProgramBatch(saved);
+
   closeModal('modal-program');
   populateFarmFilter();
   renderPrograms();
+
+  if (batchResult?.created) alert(`입추(사육배치)도 함께 등록했습니다.\n${saved.farmName} · ${programBatchHouseLabel(saved.houses)} · ${saved.birdCount ? Number(saved.birdCount).toLocaleString() + '수' : ''}`);
+  else if (batchResult?.skipped === 'no-date') alert('사육동수·마릿수는 저장했지만, 입추일이 없어 입추(사육배치)는 만들지 못했습니다.\n프로그램 편집에서 입추일을 넣고 다시 저장하면 등록됩니다.');
+  else if (batchResult?.error) alert('프로그램은 저장했지만 입추(사육배치) 등록에 실패했습니다.\n' + batchResult.error);
 }
 
 async function deleteProgram(id) {
@@ -718,6 +803,10 @@ function viewProgram(id) {
       <div style="background:var(--bg);border-radius:8px;padding:12px">
         <div style="font-size:11px;color:var(--text-secondary);font-weight:700;margin-bottom:4px">사육 기간</div>
         <div style="font-size:14px;font-weight:700">${prog.duration}일령${prog.placementDate ? ' · 입추일 '+prog.placementDate : ''}</div>
+        ${(prog.houses || prog.birdCount) ? `<div style="font-size:12px;color:var(--text-secondary)">${[
+          prog.houses ? programBatchHouseLabel(prog.houses) : null,
+          prog.birdCount ? Number(prog.birdCount).toLocaleString() + '수' : null,
+        ].filter(Boolean).join(' · ')}</div>` : ''}
         ${showEnv ? `<div style="font-size:12px;color:var(--text-secondary)">${programSpeciesName(prog)} · ${programBreedName(prog)}</div>` : ''}
         ${prog.focus ? `<div style="font-size:12px;color:var(--text-secondary)">${prog.focus}</div>` : ''}
       </div>
@@ -791,6 +880,8 @@ function renderPrograms() {
       </div>
       <div class="flex-gap" style="margin-bottom:12px;gap:16px">
         <span><span style="color:var(--text-secondary);font-size:12px">사육기간 </span><strong>${p.duration}일령</strong></span>
+        ${p.houses ? `<span><span style="color:var(--text-secondary);font-size:12px">동수 </span><strong>${programBatchHouseLabel(p.houses)}</strong></span>` : ''}
+        ${p.birdCount ? `<span><span style="color:var(--text-secondary);font-size:12px">마릿수 </span><strong>${Number(p.birdCount).toLocaleString()}수</strong></span>` : ''}
         <span><span class="badge badge-blue">약품 ${drugDays}일</span></span>
         <span><span class="badge badge-green">백신 ${vaccDays}일</span></span>
       </div>

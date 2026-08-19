@@ -109,6 +109,8 @@ create table if not exists programs (
   placement_date date,
   species text,
   breed text,
+  houses int,
+  bird_count int,
   focus text,
   notes text,
   feed_memo text,
@@ -124,6 +126,10 @@ create index if not exists idx_programs_farm_id on programs(farm_id);
 -- (품종을 알아야 일령별 목표 온·습도를 매뉴얼에서 찾아 보여줄 수 있다)
 alter table programs add column if not exists species text;
 alter table programs add column if not exists breed text;
+
+-- 사육동수·마릿수: 프로그램 저장 시 입추(batches)를 자동으로 만들거나 갱신하는 데 쓴다
+alter table programs add column if not exists houses int;
+alter table programs add column if not exists bird_count int;
 
 -- 기존 배포본에 이미 programs 테이블이 있을 경우를 위한 컬럼 추가
 alter table programs add column if not exists placement_date date;

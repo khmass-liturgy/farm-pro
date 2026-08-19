@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>농장 투약관리 시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260814v">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260814v">
-<link rel="icon" href="img/favicon.ico?v=20260814v">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260814v">
-<link rel="stylesheet" href="css/styles.css?v=20260814v">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260814w">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260814w">
+<link rel="icon" href="img/favicon.ico?v=20260814w">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260814w">
+<link rel="stylesheet" href="css/styles.css?v=20260814w">
 </head>
 <body>
 
@@ -813,6 +813,11 @@
       <div class="form-group"><label>입추일 <span class="text-muted">(선택, 입력하면 일령별 날짜가 자동 계산됨)</span></label><input id="p-placement-date" type="date" min="1900-01-01" max="2999-12-31" onchange="updateProgramDayDates(); applyProgramAutoName();"></div>
     </div>
     <div class="form-row">
+      <div class="form-group"><label>사육동수</label><input id="p-houses" type="number" min="1" placeholder="예) 3" oninput="updateProgramBatchHint()"></div>
+      <div class="form-group"><label>마릿수</label><input id="p-count" type="number" min="0" placeholder="예) 30000" oninput="updateProgramBatchHint()"></div>
+    </div>
+    <div class="text-muted mb-16" id="p-batch-hint">사육동수·마릿수를 입력하면 저장할 때 입추(사육배치)가 자동으로 등록됩니다.</div>
+    <div class="form-row">
       <div class="form-group"><label>축종 <span class="text-muted">(선택하면 일령별 목표 온·습도가 표시됩니다)</span></label>
         <select id="p-species" onchange="onProgramSpeciesChange()">
           <option value="">선택 안 함</option>
@@ -1069,25 +1074,25 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=20260814v"></script>
-<script src="js/supabaseClient.js?v=20260814v"></script>
-<script src="js/auth.js?v=20260814v"></script>
-<script src="js/breedStandards.js?v=20260814v"></script>
-<script src="js/farms.js?v=20260814v"></script>
-<script src="js/masterdata.js?v=20260814v"></script>
-<script src="js/rxProducts.js?v=20260814v"></script>
-<script src="js/drugSearch.js?v=20260814v"></script>
-<script src="js/programs.js?v=20260814v"></script>
-<script src="js/batches.js?v=20260814v"></script>
-<script src="js/medicationLog.js?v=20260814v"></script>
-<script src="js/prescriptions.js?v=20260814v"></script>
-<script src="js/clinicalAssessment.js?v=20260814v"></script>
-<script src="js/rodentControl.js?v=20260814v"></script>
-<script src="js/schedule.js?v=20260814v"></script>
-<script src="js/dashboard.js?v=20260814v"></script>
-<script src="js/reports.js?v=20260814v"></script>
-<script src="js/print.js?v=20260814v"></script>
-<script src="js/backup.js?v=20260814v"></script>
-<script src="js/app.js?v=20260814v"></script>
+<script src="js/config.js?v=20260814w"></script>
+<script src="js/supabaseClient.js?v=20260814w"></script>
+<script src="js/auth.js?v=20260814w"></script>
+<script src="js/breedStandards.js?v=20260814w"></script>
+<script src="js/farms.js?v=20260814w"></script>
+<script src="js/masterdata.js?v=20260814w"></script>
+<script src="js/rxProducts.js?v=20260814w"></script>
+<script src="js/drugSearch.js?v=20260814w"></script>
+<script src="js/programs.js?v=20260814w"></script>
+<script src="js/batches.js?v=20260814w"></script>
+<script src="js/medicationLog.js?v=20260814w"></script>
+<script src="js/prescriptions.js?v=20260814w"></script>
+<script src="js/clinicalAssessment.js?v=20260814w"></script>
+<script src="js/rodentControl.js?v=20260814w"></script>
+<script src="js/schedule.js?v=20260814w"></script>
+<script src="js/dashboard.js?v=20260814w"></script>
+<script src="js/reports.js?v=20260814w"></script>
+<script src="js/print.js?v=20260814w"></script>
+<script src="js/backup.js?v=20260814w"></script>
+<script src="js/app.js?v=20260814w"></script>
 </body>
 </html>

@@ -67,6 +67,8 @@ const TABLES = {
         farm_id: o.farmId || null, farm_name_snapshot: o.farmName || null,
         name: o.name, duration: Number(o.duration) || 30, placement_date: o.placementDate || null,
         species: o.species || null, breed: o.breed || null,
+        houses: o.houses === '' || o.houses == null ? null : Number(o.houses),
+        bird_count: o.birdCount === '' || o.birdCount == null ? null : Number(o.birdCount),
         focus: o.focus || null, notes: o.notes || null,
         feed_memo: o.feedMemo || null, feed_items: o.feedItems || [], days: o.days || [],
       };
@@ -75,7 +77,9 @@ const TABLES = {
       return {
         id: r.id, farmId: r.farm_id, farmName: r.farm_name_snapshot,
         name: r.name, duration: r.duration, placementDate: r.placement_date,
-        species: r.species, breed: r.breed, focus: r.focus, notes: r.notes,
+        species: r.species, breed: r.breed,
+        houses: r.houses, birdCount: r.bird_count,
+        focus: r.focus, notes: r.notes,
         feedMemo: r.feed_memo, feedItems: r.feed_items || [], days: r.days || [],
         createdAt: r.created_at,
       };
