@@ -79,11 +79,20 @@ function computeUpcomingSchedule(horizonDays = DUE_SOON_HORIZON_DAYS) {
 // 일령부터 15일치 계획. computeUpcomingSchedule과 달리 배치(사육중 여부)와 무관하게
 // 프로그램 자체를 훑는다(입추 전/후 상관없이 프로그램만 등록돼 있으면 대상).
 const PROGRAM_SCHEDULE_HORIZON_DAYS = 14; // offset 0~14 = 오늘 포함 15일
+// 목록에 못 들어간 프로그램은 그 사유도 함께 돌려준다. 조건이 안 맞는다고 카드를 그냥
+// 비우면 "방금 만든 프로그램이 대시보드에 안 뜬다"로만 보이고 원인을 알 수 없다.
+// 특히 입추일은 프로그램 등록 시 선택 항목이라, 안 넣으면 여기서 통째로 빠진다.
 function computeProgramNext15Days(horizonDays = PROGRAM_SCHEDULE_HORIZON_DAYS) {
-  const programs = load('programs').filter(p => p.placementDate);
   const items = [];
-  programs.forEach(p => {
+  const excluded = [];
+  load('programs').forEach(p => {
+    const label = { programId: p.id, programName: p.name, farmName: p.farmName || '' };
+    if (!p.placementDate) {
+      excluded.push({ ...label, reason: '입추일이 입력되지 않음 — 프로그램 편집에서 입추일을 넣으면 표시됩니다' });
+      return;
+    }
     const dayAge = computeDayAge(p.placementDate);
+    const before = items.length;
     for (let offset = 0; offset <= horizonDays; offset++) {
       const day = dayAge + offset;
       if (day < 1 || day > p.duration) continue;
@@ -96,9 +105,17 @@ function computeProgramNext15Days(horizonDays = PROGRAM_SCHEDULE_HORIZON_DAYS) {
         drugLabel: dayDrugLabel(d), vaccineLabel: dayVaccineLabel(d),
       });
     }
+    if (items.length === before) {
+      const reason = dayAge > p.duration
+        ? `프로그램 기간이 지남 (${p.duration}일령 프로그램인데 입추일 기준 오늘 ${dayAge}일령)`
+        : dayAge + horizonDays < 1
+          ? `아직 입추 전 (입추일 ${p.placementDate})`
+          : '앞으로 15일 안에 약품·백신 계획이 있는 날이 없음';
+      excluded.push({ ...label, reason });
+    }
   });
   items.sort((a, b) => a.date.localeCompare(b.date) || a.farmName.localeCompare(b.farmName));
-  return items;
+  return { items, excluded };
 }
 
 // 활성 입추 배치의 최근 투약 기록 중 휴약기간이 아직 끝나지 않은 항목
@@ -179,10 +196,25 @@ function renderDashboard() {
     </div>`;
   }
 
-  const next15 = computeProgramNext15Days();
+  const { items: next15, excluded: next15Excluded } = computeProgramNext15Days();
   const next15El = document.getElementById('dash-program-15days');
-  if (!next15.length) {
-    next15El.innerHTML = '';
+  // 목록에 못 들어간 프로그램이 있으면 사유를 함께 적는다(왜 안 뜨는지 화면에서 알 수 있게).
+  const excludedHtml = next15Excluded.length ? `
+    <div class="${next15.length ? 'mt-16' : ''}" style="font-size:11px;color:var(--text-secondary)">
+      <div style="font-weight:700;margin-bottom:4px">아래 프로그램은 이 목록에 포함되지 않았습니다</div>
+      ${next15Excluded.map(e => `<div style="padding:3px 0;cursor:pointer" onclick="showPage('programs')">
+        · <strong>${e.programName}</strong>${e.farmName ? ` <span class="text-muted">(${e.farmName})</span>` : ''} — ${e.reason}
+      </div>`).join('')}
+    </div>` : '';
+
+  if (!next15.length && !next15Excluded.length) {
+    next15El.innerHTML = ''; // 프로그램 자체가 없으면 할 말도 없다
+  } else if (!next15.length) {
+    next15El.innerHTML = `<div class="card mt-16">
+      <div class="card-header"><div class="card-title">📋 프로그램 기준 오늘부터 15일 일정</div></div>
+      <p class="text-muted mb-16">앞으로 15일 안에 예정된 투약 계획이 없습니다.</p>
+      ${excludedHtml}
+    </div>`;
   } else {
     const next15Rows = next15.map(it => `
       <tr onclick="showPage('programs')" style="cursor:pointer">
@@ -196,6 +228,7 @@ function renderDashboard() {
     next15El.innerHTML = `<div class="card mt-16">
       <div class="card-header"><div class="card-title">📋 프로그램 기준 오늘부터 15일 일정</div></div>
       <div class="tbl-wrap"><table><thead><tr><th>날짜</th><th>농장</th><th>프로그램</th><th>일령</th><th>약품</th><th>백신</th></tr></thead><tbody>${next15Rows}</tbody></table></div>
+      ${excludedHtml}
     </div>`;
   }
 
