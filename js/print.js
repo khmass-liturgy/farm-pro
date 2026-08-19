@@ -96,12 +96,6 @@ function printProgram(id) {
       </div>
     </div>
 
-    <div class="print-sign">
-      <div class="print-sign-box">농 장 주</div>
-      <div class="print-sign-box">담당 수의사</div>
-      <div class="print-sign-box">확 인</div>
-    </div>
-
     <div style="margin-top:6pt;font-size:7pt;color:#aaa;text-align:center">
       ※ 본 프로그램은 기본 프로그램으로 질병 상황에 따라 수의사와 상의 후 조정될 수 있습니다.
     </div>

@@ -401,8 +401,6 @@ body { display: block !important; height: auto !important; overflow: visible !im
 .print-feed-table { width: 100%; border-collapse: collapse; font-size: 8pt; }
 .print-feed-table th { background: #f0f4fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; border: 0.5pt solid #bbb; padding: 3pt 4pt; font-size: 7.5pt; text-align: left; }
 .print-feed-table td { border: 0.5pt solid #bbb; padding: 3pt 4pt; }
-.print-sign { display: grid; grid-template-columns: repeat(3,1fr); gap: 6pt; margin-top: 8pt; }
-.print-sign-box { border: 0.5pt solid #aaa; text-align: center; padding: 4pt 0 20pt; font-size: 7.5pt; color: #444; }
 
 /* 처방전 (수의사법 시행규칙 별지 제10호서식) — 실제 처방전 PDF를 좌표 단위로 측정해
    그대로 옮긴 15열×31행 표(열너비 %, 행높이 pt 실측값). 각 rx-td는 원본의 병합 셀
