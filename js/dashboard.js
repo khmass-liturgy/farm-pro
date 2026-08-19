@@ -5,10 +5,12 @@ function parseWithdrawalDays(text) {
   return m ? parseInt(m[1], 10) : null;
 }
 
-// 활성 입추 배치 중, 오늘부터 DUE_SOON_HORIZON_DAYS일 이내에 투약/백신 계획이 있는데
-// 아직 기록되지 않은 항목. 계군(배치)의 입추일을 기준으로 일령을 계산해 알려준다.
+// 활성 입추 배치 중, startOffset~horizonDays일 사이에 투약/백신 계획이 있는데 아직
+// 기록되지 않은 항목. 계군(배치)의 입추일을 기준으로 일령을 계산해 알려준다.
+// startOffset은 기본 0(오늘부터)이지만, 대시보드는 어제치 미기록도 놓치지 않도록
+// -1(어제)부터 부른다 — 투약 일정 화면(js/schedule.js)은 기존 기본값을 그대로 쓴다.
 const DUE_SOON_HORIZON_DAYS = 7;
-function computeDueSoonAlerts(horizonDays = DUE_SOON_HORIZON_DAYS) {
+function computeDueSoonAlerts(horizonDays = DUE_SOON_HORIZON_DAYS, startOffset = 0) {
   const batches = load('batches').filter(b => b.status === 'active');
   const farms = load('farms');
   const programs = load('programs');
@@ -20,7 +22,7 @@ function computeDueSoonAlerts(horizonDays = DUE_SOON_HORIZON_DAYS) {
     if (!prog) return;
     const dayAge = computeDayAge(b.placementDate);
     const farm = farms.find(f => f.id === b.farmId);
-    for (let offset = 0; offset <= horizonDays; offset++) {
+    for (let offset = startOffset; offset <= horizonDays; offset++) {
       const day = dayAge + offset;
       if (day < 1 || day > prog.duration) continue;
       const d = prog.days.find(x => x.day === day);
@@ -29,11 +31,10 @@ function computeDueSoonAlerts(horizonDays = DUE_SOON_HORIZON_DAYS) {
       if (logs.some(l => l.batchId === b.id && l.programDay === day)) continue;
       const label = [dayDrugLabel(d), dayVaccineLabel(d)].filter(Boolean).join(' / ');
       const dateStr = programDayDateShort(b.placementDate, day);
+      const dayLabel = offset === 0 ? '오늘' : offset > 0 ? `${offset}일 후` : `${-offset}일 전`;
       alerts.push({
-        level: offset === 0 ? 'red' : 'amber',
-        text: offset === 0
-          ? `${farm?.name||''} — 오늘 ${dateStr}(${day}일령) 투약 예정: ${label} (미기록)`
-          : `${farm?.name||''} — ${offset}일 후 ${dateStr}(${day}일령) 투약 예정: ${label}`,
+        level: offset <= 0 ? 'red' : 'amber',
+        text: `${farm?.name||''} — ${dayLabel} ${dateStr}(${day}일령) 투약 예정: ${label}${offset <= 0 ? ' (미기록)' : ''}`,
         batchId: b.id,
         farmId: b.farmId, day, offset,
       });
@@ -44,8 +45,9 @@ function computeDueSoonAlerts(horizonDays = DUE_SOON_HORIZON_DAYS) {
 
 // 활성 입추 배치 중, 오늘부터 horizonDays일 이내에 투약/백신 계획이 있는 항목 전체
 // (기록 여부 상관없이) — "다가오는 일정" 목록용. computeDueSoonAlerts는 미기록 건만
-// 골라 경고 문구로 보여주는 반면, 이건 한 주 계획을 날짜순으로 그대로 보여준다.
-function computeUpcomingSchedule(horizonDays = DUE_SOON_HORIZON_DAYS) {
+// 골라 경고 문구로 보여주는 반면, 이건 며칠치 계획을 날짜순으로 그대로 보여준다.
+const UPCOMING_SCHEDULE_HORIZON_DAYS = 3;
+function computeUpcomingSchedule(horizonDays = UPCOMING_SCHEDULE_HORIZON_DAYS) {
   const batches = load('batches').filter(b => b.status === 'active');
   const farms = load('farms');
   const programs = load('programs');
@@ -76,13 +78,13 @@ function computeUpcomingSchedule(horizonDays = DUE_SOON_HORIZON_DAYS) {
 }
 
 // 입추일이 입력된 모든 투약 프로그램에서, 그 프로그램의 입추일 기준 "오늘"에 해당하는
-// 일령부터 15일치 계획. computeUpcomingSchedule과 달리 배치(사육중 여부)와 무관하게
+// 일령부터 7일치 계획. computeUpcomingSchedule과 달리 배치(사육중 여부)와 무관하게
 // 프로그램 자체를 훑는다(입추 전/후 상관없이 프로그램만 등록돼 있으면 대상).
-const PROGRAM_SCHEDULE_HORIZON_DAYS = 14; // offset 0~14 = 오늘 포함 15일
+const PROGRAM_SCHEDULE_HORIZON_DAYS = 6; // offset 0~6 = 오늘 포함 7일
 // 목록에 못 들어간 프로그램은 그 사유도 함께 돌려준다. 조건이 안 맞는다고 카드를 그냥
 // 비우면 "방금 만든 프로그램이 대시보드에 안 뜬다"로만 보이고 원인을 알 수 없다.
 // 특히 입추일은 프로그램 등록 시 선택 항목이라, 안 넣으면 여기서 통째로 빠진다.
-function computeProgramNext15Days(horizonDays = PROGRAM_SCHEDULE_HORIZON_DAYS) {
+function computeProgramNextDays(horizonDays = PROGRAM_SCHEDULE_HORIZON_DAYS) {
   const items = [];
   const excluded = [];
   load('programs').forEach(p => {
@@ -110,7 +112,7 @@ function computeProgramNext15Days(horizonDays = PROGRAM_SCHEDULE_HORIZON_DAYS) {
         ? `프로그램 기간이 지남 (${p.duration}일령 프로그램인데 입추일 기준 오늘 ${dayAge}일령)`
         : dayAge + horizonDays < 1
           ? `아직 입추 전 (입추일 ${p.placementDate})`
-          : '앞으로 15일 안에 약품·백신 계획이 있는 날이 없음';
+          : '앞으로 7일 안에 약품·백신 계획이 있는 날이 없음';
       excluded.push({ ...label, reason });
     }
   });
@@ -163,7 +165,7 @@ function renderDashboard() {
     `<div class="stat-card"><div class="stat-label">이번달 투약 기록</div><div class="stat-value">${logsThisMonth}</div><div class="stat-sub">건</div></div>`,
   ].join('');
 
-  const dueSoon = computeDueSoonAlerts();
+  const dueSoon = computeDueSoonAlerts(1, -1); // 대시보드는 어제~내일(-1~+1)만
   const withdrawal = computeWithdrawalAlerts();
   const alertsEl = document.getElementById('dash-alerts');
   if (!dueSoon.length && !withdrawal.length) {
@@ -191,32 +193,32 @@ function renderDashboard() {
         <td>${it.logged ? '<span class="badge badge-green">기록완료</span>' : '<span class="badge badge-amber">예정</span>'}</td>
       </tr>`).join('');
     upcomingEl.innerHTML = `<div class="card mb-16">
-      <div class="card-header"><div class="card-title">📅 다가오는 ${DUE_SOON_HORIZON_DAYS}일 투약 일정</div></div>
+      <div class="card-header"><div class="card-title">📅 다가오는 ${UPCOMING_SCHEDULE_HORIZON_DAYS}일 투약 일정</div></div>
       <div class="tbl-wrap"><table><thead><tr><th>날짜</th><th>농장</th><th>일령</th><th>약품</th><th>백신</th><th>상태</th></tr></thead><tbody>${upcomingRows}</tbody></table></div>
     </div>`;
   }
 
-  const { items: next15, excluded: next15Excluded } = computeProgramNext15Days();
-  const next15El = document.getElementById('dash-program-15days');
+  const { items: progDays, excluded: progDaysExcluded } = computeProgramNextDays();
+  const progDaysEl = document.getElementById('dash-program-15days');
   // 목록에 못 들어간 프로그램이 있으면 사유를 함께 적는다(왜 안 뜨는지 화면에서 알 수 있게).
-  const excludedHtml = next15Excluded.length ? `
-    <div class="${next15.length ? 'mt-16' : ''}" style="font-size:11px;color:var(--text-secondary)">
+  const excludedHtml = progDaysExcluded.length ? `
+    <div class="${progDays.length ? 'mt-16' : ''}" style="font-size:11px;color:var(--text-secondary)">
       <div style="font-weight:700;margin-bottom:4px">아래 프로그램은 이 목록에 포함되지 않았습니다</div>
-      ${next15Excluded.map(e => `<div style="padding:3px 0;cursor:pointer" onclick="showPage('programs')">
+      ${progDaysExcluded.map(e => `<div style="padding:3px 0;cursor:pointer" onclick="showPage('programs')">
         · <strong>${e.programName}</strong>${e.farmName ? ` <span class="text-muted">(${e.farmName})</span>` : ''} — ${e.reason}
       </div>`).join('')}
     </div>` : '';
 
-  if (!next15.length && !next15Excluded.length) {
-    next15El.innerHTML = ''; // 프로그램 자체가 없으면 할 말도 없다
-  } else if (!next15.length) {
-    next15El.innerHTML = `<div class="card mt-16">
-      <div class="card-header"><div class="card-title">📋 프로그램 기준 오늘부터 15일 일정</div></div>
-      <p class="text-muted mb-16">앞으로 15일 안에 예정된 투약 계획이 없습니다.</p>
+  if (!progDays.length && !progDaysExcluded.length) {
+    progDaysEl.innerHTML = ''; // 프로그램 자체가 없으면 할 말도 없다
+  } else if (!progDays.length) {
+    progDaysEl.innerHTML = `<div class="card mt-16">
+      <div class="card-header"><div class="card-title">📋 프로그램 기준 오늘부터 7일 일정</div></div>
+      <p class="text-muted mb-16">앞으로 7일 안에 예정된 투약 계획이 없습니다.</p>
       ${excludedHtml}
     </div>`;
   } else {
-    const next15Rows = next15.map(it => `
+    const progDaysRows = progDays.map(it => `
       <tr onclick="showPage('programs')" style="cursor:pointer">
         <td>${it.date}${it.offset === 0 ? ' <span class="badge badge-red">오늘</span>' : ''}</td>
         <td><strong>${it.farmName}</strong></td>
@@ -225,9 +227,9 @@ function renderDashboard() {
         <td>${it.drugLabel ? `<span class="drug-pill">${it.drugLabel}</span>` : '-'}</td>
         <td>${it.vaccineLabel ? `<span class="vaccine-pill">💉 ${it.vaccineLabel}</span>` : '-'}</td>
       </tr>`).join('');
-    next15El.innerHTML = `<div class="card mt-16">
-      <div class="card-header"><div class="card-title">📋 프로그램 기준 오늘부터 15일 일정</div></div>
-      <div class="tbl-wrap"><table><thead><tr><th>날짜</th><th>농장</th><th>프로그램</th><th>일령</th><th>약품</th><th>백신</th></tr></thead><tbody>${next15Rows}</tbody></table></div>
+    progDaysEl.innerHTML = `<div class="card mt-16">
+      <div class="card-header"><div class="card-title">📋 프로그램 기준 오늘부터 7일 일정</div></div>
+      <div class="tbl-wrap"><table><thead><tr><th>날짜</th><th>농장</th><th>프로그램</th><th>일령</th><th>약품</th><th>백신</th></tr></thead><tbody>${progDaysRows}</tbody></table></div>
       ${excludedHtml}
     </div>`;
   }
