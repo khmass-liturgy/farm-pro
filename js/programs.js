@@ -726,6 +726,11 @@ function renderPrograms() {
     (!q || p.name.toLowerCase().includes(q) || (p.farmName||'').toLowerCase().includes(q)) &&
     (!ff || p.farmId === ff)
   );
+  // 최근에 등록한 프로그램을 맨 위에 놓는다. STORE는 created_at 오름차순(오래된 것부터)이라
+  // 그대로 그리면 방금 만든 프로그램이 목록 맨 아래로 밀려 한참 스크롤해야 한다.
+  // filter()가 새 배열을 돌려주므로 여기서 정렬해도 STORE 원본 순서는 건드리지 않는다.
+  // created_at이 없는 데이터(구버전 백업 복원분 등)는 맨 뒤로 보낸다.
+  progs.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   const container = document.getElementById('prog-list');
   if (!progs.length) {
     container.innerHTML = `<div class="empty-state"><div class="icon-big">📋</div><p>등록된 투약 프로그램이 없습니다. 프로그램을 추가해주세요.</p></div>`;
