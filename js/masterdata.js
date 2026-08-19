@@ -1,13 +1,41 @@
 // ─── 약품 관리 ────────────────────────────────────────────────────────────
+// 기본 분류 + 이미 등록된 약품들이 쓰고 있는 분류(직접입력으로 추가된 것 포함)를
+// 합쳐서 보여준다. 새 분류는 별도 테이블 없이 "이미 그 분류로 저장된 약품이
+// 있다"는 사실 자체로 선택지에 계속 남는다.
+const DRUG_TYPE_BASE = ['항생제','콕시듐제','백신','영양제','소독제','성장촉진제','대사촉진제','기타'];
+function collectDrugTypes() {
+  const used = load('drugs').map(d => d.type).filter(Boolean);
+  const extra = [...new Set(used)].filter(t => !DRUG_TYPE_BASE.includes(t)).sort();
+  return [...DRUG_TYPE_BASE, ...extra];
+}
+function populateDrugTypeSelect(selectedType) {
+  const sel = document.getElementById('d-type');
+  sel.innerHTML = collectDrugTypes().map(t => `<option value="${t}"${t===selectedType?' selected':''}>${t}</option>`).join('')
+    + `<option value="__custom__">✏️ 직접 입력</option>`;
+  document.getElementById('d-type-custom').style.display = 'none';
+  document.getElementById('d-type-custom-input').value = '';
+}
+function onDrugTypeChange() {
+  document.getElementById('d-type-custom').style.display = document.getElementById('d-type').value === '__custom__' ? '' : 'none';
+}
+function populateDrugTypeFilter() {
+  const sel = document.getElementById('drug-filter-type');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">전체 분류</option>' + collectDrugTypes().map(t =>
+    `<option value="${t}"${t===cur?' selected':''}>${t}</option>`
+  ).join('');
+}
+
 function openDrugModal(id) {
   editingId.drug = id || null;
   const drug = id ? load('drugs').find(d => d.id === id) : null;
   document.getElementById('modal-drug-title').textContent = id ? '약품 편집' : '약품 등록';
-  ['name','type','ingredient','maker','dose','withdrawal','indication','notes'].forEach(k => {
+  ['name','ingredient','maker','dose','withdrawal','indication','notes'].forEach(k => {
     const el = document.getElementById('d-'+k);
     if(el) el.value = drug ? (drug[k]||'') : '';
   });
-  if(drug) document.getElementById('d-type').value = drug.type||'항생제';
+  populateDrugTypeSelect(drug ? (drug.type || '항생제') : '항생제');
   document.getElementById('d-dose-basis').value = '';
   document.getElementById('d-dose-amount').value = '';
   document.getElementById('d-dose').dataset.autoValue = ''; // 선택기가 마지막으로 채운 값(수동 입력과 구분용)
@@ -36,9 +64,12 @@ function applyDoseSelects() {
 async function saveDrug() {
   const name = document.getElementById('d-name').value.trim();
   if (!name) { alert('약품명은 필수입니다.'); return; }
+  const typeSel = document.getElementById('d-type').value;
+  const type = typeSel === '__custom__' ? document.getElementById('d-type-custom-input').value.trim() : typeSel;
+  if (!type) { alert('분류를 선택하거나 직접 입력해주세요.'); return; }
   const data = {
     name,
-    type: document.getElementById('d-type').value,
+    type,
     ingredient: document.getElementById('d-ingredient').value.trim(),
     maker: document.getElementById('d-maker').value.trim(),
     dose: document.getElementById('d-dose').value.trim(),
@@ -59,6 +90,7 @@ async function deleteDrug(id) {
   renderDrugs();
 }
 function renderDrugs() {
+  populateDrugTypeFilter();
   const q = (document.getElementById('drug-search')?.value||'').toLowerCase();
   const ft = document.getElementById('drug-filter-type')?.value||'';
   let drugs = load('drugs').filter(d =>
