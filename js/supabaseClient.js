@@ -244,10 +244,31 @@ async function refreshAllStores() {
   return failed;
 }
 
+// PostgREST 오류 원문("Could not find the 'x' column ... in the schema cache")만으로는
+// 무엇을 해야 할지 알 수 없다. 새 컬럼을 추가하는 기능을 배포한 뒤 supabase/schema.sql을
+// 아직 실행하지 않았거나, 실행은 했지만 PostgREST 스키마 캐시가 아직 갱신되지 않은 경우다.
+// 저장 경로가 모두 insertRow/updateRow를 지나므로 여기서 한 번에 안내 문구로 바꾼다.
+function describeDbError(error) {
+  const msg = error?.message || String(error);
+  const col = /Could not find the '([^']+)' column of '([^']+)'/.exec(msg);
+  if (col) {
+    return `저장에 필요한 '${col[2]}.${col[1]}' 컬럼이 데이터베이스에 없습니다.\n\n` +
+      `Supabase SQL Editor에서 supabase/schema.sql을 다시 실행하세요.\n` +
+      `이미 실행하셨다면 스키마 캐시 갱신이 필요합니다:\n` +
+      `    notify pgrst, 'reload schema';\n\n(원문: ${msg})`;
+  }
+  if (/row-level security/i.test(msg)) {
+    return `이 작업을 할 권한이 없습니다(RLS 정책).\n\n` +
+      `로그아웃 후 다시 로그인해보시고, 그래도 같으면 supabase/schema.sql의 ` +
+      `맨 끝 RLS 정책 블록을 다시 실행하세요.\n\n(원문: ${msg})`;
+  }
+  return msg;
+}
+
 async function insertRow(key, obj) {
   const cfg = TABLES[key];
   const { data, error } = await sb.from(cfg.table).insert(cfg.toRow(obj)).select().single();
-  if (error) throw error;
+  if (error) throw new Error(describeDbError(error));
   const row = cfg.fromRow(data);
   STORE[key] = [...(STORE[key] || []), row];
   return row;
@@ -256,7 +277,7 @@ async function insertRow(key, obj) {
 async function updateRow(key, id, obj) {
   const cfg = TABLES[key];
   const { data, error } = await sb.from(cfg.table).update(cfg.toRow(obj)).eq('id', id).select().single();
-  if (error) throw error;
+  if (error) throw new Error(describeDbError(error));
   const row = cfg.fromRow(data);
   STORE[key] = (STORE[key] || []).map(r => r.id === id ? row : r);
   return row;
@@ -265,6 +286,6 @@ async function updateRow(key, id, obj) {
 async function deleteRow(key, id) {
   const cfg = TABLES[key];
   const { error } = await sb.from(cfg.table).delete().eq('id', id);
-  if (error) throw error;
+  if (error) throw new Error(describeDbError(error));
   STORE[key] = (STORE[key] || []).filter(r => r.id !== id);
 }
