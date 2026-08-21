@@ -1,0 +1,33 @@
+name: 일령 알림
+
+# 매일 아침 07:00(KST) — 프로그램에 입추일이 입력된 농장의 오늘 일령을 텔레그램으로 보낸다.
+# Supabase service_role 키/텔레그램 봇 토큰은 저장소 Secret으로만 참조하고
+# 워크플로 파일이나 스크립트에는 절대 값을 직접 적지 않는다.
+on:
+  schedule:
+    - cron: "0 22 * * *" # UTC 22:00 = KST 07:00 (다음날)
+  workflow_dispatch: # 수동 실행 버튼(설정 직후 테스트용)
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v5
+
+      - name: Python 설정
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: 오늘 일령 전송
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ] || [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "SUPABASE_SERVICE_ROLE_KEY / TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID Secret이 아직 설정되지 않았습니다. 저장소 Settings → Secrets and variables → Actions 에서 추가한 뒤 다시 실행하세요."
+            exit 0
+          fi
+          python scripts/send_daily_age.py
