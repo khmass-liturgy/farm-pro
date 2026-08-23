@@ -25,7 +25,7 @@ const PAGE_ACTIONS = {
   batches: `<button class="btn btn-primary" onclick="openBatchModal()">+ 입추 등록</button>`,
   clinical: `<button class="btn btn-primary" onclick="openClinicalModal()">+ 계군 임상평가 입력</button>`,
   rodent: `<button class="btn btn-primary" onclick="openRodentModal()">+ 구서 평가 입력</button>`,
-  medconsult: `<button class="btn btn-primary" onclick="openConsultLogModal()">+ 상담 기록 추가</button>`,
+  medconsult: `<button class="btn btn-primary" onclick="openConsultLogModal()">+ 진료기록 추가</button>`,
   prescriptions: `<button class="btn btn-primary" onclick="openRxPrescriptionModal()">+ 처방전 발급</button>`,
   drugs: `<button class="btn btn-primary" onclick="openDrugModal()">+ 약품 추가</button>`,
   'rx-products': `<button class="btn btn-primary" onclick="openRxProductModal()">+ 제품 추가</button>`,

@@ -191,6 +191,25 @@ alter table medication_logs drop constraint if exists medication_logs_has_conten
 alter table medication_logs add constraint medication_logs_has_content
   check (drug_name_text is not null or vaccine_name_text is not null or disease is not null or note is not null);
 
+-- "진료기록"(구 투약상담) 부검사진 — Storage 객체 경로 배열만 저장한다. 서명 URL은
+-- 시간이 지나면 만료되므로 저장해두지 않고, 화면에 표시할 때마다 그때그때 새로 발급한다.
+alter table medication_logs add column if not exists necropsy_photos jsonb not null default '[]'::jsonb;
+
+-- 부검사진 Storage 버킷 — 비공개(로그인한 사용자만), 나머지 테이블과 동일한
+-- "공유 워크스페이스" RLS 모델(authenticated면 전체 읽기/쓰기 허용)을 그대로 따른다.
+-- public 버킷으로 만들지 않는 이유: 부검사진은 URL만 알면 로그인 없이도 누구나 볼 수
+-- 있게 되는 게 부적절한 민감 데이터라서, 다른 테이블처럼 인증된 사용자만 접근하게 한다.
+insert into storage.buckets (id, name, public)
+values ('necropsy-photos', 'necropsy-photos', false)
+on conflict (id) do nothing;
+
+drop policy if exists "necropsy_photos_authenticated_access" on storage.objects;
+create policy "necropsy_photos_authenticated_access"
+on storage.objects for all
+to authenticated
+using (bucket_id = 'necropsy-photos')
+with check (bucket_id = 'necropsy-photos');
+
 -- ─────────────────────────────────────────────────────────────────────────
 -- 처방전 (수의사법 시행규칙 [별지 제10호서식]) — 신규
 --

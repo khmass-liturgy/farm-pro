@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>농장 투약관리 시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260815a">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260815a">
-<link rel="icon" href="img/favicon.ico?v=20260815a">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260815a">
-<link rel="stylesheet" href="css/styles.css?v=20260815a">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260815b">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260815b">
+<link rel="icon" href="img/favicon.ico?v=20260815b">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260815b">
+<link rel="stylesheet" href="css/styles.css?v=20260815b">
 </head>
 <body>
 
@@ -259,7 +259,7 @@
           <table>
             <thead>
               <tr>
-                <th>날짜</th><th>농장</th><th>입추(동)</th><th>일령</th><th>질병</th><th>내용</th><th>투약내용</th><th>기록자</th><th>관리</th>
+                <th>날짜</th><th>농장</th><th>입추(동)</th><th>일령</th><th>질병</th><th>내용</th><th>투약내용</th><th>사진</th><th>기록자</th><th>관리</th>
               </tr>
             </thead>
             <tbody id="medconsult-tbody"></tbody>
@@ -267,7 +267,7 @@
         </div>
         <div id="medconsult-empty" class="empty-state" style="display:none">
           <div class="icon-big">🩺</div>
-          <p>기록된 투약상담 내역이 없습니다.</p>
+          <p>기록된 진료기록이 없습니다.</p>
         </div>
       </div>
     </div>
@@ -979,6 +979,10 @@
     </div>
     <div class="form-group"><label>투여량/메모</label><input id="ml-dose-note" placeholder="예) 물 200L당 400cc, 제품명 등"></div>
     <div class="form-group"><label>내용</label><textarea id="ml-note" placeholder="상담 내용을 입력하세요"></textarea></div>
+    <div class="form-group"><label>부검사진</label>
+      <input type="file" id="ml-photo-input" accept="image/*" multiple onchange="onMlPhotoInputChange(this)">
+      <div id="ml-photo-grid" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-medlog')">취소</button>
       <button class="btn btn-primary" onclick="saveMedicationLog()">저장</button>
@@ -1072,25 +1076,25 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=20260815a"></script>
-<script src="js/supabaseClient.js?v=20260815a"></script>
-<script src="js/auth.js?v=20260815a"></script>
-<script src="js/breedStandards.js?v=20260815a"></script>
-<script src="js/farms.js?v=20260815a"></script>
-<script src="js/masterdata.js?v=20260815a"></script>
-<script src="js/rxProducts.js?v=20260815a"></script>
-<script src="js/drugSearch.js?v=20260815a"></script>
-<script src="js/programs.js?v=20260815a"></script>
-<script src="js/batches.js?v=20260815a"></script>
-<script src="js/medicationLog.js?v=20260815a"></script>
-<script src="js/prescriptions.js?v=20260815a"></script>
-<script src="js/clinicalAssessment.js?v=20260815a"></script>
-<script src="js/rodentControl.js?v=20260815a"></script>
-<script src="js/schedule.js?v=20260815a"></script>
-<script src="js/dashboard.js?v=20260815a"></script>
-<script src="js/reports.js?v=20260815a"></script>
-<script src="js/print.js?v=20260815a"></script>
-<script src="js/backup.js?v=20260815a"></script>
-<script src="js/app.js?v=20260815a"></script>
+<script src="js/config.js?v=20260815b"></script>
+<script src="js/supabaseClient.js?v=20260815b"></script>
+<script src="js/auth.js?v=20260815b"></script>
+<script src="js/breedStandards.js?v=20260815b"></script>
+<script src="js/farms.js?v=20260815b"></script>
+<script src="js/masterdata.js?v=20260815b"></script>
+<script src="js/rxProducts.js?v=20260815b"></script>
+<script src="js/drugSearch.js?v=20260815b"></script>
+<script src="js/programs.js?v=20260815b"></script>
+<script src="js/batches.js?v=20260815b"></script>
+<script src="js/medicationLog.js?v=20260815b"></script>
+<script src="js/prescriptions.js?v=20260815b"></script>
+<script src="js/clinicalAssessment.js?v=20260815b"></script>
+<script src="js/rodentControl.js?v=20260815b"></script>
+<script src="js/schedule.js?v=20260815b"></script>
+<script src="js/dashboard.js?v=20260815b"></script>
+<script src="js/reports.js?v=20260815b"></script>
+<script src="js/print.js?v=20260815b"></script>
+<script src="js/backup.js?v=20260815b"></script>
+<script src="js/app.js?v=20260815b"></script>
 </body>
 </html>
