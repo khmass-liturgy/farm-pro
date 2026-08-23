@@ -7,6 +7,22 @@ function computeDayAge(placementDate) {
   return Math.floor((today - start) / 86400000) + 1;
 }
 
+// 육계는 보통 35일령 전후로 출하되는데, 출하 이후에도 사용자가 상태를 수동으로
+// '완료'로 바꾸지 않으면 배치는 계속 status==='active'로 남아 목록에 "사육중"으로
+// 표시된다. 이건 화면상 오해의 소지가 있어 "출하완료"로 다르게 보여주되, 실제
+// status 컬럼은 절대 바꾸지 않는다 — 대시보드의 활성 배치 카운트, 투약 예정 알림,
+// 사양표준/온습도 카드 등 여러 로직이 status==='active'를 그대로 필터링에 쓰고
+// 있어서, 이 배치들을 계속 active로 취급해야 그 기능들이 정상 동작한다.
+// 따라서 이 함수는 "표시 전용" 파생값만 계산하며, 화면에 상태를 보여줄 때는
+// 항상 이 함수를 거쳐야 한다(로직 중복 방지).
+function computeBatchDisplayStatus(b) {
+  if (b.status === 'completed') return { label: '완료', badgeClass: 'badge-teal' };
+  if (b.species === '육계' && computeDayAge(b.placementDate) > 35) {
+    return { label: '출하완료', badgeClass: 'badge-purple' };
+  }
+  return { label: '사육중', badgeClass: 'badge-green' };
+}
+
 function populateProgramSelectForFarm(selectId, farmId, val) {
   const programs = load('programs').filter(p => p.farmId === farmId);
   const sel = document.getElementById(selectId);
@@ -142,7 +158,8 @@ function renderBatches() {
     const prog = programs.find(p => p.id === b.programId);
     const dayAge = computeDayAge(b.placementDate);
     const dayAgeLabel = dayAge < 1 ? '입추 예정' : `${dayAge}일령`;
-    const statusBadge = b.status === 'completed' ? '<span class="badge badge-teal">완료</span>' : '<span class="badge badge-green">사육중</span>';
+    const displayStatus = computeBatchDisplayStatus(b);
+    const statusBadge = `<span class="badge ${displayStatus.badgeClass}">${displayStatus.label}</span>`;
     const speciesKey = b.species === '육계' ? 'broiler' : b.species === '산란계' ? 'layer' : null;
     const breedName = speciesKey && b.breed ? (CONSULT_BREEDS[speciesKey].breeds[b.breed]?.name || b.breed) : '-';
     return `<tr style="cursor:pointer" onclick="openBatchDetail('${b.id}')">
@@ -220,7 +237,7 @@ function renderBatchDetail() {
   wrap.innerHTML = `
     <button class="btn btn-outline btn-sm mb-16" onclick="showPage('batches')">← 목록으로</button>
     <div class="batch-hero">
-      <div class="stat-card"><div class="stat-label">현재 일령</div><div class="stat-value big">${dayAge<1?'예정':dayAge+'일'}</div><div class="stat-sub">${b.status==='completed'?'사육 종료':'사육중'}</div></div>
+      <div class="stat-card"><div class="stat-label">현재 일령</div><div class="stat-value big">${dayAge<1?'예정':dayAge+'일'}</div><div class="stat-sub">${b.status==='completed'?'사육 종료':computeBatchDisplayStatus(b).label}</div></div>
       <div class="stat-card"><div class="stat-label">농장</div><div class="stat-value" style="font-size:16px">${farm?.name||'-'}</div><div class="stat-sub">${b.house?b.house+' · ':''}${farm?.address||''}</div></div>
       <div class="stat-card"><div class="stat-label">프로그램</div><div class="stat-value" style="font-size:16px">${prog?prog.name:(b.programName||'-')}</div><div class="stat-sub">${prog?prog.duration+'일령 프로그램':''}</div></div>
       <div class="stat-card"><div class="stat-label">입추수수</div><div class="stat-value" style="font-size:16px">${b.birdCount?Number(b.birdCount).toLocaleString()+'수':'-'}</div><div class="stat-sub">입추일 ${b.placementDate}</div></div>

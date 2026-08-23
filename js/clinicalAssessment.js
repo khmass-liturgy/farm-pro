@@ -140,7 +140,7 @@ function caBatchLabel(b) {
     b.house || '동 미지정',
     `${b.placementDate} 입추`,
     [b.species, breedName].filter(Boolean).join(' '),
-    b.status === 'completed' ? '완료' : null,
+    b.status === 'completed' ? '완료' : (computeBatchDisplayStatus(b).label === '출하완료' ? '출하완료' : null),
   ].filter(Boolean);
   return parts.join(' · ');
 }

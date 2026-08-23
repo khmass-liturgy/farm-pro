@@ -69,9 +69,11 @@ function onConsultFarmSelChange() {
   const farmId = document.getElementById('ml-farm-sel').value;
   const batches = load('batches').filter(b => b.farmId === farmId);
   const sel = document.getElementById('ml-batch-sel');
-  sel.innerHTML = '<option value="">입추 선택</option>' + batches.map(b =>
-    `<option value="${b.id}">${b.house ? b.house+' · ' : ''}${b.placementDate}${b.status==='completed'?' (완료)':''}</option>`
-  ).join('');
+  sel.innerHTML = '<option value="">입추 선택</option>' + batches.map(b => {
+    const displayStatus = computeBatchDisplayStatus(b);
+    const suffix = b.status === 'completed' ? ' (완료)' : (displayStatus.label === '출하완료' ? ' (출하완료)' : '');
+    return `<option value="${b.id}">${b.house ? b.house+' · ' : ''}${b.placementDate}${suffix}</option>`;
+  }).join('');
 }
 
 async function saveMedicationLog() {
