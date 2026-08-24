@@ -1,10 +1,4 @@
 // ─── 대시보드 ─────────────────────────────────────────────────────────────
-function parseWithdrawalDays(text) {
-  if (!text) return null;
-  const m = /(\d+)/.exec(text);
-  return m ? parseInt(m[1], 10) : null;
-}
-
 // 활성 입추 배치 중, startOffset~horizonDays일 사이에 투약/백신 계획이 있는데 아직
 // 기록되지 않은 항목. 계군(배치)의 입추일을 기준으로 일령을 계산해 알려준다.
 // startOffset은 기본 0(오늘부터)이지만, 대시보드는 어제치 미기록도 놓치지 않도록
@@ -120,39 +114,8 @@ function computeProgramNextDays(horizonDays = PROGRAM_SCHEDULE_HORIZON_DAYS) {
   return { items, excluded };
 }
 
-// 활성 입추 배치의 최근 투약 기록 중 휴약기간이 아직 끝나지 않은 항목
-// (drug_id가 삭제되었거나 자유입력 약품은 withdrawal을 알 수 없어 계산에서 제외됨)
-function computeWithdrawalAlerts() {
-  const batches = load('batches').filter(b => b.status === 'active');
-  const farms = load('farms');
-  const drugs = load('drugs');
-  const logs = load('medicationLogs');
-  const today = new Date(); today.setHours(0,0,0,0);
-  const alerts = [];
-  batches.forEach(b => {
-    const batchLogs = logs
-      .filter(l => l.batchId === b.id && l.drugId)
-      .slice().sort((a,c) => c.logDate.localeCompare(a.logDate));
-    batchLogs.forEach(l => {
-      const drug = drugs.find(d => d.id === l.drugId);
-      const wd = parseWithdrawalDays(drug?.withdrawal);
-      if (!wd) return;
-      const endDate = new Date(new Date(l.logDate + 'T00:00:00').getTime() + wd * 86400000);
-      if (endDate >= today) {
-        const farm = farms.find(f => f.id === b.farmId);
-        alerts.push({
-          level: 'amber',
-          text: `${farm?.name||''} — ${drug?.name||l.drugName} 휴약기간 진행중 (종료: ${endDate.toISOString().slice(0,10)})`,
-          batchId: b.id,
-        });
-      }
-    });
-  });
-  return alerts;
-}
-
 function renderDashboard() {
-  const farms = load('farms'), drugs = load('drugs'), programs = load('programs');
+  const farms = load('farms'), programs = load('programs');
   const batches = load('batches'), logs = load('medicationLogs');
   const activeBatches = batches.filter(b => b.status === 'active').length;
   const thisMonth = new Date().toISOString().slice(0,7);
@@ -164,19 +127,6 @@ function renderDashboard() {
     `<div class="stat-card"><div class="stat-label">사육중인 입추</div><div class="stat-value">${activeBatches}</div><div class="stat-sub">개 배치</div></div>`,
     `<div class="stat-card"><div class="stat-label">이번달 투약 기록</div><div class="stat-value">${logsThisMonth}</div><div class="stat-sub">건</div></div>`,
   ].join('');
-
-  const dueSoon = computeDueSoonAlerts(1, -1); // 대시보드는 어제~내일(-1~+1)만
-  const withdrawal = computeWithdrawalAlerts();
-  const alertsEl = document.getElementById('dash-alerts');
-  if (!dueSoon.length && !withdrawal.length) {
-    alertsEl.innerHTML = '';
-  } else {
-    alertsEl.innerHTML = `<div class="card mb-16">
-      <div class="card-header"><div class="card-title">⏰ 알림</div></div>
-      ${dueSoon.map(a => `<div class="alert-row ${a.level}" onclick="openBatchDetail('${a.batchId}')" style="cursor:pointer">${a.text}</div>`).join('')}
-      ${withdrawal.map(a => `<div class="alert-row ${a.level}" onclick="openBatchDetail('${a.batchId}')" style="cursor:pointer">${a.text}</div>`).join('')}
-    </div>`;
-  }
 
   const upcoming = computeUpcomingSchedule();
   const upcomingEl = document.getElementById('dash-upcoming');
