@@ -22,7 +22,7 @@ KST = timezone(timedelta(hours=9))
 def fetch_programs():
     url = (
         f"{SUPABASE_URL}/rest/v1/programs"
-        "?select=farm_name_snapshot,placement_date,duration"
+        "?select=farm_name_snapshot,placement_date,duration,species"
         "&placement_date=not.is.null"
     )
     req = urllib.request.Request(
@@ -64,6 +64,12 @@ def main():
         age = day_age(pd, today)
         if age < 1:
             continue  # 아직 입추 전인 프로그램은 제외
+        # 육계는 보통 35일령 전후로 출하된다. js/batches.js의 computeBatchDisplayStatus()가
+        # "출하완료"로 표시 전환하는 것과 같은 기준(육계 && 35일령 초과)으로, 이미 출하됐을
+        # 프로그램은 매일 알림에서 제외한다(대시보드 표시와 달리 이 값은 DB 컬럼을 바꾸는
+        # 게 아니라 알림 발송 여부만 결정하므로 status 컬럼과는 무관하다).
+        if p.get("species") == "육계" and age > 35:
+            continue
         farm_name = p.get("farm_name_snapshot") or "(농장명 미상)"
         lines.append((farm_name, age))
 
