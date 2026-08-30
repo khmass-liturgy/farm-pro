@@ -338,11 +338,17 @@ function renderConsultLogPage() {
     const farm = b ? farms.find(f => f.id === b.farmId) : null;
     const medParts = [l.drugName, l.vaccineName, l.doseNote].filter(Boolean);
     const photoCount = l.necropsyPhotos?.length || 0;
+    // 입추상세의 "실제 투약 기록"으로 만든 건 programDay가 있지만, 진료기록 목록에서
+    // 직접 추가한 건 특정 계획일에 묶여 있지 않아 programDay가 없다. 그런 경우에도
+    // 입추일+상담일자로 그 날의 일령을 계산해 채워준다(둘 다 없을 때만 '-').
+    const age = b?.placementDate ? dayAgeOnDate(b.placementDate, l.logDate) : null;
+    const ageLabel = l.programDay ? `${l.programDay}일`
+      : age == null ? '-' : age < 1 ? '입추 전' : `${age}일령`;
     return `<tr>
       <td>${l.logDate}</td>
       <td>${farm?.name || '-'}</td>
       <td style="color:var(--text-secondary)">${b?.house || '-'}</td>
-      <td>${l.programDay ? l.programDay+'일' : '-'}</td>
+      <td>${ageLabel}</td>
       <td>${l.disease||'-'}</td>
       <td style="color:var(--text-secondary)">${l.note||'-'}</td>
       <td>${medParts.length ? medParts.join(' / ') : '-'}</td>
