@@ -186,6 +186,28 @@ function openConsultLogModal(id) {
   renderMlPhotoGrid();
   openModal('modal-medlog');
   if (mlPhotoState.existing.length) loadMlExistingPhotoUrls();
+  updateMlDayAgeInfo();
+}
+
+// 상담 일자 기준으로 그 입추의 일령을 계산한다. computeDayAge()는 항상 "오늘"을 기준으로
+// 계산하지만, 상담일자는 과거 날짜를 골라 기록할 수도 있으므로 "선택한 날짜" 기준으로
+// 따로 계산해야 한다.
+function dayAgeOnDate(placementDate, dateStr) {
+  if (!placementDate || !dateStr) return null;
+  const [py, pm, pd] = placementDate.split('-').map(Number);
+  const [dy, dm, dd] = dateStr.split('-').map(Number);
+  return Math.floor((Date.UTC(dy, dm - 1, dd) - Date.UTC(py, pm - 1, pd)) / 86400000) + 1;
+}
+// 농장→입추→상담일자를 고를 때마다(순서 무관) 해당 일령을 자동으로 보여준다.
+function updateMlDayAgeInfo() {
+  const info = document.getElementById('ml-day-age-info');
+  if (!info) return;
+  const batchId = document.getElementById('ml-batch-sel')?.value;
+  const dateStr = document.getElementById('ml-log-date')?.value;
+  const batch = batchId ? load('batches').find(b => b.id === batchId) : null;
+  if (!batch || !dateStr) { info.textContent = ''; return; }
+  const age = dayAgeOnDate(batch.placementDate, dateStr);
+  info.textContent = age == null ? '' : age < 1 ? '입추 예정일 이전입니다' : `🐣 해당 일령: ${age}일령`;
 }
 
 function onConsultFarmSelChange() {
@@ -197,6 +219,7 @@ function onConsultFarmSelChange() {
     const suffix = b.status === 'completed' ? ' (완료)' : (displayStatus.label === '출하완료' ? ' (출하완료)' : '');
     return `<option value="${b.id}">${b.house ? b.house+' · ' : ''}${b.placementDate}${suffix}</option>`;
   }).join('');
+  updateMlDayAgeInfo();
 }
 
 async function saveMedicationLog() {

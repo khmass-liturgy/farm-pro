@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>농장 투약관리 시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260815c">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260815c">
-<link rel="icon" href="img/favicon.ico?v=20260815c">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260815c">
-<link rel="stylesheet" href="css/styles.css?v=20260815c">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260815d">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260815d">
+<link rel="icon" href="img/favicon.ico?v=20260815d">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260815d">
+<link rel="stylesheet" href="css/styles.css?v=20260815d">
 </head>
 <body>
 
@@ -944,7 +944,7 @@
 
 <!-- 모달: 실제 투약 기록 -->
 <div class="modal-bg" id="modal-medlog">
-  <div class="modal">
+  <div class="modal modal-wide">
     <div class="modal-header">
       <div class="modal-title" id="modal-medlog-title">실제 투약 기록</div>
       <button class="modal-close" onclick="closeModal('modal-medlog')">✕</button>
@@ -957,11 +957,12 @@
         <select id="ml-farm-sel" onchange="onConsultFarmSelChange()"><option value="">농장 선택</option></select>
       </div>
       <div class="form-group"><label>입추 *</label>
-        <select id="ml-batch-sel"><option value="">입추 선택</option></select>
+        <select id="ml-batch-sel" onchange="updateMlDayAgeInfo()"><option value="">입추 선택</option></select>
+        <div class="text-muted" id="ml-day-age-info" style="font-size:12px;margin-top:4px"></div>
       </div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>상담 일자 *</label><input id="ml-log-date" type="date" min="1900-01-01" max="2999-12-31"></div>
+      <div class="form-group"><label>상담 일자 *</label><input id="ml-log-date" type="date" min="1900-01-01" max="2999-12-31" onchange="updateMlDayAgeInfo()"></div>
       <div class="form-group"><label>질병</label><input id="ml-disease" placeholder="예) 대장균증"></div>
     </div>
     <div class="form-group"><label>약품</label>
@@ -1075,25 +1076,25 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=20260815c"></script>
-<script src="js/supabaseClient.js?v=20260815c"></script>
-<script src="js/auth.js?v=20260815c"></script>
-<script src="js/breedStandards.js?v=20260815c"></script>
-<script src="js/farms.js?v=20260815c"></script>
-<script src="js/masterdata.js?v=20260815c"></script>
-<script src="js/rxProducts.js?v=20260815c"></script>
-<script src="js/drugSearch.js?v=20260815c"></script>
-<script src="js/programs.js?v=20260815c"></script>
-<script src="js/batches.js?v=20260815c"></script>
-<script src="js/medicationLog.js?v=20260815c"></script>
-<script src="js/prescriptions.js?v=20260815c"></script>
-<script src="js/clinicalAssessment.js?v=20260815c"></script>
-<script src="js/rodentControl.js?v=20260815c"></script>
-<script src="js/schedule.js?v=20260815c"></script>
-<script src="js/dashboard.js?v=20260815c"></script>
-<script src="js/reports.js?v=20260815c"></script>
-<script src="js/print.js?v=20260815c"></script>
-<script src="js/backup.js?v=20260815c"></script>
-<script src="js/app.js?v=20260815c"></script>
+<script src="js/config.js?v=20260815d"></script>
+<script src="js/supabaseClient.js?v=20260815d"></script>
+<script src="js/auth.js?v=20260815d"></script>
+<script src="js/breedStandards.js?v=20260815d"></script>
+<script src="js/farms.js?v=20260815d"></script>
+<script src="js/masterdata.js?v=20260815d"></script>
+<script src="js/rxProducts.js?v=20260815d"></script>
+<script src="js/drugSearch.js?v=20260815d"></script>
+<script src="js/programs.js?v=20260815d"></script>
+<script src="js/batches.js?v=20260815d"></script>
+<script src="js/medicationLog.js?v=20260815d"></script>
+<script src="js/prescriptions.js?v=20260815d"></script>
+<script src="js/clinicalAssessment.js?v=20260815d"></script>
+<script src="js/rodentControl.js?v=20260815d"></script>
+<script src="js/schedule.js?v=20260815d"></script>
+<script src="js/dashboard.js?v=20260815d"></script>
+<script src="js/reports.js?v=20260815d"></script>
+<script src="js/print.js?v=20260815d"></script>
+<script src="js/backup.js?v=20260815d"></script>
+<script src="js/app.js?v=20260815d"></script>
 </body>
 </html>
