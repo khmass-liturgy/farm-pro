@@ -317,12 +317,21 @@ function onConsultFarmFilterChange() {
   renderConsultFilterBatches();
   renderConsultLogPage();
 }
+// medication_logs 한 테이블에 두 종류가 함께 쌓인다:
+//  - 진료기록: 이 화면의 "+ 진료기록 추가"로 만든 것. 특정 계획일에 묶이지 않아 programDay가 없다.
+//  - 실제 투약 기록: 입추 상세의 일자별 계획표에서 "실제 투약 기록" 버튼으로 만든 것.
+//    항상 그 계획일(programDay)을 달고 저장된다.
+// 이 목록은 진료기록만 보여준다(계획 실적은 입추 상세의 일자별 표에서 확인).
+function isConsultLog(l) {
+  return l.programDay == null;
+}
+
 function renderConsultLogPage() {
   const farmId = document.getElementById('mc-farm-filter')?.value || '';
   const batchId = document.getElementById('mc-batch-filter')?.value || '';
   const batches = load('batches');
   const farms = load('farms');
-  let logs = load('medicationLogs');
+  let logs = load('medicationLogs').filter(isConsultLog);
   if (batchId) {
     logs = logs.filter(l => l.batchId === batchId);
   } else if (farmId) {
@@ -338,12 +347,10 @@ function renderConsultLogPage() {
     const farm = b ? farms.find(f => f.id === b.farmId) : null;
     const medParts = [l.drugName, l.vaccineName, l.doseNote].filter(Boolean);
     const photoCount = l.necropsyPhotos?.length || 0;
-    // 입추상세의 "실제 투약 기록"으로 만든 건 programDay가 있지만, 진료기록 목록에서
-    // 직접 추가한 건 특정 계획일에 묶여 있지 않아 programDay가 없다. 그런 경우에도
-    // 입추일+상담일자로 그 날의 일령을 계산해 채워준다(둘 다 없을 때만 '-').
+    // 진료기록은 특정 계획일에 묶이지 않아 일령이 저장돼 있지 않다.
+    // 입추일과 상담일자로 그날의 일령을 계산해 채운다(둘 중 하나라도 없으면 '-').
     const age = b?.placementDate ? dayAgeOnDate(b.placementDate, l.logDate) : null;
-    const ageLabel = l.programDay ? `${l.programDay}일`
-      : age == null ? '-' : age < 1 ? '입추 전' : `${age}일령`;
+    const ageLabel = age == null ? '-' : age < 1 ? '입추 전' : `${age}일령`;
     return `<tr>
       <td>${l.logDate}</td>
       <td>${farm?.name || '-'}</td>
