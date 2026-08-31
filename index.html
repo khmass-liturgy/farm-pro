@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>농장 투약관리 시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260815f">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260815f">
-<link rel="icon" href="img/favicon.ico?v=20260815f">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260815f">
-<link rel="stylesheet" href="css/styles.css?v=20260815f">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260815g">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260815g">
+<link rel="icon" href="img/favicon.ico?v=20260815g">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260815g">
+<link rel="stylesheet" href="css/styles.css?v=20260815g">
 </head>
 <body>
 
@@ -25,15 +25,19 @@
     </div>
   </div>
   <div class="sidebar-section">
-    <div class="sidebar-section-label">가금컨설팅</div>
-    <div class="sidebar-item" onclick="showPage('weather-consult')">
-      <span class="icon">🌤️</span> 날씨별 컨설팅
-    </div>
-    <div class="sidebar-item" onclick="showPage('clinical')">
-      <span class="icon">🩺</span> 계군 임상평가
-    </div>
-    <div class="sidebar-item" onclick="showPage('rodent')">
-      <span class="icon">🐀</span> 구서작업 컨설팅
+    <button class="sidebar-section-label toggle" onclick="toggleSidebarSection('consult')" aria-expanded="false" aria-controls="sidebar-items-consult">
+      <span class="chevron" id="sidebar-chevron-consult">▸</span> 가금컨설팅
+    </button>
+    <div class="sidebar-section-items" id="sidebar-items-consult">
+      <div class="sidebar-item" onclick="showPage('weather-consult')">
+        <span class="icon">🌤️</span> 날씨별 컨설팅
+      </div>
+      <div class="sidebar-item" onclick="showPage('clinical')">
+        <span class="icon">🩺</span> 계군 임상평가
+      </div>
+      <div class="sidebar-item" onclick="showPage('rodent')">
+        <span class="icon">🐀</span> 구서작업 컨설팅
+      </div>
     </div>
   </div>
   <div class="sidebar-section">
@@ -58,30 +62,38 @@
     </div>
   </div>
   <div class="sidebar-section">
-    <div class="sidebar-section-label">데이터</div>
-    <div class="sidebar-item" onclick="showPage('drugsearch')">
-      <span class="icon">🔎</span> 동물약품 검색
-    </div>
-    <div class="sidebar-item" onclick="showPage('drugs')">
-      <span class="icon">💊</span> 약품 등록
-    </div>
-    <div class="sidebar-item" onclick="showPage('rx-products')">
-      <span class="icon">🧪</span> 처방전용 제품
-    </div>
-    <div class="sidebar-item" onclick="showPage('vaccines')">
-      <span class="icon">💉</span> 백신 관리
-    </div>
-    <div class="sidebar-item" onclick="showPage('feeds')">
-      <span class="icon">🌾</span> 사료첨가제 관리
-    </div>
-    <div class="sidebar-item" onclick="showPage('reports')">
-      <span class="icon">📈</span> 통계/리포트
+    <button class="sidebar-section-label toggle" onclick="toggleSidebarSection('data')" aria-expanded="false" aria-controls="sidebar-items-data">
+      <span class="chevron" id="sidebar-chevron-data">▸</span> 데이터
+    </button>
+    <div class="sidebar-section-items" id="sidebar-items-data">
+      <div class="sidebar-item" onclick="showPage('drugsearch')">
+        <span class="icon">🔎</span> 동물약품 검색
+      </div>
+      <div class="sidebar-item" onclick="showPage('drugs')">
+        <span class="icon">💊</span> 약품 등록
+      </div>
+      <div class="sidebar-item" onclick="showPage('rx-products')">
+        <span class="icon">🧪</span> 처방전용 제품
+      </div>
+      <div class="sidebar-item" onclick="showPage('vaccines')">
+        <span class="icon">💉</span> 백신 관리
+      </div>
+      <div class="sidebar-item" onclick="showPage('feeds')">
+        <span class="icon">🌾</span> 사료첨가제 관리
+      </div>
+      <div class="sidebar-item" onclick="showPage('reports')">
+        <span class="icon">📈</span> 통계/리포트
+      </div>
     </div>
   </div>
   <div class="sidebar-section">
-    <div class="sidebar-section-label">시스템</div>
-    <div class="sidebar-item" onclick="showPage('backup')">
-      <span class="icon">💾</span> 백업/복원
+    <button class="sidebar-section-label toggle" onclick="toggleSidebarSection('system')" aria-expanded="false" aria-controls="sidebar-items-system">
+      <span class="chevron" id="sidebar-chevron-system">▸</span> 시스템
+    </button>
+    <div class="sidebar-section-items" id="sidebar-items-system">
+      <div class="sidebar-item" onclick="showPage('backup')">
+        <span class="icon">💾</span> 백업/복원
+      </div>
     </div>
   </div>
   <div class="sidebar-footer">
@@ -1081,25 +1093,25 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=20260815f"></script>
-<script src="js/supabaseClient.js?v=20260815f"></script>
-<script src="js/auth.js?v=20260815f"></script>
-<script src="js/breedStandards.js?v=20260815f"></script>
-<script src="js/farms.js?v=20260815f"></script>
-<script src="js/masterdata.js?v=20260815f"></script>
-<script src="js/rxProducts.js?v=20260815f"></script>
-<script src="js/drugSearch.js?v=20260815f"></script>
-<script src="js/programs.js?v=20260815f"></script>
-<script src="js/batches.js?v=20260815f"></script>
-<script src="js/medicationLog.js?v=20260815f"></script>
-<script src="js/prescriptions.js?v=20260815f"></script>
-<script src="js/clinicalAssessment.js?v=20260815f"></script>
-<script src="js/rodentControl.js?v=20260815f"></script>
-<script src="js/schedule.js?v=20260815f"></script>
-<script src="js/dashboard.js?v=20260815f"></script>
-<script src="js/reports.js?v=20260815f"></script>
-<script src="js/print.js?v=20260815f"></script>
-<script src="js/backup.js?v=20260815f"></script>
-<script src="js/app.js?v=20260815f"></script>
+<script src="js/config.js?v=20260815g"></script>
+<script src="js/supabaseClient.js?v=20260815g"></script>
+<script src="js/auth.js?v=20260815g"></script>
+<script src="js/breedStandards.js?v=20260815g"></script>
+<script src="js/farms.js?v=20260815g"></script>
+<script src="js/masterdata.js?v=20260815g"></script>
+<script src="js/rxProducts.js?v=20260815g"></script>
+<script src="js/drugSearch.js?v=20260815g"></script>
+<script src="js/programs.js?v=20260815g"></script>
+<script src="js/batches.js?v=20260815g"></script>
+<script src="js/medicationLog.js?v=20260815g"></script>
+<script src="js/prescriptions.js?v=20260815g"></script>
+<script src="js/clinicalAssessment.js?v=20260815g"></script>
+<script src="js/rodentControl.js?v=20260815g"></script>
+<script src="js/schedule.js?v=20260815g"></script>
+<script src="js/dashboard.js?v=20260815g"></script>
+<script src="js/reports.js?v=20260815g"></script>
+<script src="js/print.js?v=20260815g"></script>
+<script src="js/backup.js?v=20260815g"></script>
+<script src="js/app.js?v=20260815g"></script>
 </body>
 </html>

@@ -35,13 +35,63 @@ const PAGE_ACTIONS = {
 
 let currentPage = 'dashboard';
 
+// ─── 사이드바 접기/펼치기 ────────────────────────────────────────────────
+// 가금컨설팅·데이터·시스템은 매일 들어가는 곳이 아니라 기본으로 접어둔다.
+// 펼침 상태는 브라우저에 남겨 다음 방문에도 그대로 유지한다.
+const COLLAPSIBLE_SECTIONS = ['consult', 'data', 'system'];
+const SIDEBAR_STATE_KEY = 'sidebar_open_sections';
+
+function loadOpenSections() {
+  try {
+    const s = localStorage.getItem(SIDEBAR_STATE_KEY);
+    if (s) return new Set(JSON.parse(s));
+  } catch (e) { /* 저장값이 깨졌으면 기본값(전부 접힘)으로 */ }
+  return new Set();
+}
+
+function setSidebarSection(key, open) {
+  const items = document.getElementById('sidebar-items-' + key);
+  const chevron = document.getElementById('sidebar-chevron-' + key);
+  if (!items) return;
+  items.classList.toggle('open', open);
+  chevron?.closest('button')?.setAttribute('aria-expanded', String(open));
+}
+
+function toggleSidebarSection(key) {
+  const items = document.getElementById('sidebar-items-' + key);
+  if (!items) return;
+  const open = !items.classList.contains('open');
+  setSidebarSection(key, open);
+  const set = loadOpenSections();
+  open ? set.add(key) : set.delete(key);
+  try { localStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify([...set])); } catch (e) { /* 저장 실패해도 동작엔 지장 없음 */ }
+}
+
+function initSidebarSections() {
+  const open = loadOpenSections();
+  COLLAPSIBLE_SECTIONS.forEach(k => setSidebarSection(k, open.has(k)));
+}
+
+// 접힌 묶음 안의 메뉴로 이동하면 그 묶음을 펼쳐 어디에 있는지 보이게 한다.
+// (저장된 펼침 상태는 건드리지 않는다 — 사용자가 직접 접어둔 선택을 덮지 않기 위해.)
+function revealSectionOfActiveItem(activeItem) {
+  const items = activeItem?.closest('.sidebar-section-items');
+  if (items && !items.classList.contains('open')) {
+    const key = items.id.replace('sidebar-items-', '');
+    setSidebarSection(key, true);
+  }
+}
+
 function showPage(name) {
   currentPage = name;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   document.querySelectorAll('.sidebar-item').forEach(i => {
-    if (i.getAttribute('onclick') && i.getAttribute('onclick').includes("'" + name + "'")) i.classList.add('active');
+    if (i.getAttribute('onclick') && i.getAttribute('onclick').includes("'" + name + "'")) {
+      i.classList.add('active');
+      revealSectionOfActiveItem(i);
+    }
   });
   document.getElementById('topbar-title').textContent = PAGE_TITLES[name] || name;
   document.getElementById('topbar-actions').innerHTML = PAGE_ACTIONS[name] || '';
@@ -108,6 +158,7 @@ async function boot() {
   const session = await requireAuth();
   if (!session) return;
   watchAuthState();
+  initSidebarSections();
   document.getElementById('sidebar-user-email').textContent = await currentUserEmail();
   try {
     await refreshAllStores();
