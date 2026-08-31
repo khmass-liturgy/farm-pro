@@ -63,7 +63,9 @@ function computeUpcomingSchedule(horizonDays = UPCOMING_SCHEDULE_HORIZON_DAYS) {
         date: programDayDate(b.placementDate, day),
         farmName: farm?.name || '', batchId: b.id, day, offset,
         drugLabel: dayDrugLabel(d), vaccineLabel: dayVaccineLabel(d),
-        logged: logs.some(l => l.batchId === b.id && l.programDay === day),
+        // 실제 투약한 건만 "기록완료"로 본다. 안 하기로 한 날(미투약)은 따로 표시한다.
+        logged: logs.some(l => l.batchId === b.id && l.programDay === day && l.administered !== false),
+        skipped: logs.some(l => l.batchId === b.id && l.programDay === day && l.administered === false),
       });
     }
   });
@@ -140,7 +142,9 @@ function renderDashboard() {
         <td>${it.day}일령</td>
         <td>${it.drugLabel ? `<span class="drug-pill">${it.drugLabel}</span>` : '-'}</td>
         <td>${it.vaccineLabel ? `<span class="vaccine-pill">💉 ${it.vaccineLabel}</span>` : '-'}</td>
-        <td>${it.logged ? '<span class="badge badge-green">기록완료</span>' : '<span class="badge badge-amber">예정</span>'}</td>
+        <td>${it.logged ? '<span class="badge badge-green">투약</span>'
+          : it.skipped ? '<span class="badge badge-amber">미투약</span>'
+          : '<span class="badge badge-amber">예정</span>'}</td>
       </tr>`).join('');
     upcomingEl.innerHTML = `<div class="card mb-16">
       <div class="card-header"><div class="card-title">📅 다가오는 ${UPCOMING_SCHEDULE_HORIZON_DAYS}일 투약 일정</div></div>

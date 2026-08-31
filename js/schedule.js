@@ -52,7 +52,22 @@ function renderScheduleView() {
   // 품종이 정해져 있으면 일령별 목표 온·습도도 함께 보여준다
   // (투약 프로그램 목록·상세·인쇄와 같은 기준: js/programs.js의 programHasEnv/programEnvFor).
   const showEnv = programHasEnv(prog);
-  const envCls = showEnv ? ' with-env' : '';
+
+  // 사육중인 계군이 연결돼 있으면 그 계군의 실적(투약/미투약)을 함께 보여준다.
+  // 계군이 없으면 실적이랄 게 없으므로 상태 칸 자체를 띄우지 않는다.
+  const showStatus = !!activeBatch;
+  const batchLogs = activeBatch ? load('medicationLogs').filter(l => l.batchId === activeBatch.id) : [];
+  const envCls = (showEnv ? ' with-env' : '') + (showStatus ? ' with-status' : '');
+
+  function dayStatusHtml(day, hasPlan) {
+    if (!hasPlan) return '<span class="text-muted">-</span>';
+    const forDay = batchLogs.filter(l => l.programDay === day);
+    if (forDay.some(l => l.administered !== false)) return '<span class="badge badge-green">투약</span>';
+    const skipped = forDay.find(l => l.administered === false);
+    if (skipped) return '<span class="badge badge-amber">미투약</span>';
+    if (dayAge != null && day <= dayAge) return '<span class="badge badge-red">미기록</span>';
+    return '<span class="text-muted">예정</span>';
+  }
 
   let rows = '';
   for (let i = 1; i <= prog.duration; i++) {
@@ -70,6 +85,7 @@ function renderScheduleView() {
         <span style="color:var(--accent);font-weight:700">${env ? env.tRange : '-'}</span><br>
         <span style="color:var(--text-secondary)">${env ? env.rhRange : '-'}</span>
       </div>` : ''}
+      ${showStatus ? `<div class="program-cell" style="text-align:center">${dayStatusHtml(i, !!(d && ((d.drugs && d.drugs.length) || d.vaccine)))}</div>` : ''}
       <div class="program-cell" style="color:var(--text-secondary);font-size:11px">${d?.note||''}</div>
     </div>`;
   }
@@ -91,6 +107,7 @@ function renderScheduleView() {
           <div class="program-cell head">💊 약품투약</div>
           <div class="program-cell head">💉 백신사항</div>
           ${showEnv ? `<div class="program-cell head" style="text-align:center">🌡️ 온·습도</div>` : ''}
+          ${showStatus ? `<div class="program-cell head" style="text-align:center">실적</div>` : ''}
           <div class="program-cell head">⚠️ 중요사항</div>
         </div>
         ${rows}

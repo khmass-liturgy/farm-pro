@@ -201,12 +201,29 @@ function renderBatchDetail() {
       const d = prog.days.find(x => x.day === i);
       const hasPlan = d && ((d.drugs && d.drugs.length) || d.vaccine);
       const isToday = i === dayAge, isFuture = i > dayAge;
+      // 계획일의 상태는 세 가지다: 투약함 / 안 하기로 함(미투약) / 아직 기록 안 함.
+      // 계획대로 투약하지 않는 날도 있으므로, 미투약을 기록으로 남길 수 있어야
+      // "잊어버려서 비어 있는 것"과 구분된다.
       const loggedForDay = logs.filter(l => l.programDay === i);
+      const givenForDay = loggedForDay.filter(l => l.administered !== false);
+      const skippedForDay = loggedForDay.filter(l => l.administered === false);
       let statusCell = '<span class="text-muted">-</span>';
       if (hasPlan) {
-        if (loggedForDay.length) statusCell = '<span class="badge badge-green">기록완료</span>';
-        else if (i <= dayAge) statusCell = `<span class="badge badge-red">미기록</span><br><button class="btn btn-outline btn-sm" style="margin-top:4px" onclick="openMedicationLogModal('${b.id}',${i})">실제 투약 기록</button>`;
-        else statusCell = '<span class="text-muted">예정</span>';
+        if (givenForDay.length) {
+          statusCell = '<span class="badge badge-green">투약</span>';
+        } else if (skippedForDay.length) {
+          const reason = skippedForDay[0].note || '';
+          statusCell = `<span class="badge badge-amber">미투약</span>` +
+            (reason && reason !== '미투약' ? `<div style="font-size:10px;color:var(--text-secondary);margin-top:2px">${reason}</div>` : '');
+        } else if (i <= dayAge) {
+          statusCell = `<span class="badge badge-red">미기록</span>
+            <div class="flex-gap" style="margin-top:4px;gap:4px">
+              <button class="btn btn-outline btn-sm" onclick="openMedicationLogModal('${b.id}',${i})">투약</button>
+              <button class="btn btn-outline btn-sm" onclick="recordNotAdministered('${b.id}',${i})">미투약</button>
+            </div>`;
+        } else {
+          statusCell = '<span class="text-muted">예정</span>';
+        }
       }
       rowsHtml += `<div class="day-plan-row ${isToday?'today':''} ${isFuture?'future':''}">
         <div class="program-cell num">${i}일<div style="font-size:10px;color:var(--text-secondary);font-weight:400">${programDayDateShort(b.placementDate, i)}</div></div>
@@ -222,10 +239,11 @@ function renderBatchDetail() {
   // 찾아 구간표로 정리한다. 오늘 해당하는 구간은 따로 표시해 현장에서 바로 보게 한다.
   const envHtml = buildBatchEnvHtml(b, dayAge);
 
-  const logsHtml = logs.length ? `<div class="tbl-wrap"><table><thead><tr><th>일령</th><th>날짜</th><th>약품</th><th>백신</th><th>메모</th><th>기록자</th><th>관리</th></tr></thead><tbody>
+  const logsHtml = logs.length ? `<div class="tbl-wrap"><table><thead><tr><th>일령</th><th>날짜</th><th>구분</th><th>약품</th><th>백신</th><th>메모</th><th>기록자</th><th>관리</th></tr></thead><tbody>
     ${logs.slice().sort((a,b2)=>(b2.programDay||0)-(a.programDay||0)).map(l => `<tr>
       <td>${l.programDay ? l.programDay+'일' : '-'}</td>
       <td>${l.logDate}</td>
+      <td>${l.administered === false ? '<span class="badge badge-amber">미투약</span>' : '<span class="badge badge-green">투약</span>'}</td>
       <td>${l.drugName||'-'}</td>
       <td>${l.vaccineName||'-'}</td>
       <td style="color:var(--text-secondary)">${l.note||'-'}</td>

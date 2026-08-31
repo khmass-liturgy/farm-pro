@@ -114,6 +114,8 @@ const TABLES = {
         vaccine_id: o.vaccineId || null, vaccine_name_text: o.vaccineName || null,
         dose_note: o.doseNote || null, administered_by_email: o.administeredByEmail || null,
         note: o.note || null, disease: o.disease || null,
+        // 명시적으로 false를 넘긴 경우(미투약)만 false. 나머지는 전부 실제 투약으로 본다.
+        administered: o.administered === false ? false : true,
         necropsy_photos: o.necropsyPhotos || [],
       };
     },
@@ -122,7 +124,8 @@ const TABLES = {
         id: r.id, batchId: r.batch_id, logDate: r.log_date, programDay: r.program_day,
         drugId: r.drug_id, drugName: r.drug_name_text, vaccineId: r.vaccine_id, vaccineName: r.vaccine_name_text,
         doseNote: r.dose_note, administeredByEmail: r.administered_by_email, note: r.note,
-        disease: r.disease, necropsyPhotos: r.necropsy_photos || [], createdAt: r.created_at,
+        disease: r.disease, administered: r.administered !== false,
+        necropsyPhotos: r.necropsy_photos || [], createdAt: r.created_at,
       };
     },
   },

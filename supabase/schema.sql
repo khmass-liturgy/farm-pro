@@ -195,6 +195,11 @@ alter table medication_logs add constraint medication_logs_has_content
 -- 시간이 지나면 만료되므로 저장해두지 않고, 화면에 표시할 때마다 그때그때 새로 발급한다.
 alter table medication_logs add column if not exists necropsy_photos jsonb not null default '[]'::jsonb;
 
+-- 계획된 날에 실제로 투약했는지(true) 아니면 판단해서 건너뛰었는지(false).
+-- 기존 기록은 모두 "실제 투약한 것"만 남겼으므로 default true가 맞다.
+-- 미투약도 기록으로 남겨야 "아직 기록 안 함"과 구분되고, 이행률에서도 빠진다.
+alter table medication_logs add column if not exists administered boolean not null default true;
+
 -- 부검사진 Storage 버킷 — 비공개(로그인한 사용자만), 나머지 테이블과 동일한
 -- "공유 워크스페이스" RLS 모델(authenticated면 전체 읽기/쓰기 허용)을 그대로 따른다.
 -- public 버킷으로 만들지 않는 이유: 부검사진은 URL만 알면 로그인 없이도 누구나 볼 수

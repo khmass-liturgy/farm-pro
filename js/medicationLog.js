@@ -282,6 +282,30 @@ async function saveMedicationLog() {
   if (document.getElementById('page-medconsult')?.classList.contains('active')) renderConsultLogPage();
 }
 
+// 계획된 날인데 판단해서 투약하지 않은 경우를 기록으로 남긴다.
+// "아직 기록 안 함(미기록)"과 "안 하기로 하고 넘어감(미투약)"은 다른 상태이므로,
+// 빈칸으로 두지 않고 명시적으로 저장해야 나중에 왜 건너뛰었는지 알 수 있다.
+async function recordNotAdministered(batchId, programDay) {
+  const reason = prompt(`${programDay}일령 계획을 투약하지 않은 사유를 적어주세요.\n(비워두면 "미투약"으로만 기록됩니다)`);
+  if (reason === null) return; // 취소
+  const data = {
+    batchId, logDate: new Date().toISOString().slice(0, 10),
+    programDay: Number(programDay),
+    drugId: null, drugName: null, vaccineId: null, vaccineName: null,
+    doseNote: null, disease: null,
+    // note는 비워둘 수 없다 — medication_logs_has_content 제약이 약품/백신/질병/메모 중
+    // 하나는 있어야 통과시키는데, 미투약 기록은 앞의 셋이 모두 비기 때문이다.
+    note: reason.trim() || '미투약',
+    administered: false,
+    administeredByEmail: await currentUserEmail(),
+    necropsyPhotos: [],
+  };
+  try { await insertRow('medicationLogs', data); }
+  catch (e) { alert('미투약 기록 저장 실패: ' + e.message); return; }
+  if (document.getElementById('page-batch-detail')?.classList.contains('active')) renderBatchDetail();
+  if (document.getElementById('page-schedule')?.classList.contains('active')) renderScheduleView();
+}
+
 async function deleteMedicationLog(id) {
   if (!confirm('이 진료기록을 삭제하시겠습니까?')) return;
   const log = load('medicationLogs').find(l => l.id === id);

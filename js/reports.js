@@ -16,7 +16,8 @@ function computeBatchAdherence(b) {
     const hasPlan = d && ((d.drugs && d.drugs.length) || d.vaccine);
     if (!hasPlan) continue;
     planned++;
-    if (logs.some(l => l.programDay === i)) done++;
+    // 이행률은 "계획대로 투약한 비율"이므로, 안 하기로 판단한 날(미투약)은 이행으로 치지 않는다.
+    if (logs.some(l => l.programDay === i && l.administered !== false)) done++;
   }
   if (planned === 0) return null;
   const farmName = load('farms').find(f => f.id === b.farmId)?.name || '(삭제된 농장)';
