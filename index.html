@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>농장 투약관리 시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260815h">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260815h">
-<link rel="icon" href="img/favicon.ico?v=20260815h">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260815h">
-<link rel="stylesheet" href="css/styles.css?v=20260815h">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260816a">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260816a">
+<link rel="icon" href="img/favicon.ico?v=20260816a">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260816a">
+<link rel="stylesheet" href="css/styles.css?v=20260816a">
 </head>
 <body>
 
@@ -22,6 +22,9 @@
     <div class="sidebar-section-label">메인</div>
     <div class="sidebar-item active" onclick="showPage('dashboard')">
       <span class="icon">📊</span> 대시보드
+    </div>
+    <div class="sidebar-item" onclick="openSmsModal()">
+      <span class="icon">💬</span> 문자 발송
     </div>
   </div>
   <div class="sidebar-section">
@@ -542,6 +545,32 @@
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-rodent')">취소</button>
       <button class="btn btn-primary" onclick="saveRodentAssessment()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 모달: 문자 발송 (뿌리오 SMS API, Supabase Edge Function 경유) -->
+<div class="modal-bg" id="modal-sms">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title">문자 발송</div>
+      <button class="modal-close" onclick="closeModal('modal-sms')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>받는 사람 * <span class="text-muted">(등록된 농장 중 선택, 여러 곳 가능)</span></label>
+      <input class="search-input mb-16" id="sms-farm-search" placeholder="🔍 농장명, 농장주 검색..." oninput="renderSmsFarmList()" style="width:100%">
+      <div id="sms-farm-list" style="max-height:220px; overflow-y:auto; border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:6px 8px;"></div>
+      <div class="text-muted mt-8" id="sms-recipient-summary">선택된 수신자 없음</div>
+    </div>
+    <div class="form-group"><label>발신번호</label><input id="sms-from" placeholder="예) 01091508844"></div>
+    <div class="form-group">
+      <label>내용 *</label>
+      <textarea id="sms-content" rows="6" placeholder="문자 내용을 입력하세요" oninput="updateSmsByteCount()"></textarea>
+      <div class="text-muted mt-8" id="sms-byte-count">0 byte (SMS 예상, 최대 90byte)</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-sms')">취소</button>
+      <button class="btn btn-primary" id="sms-send-btn" onclick="sendSmsToSelectedFarms()">발송</button>
     </div>
   </div>
 </div>
@@ -1093,25 +1122,26 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=20260815h"></script>
-<script src="js/supabaseClient.js?v=20260815h"></script>
-<script src="js/auth.js?v=20260815h"></script>
-<script src="js/breedStandards.js?v=20260815h"></script>
-<script src="js/farms.js?v=20260815h"></script>
-<script src="js/masterdata.js?v=20260815h"></script>
-<script src="js/rxProducts.js?v=20260815h"></script>
-<script src="js/drugSearch.js?v=20260815h"></script>
-<script src="js/programs.js?v=20260815h"></script>
-<script src="js/batches.js?v=20260815h"></script>
-<script src="js/medicationLog.js?v=20260815h"></script>
-<script src="js/prescriptions.js?v=20260815h"></script>
-<script src="js/clinicalAssessment.js?v=20260815h"></script>
-<script src="js/rodentControl.js?v=20260815h"></script>
-<script src="js/schedule.js?v=20260815h"></script>
-<script src="js/dashboard.js?v=20260815h"></script>
-<script src="js/reports.js?v=20260815h"></script>
-<script src="js/print.js?v=20260815h"></script>
-<script src="js/backup.js?v=20260815h"></script>
-<script src="js/app.js?v=20260815h"></script>
+<script src="js/config.js?v=20260816a"></script>
+<script src="js/supabaseClient.js?v=20260816a"></script>
+<script src="js/auth.js?v=20260816a"></script>
+<script src="js/breedStandards.js?v=20260816a"></script>
+<script src="js/farms.js?v=20260816a"></script>
+<script src="js/sms.js?v=20260816a"></script>
+<script src="js/masterdata.js?v=20260816a"></script>
+<script src="js/rxProducts.js?v=20260816a"></script>
+<script src="js/drugSearch.js?v=20260816a"></script>
+<script src="js/programs.js?v=20260816a"></script>
+<script src="js/batches.js?v=20260816a"></script>
+<script src="js/medicationLog.js?v=20260816a"></script>
+<script src="js/prescriptions.js?v=20260816a"></script>
+<script src="js/clinicalAssessment.js?v=20260816a"></script>
+<script src="js/rodentControl.js?v=20260816a"></script>
+<script src="js/schedule.js?v=20260816a"></script>
+<script src="js/dashboard.js?v=20260816a"></script>
+<script src="js/reports.js?v=20260816a"></script>
+<script src="js/print.js?v=20260816a"></script>
+<script src="js/backup.js?v=20260816a"></script>
+<script src="js/app.js?v=20260816a"></script>
 </body>
 </html>
