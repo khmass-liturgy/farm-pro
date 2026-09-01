@@ -68,6 +68,18 @@ function updateSmsByteCount() {
   el.style.color = bytes > limit ? 'var(--red)' : '';
 }
 
+// sb.functions.invoke()가 실패하면 error.message는 그냥 "Edge Function returned a
+// non-2xx status code"로 뭉뚱그려진다. 실제로 무엇이 잘못됐는지(뿌리오 토큰 발급
+// 실패, 발신번호 미등록 등)는 error.context(원본 Response)의 JSON 본문에 들어
+// 있으므로, 그걸 직접 읽어야 send-sms/index.ts가 보낸 진짜 메시지를 보여줄 수 있다.
+async function extractFunctionErrorMessage(error) {
+  try {
+    const body = await error.context?.clone().json();
+    if (body?.error) return body.error;
+  } catch (e) { /* 본문이 JSON이 아니거나 이미 읽혔으면 원래 메시지로 대체 */ }
+  return error.message || String(error);
+}
+
 async function sendSmsToSelectedFarms() {
   const farms = load('farms').filter(f => smsSelectedFarmIds.has(f.id));
   if (!farms.length) { alert('받는 사람을 선택해주세요.'); return; }
@@ -92,7 +104,7 @@ async function sendSmsToSelectedFarms() {
   btn.textContent = '발송 중...';
   try {
     const { data, error } = await sb.functions.invoke('send-sms', { body: { from, content, targets } });
-    if (error) throw error;
+    if (error) throw new Error(await extractFunctionErrorMessage(error));
     if (data?.error) throw new Error(data.error);
     alert(`문자 발송 완료 (${targets.length}명, ${data.messageType})`);
     closeModal('modal-sms');

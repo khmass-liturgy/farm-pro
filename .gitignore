@@ -4,3 +4,7 @@
 
 # scripts/의 Python 알림 스크립트를 로컬에서 문법 검사(py_compile)할 때 생기는 캐시
 scripts/__pycache__/
+
+# Supabase CLI가 `supabase link`/`functions deploy` 실행 시 로컬에 남기는 캐시
+# (CLI 버전 확인용 등, 프로젝트 코드가 아니며 사용자마다 내용이 다르다)
+supabase/.temp/
