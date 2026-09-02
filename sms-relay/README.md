@@ -42,13 +42,25 @@ Network Security Group) → Ingress Rules 추가:
 - Source `0.0.0.0/0`, TCP, 대상 포트 `80`
 - Source `0.0.0.0/0`, TCP, 대상 포트 `443`
 
+규칙을 추가한 뒤 **기존 SSH(22) 규칙이 그대로 남아 있는지 반드시 확인하세요.**
+편집 과정에서 22번 규칙이 사라지면 그 VCN에 속한 모든 인스턴스에 SSH가
+안 됩니다(인스턴스는 Running인데 접속만 타임아웃 나서 원인을 찾기 어렵습니다).
+
 **(2) VM 안 (SSH 접속 후)** — Oracle의 Ubuntu 이미지는 iptables가 기본으로
-80/443을 막아둡니다:
+80/443을 막아둡니다.
+
+**주의: 삽입 위치가 중요합니다.** INPUT 체인에는 "나머지 전부 거부"하는 REJECT
+규칙이 들어 있는데, ACCEPT 규칙을 그 **뒤에** 넣으면 아예 평가되지 않아 포트가
+계속 막힌 것처럼 보입니다(겉보기엔 규칙이 있는데 접속은 타임아웃). 그래서 위치를
+고정된 숫자로 찍지 말고, REJECT 규칙의 실제 줄 번호를 먼저 확인해 그 앞에 넣습니다:
 
 ```bash
-sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
-sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
+sudo iptables -L INPUT -n --line-numbers   # REJECT 규칙이 몇 번인지 확인 (보통 5)
+REJECT_LINE=$(sudo iptables -L INPUT -n --line-numbers | awk '$2=="REJECT"{print $1; exit}')
+sudo iptables -I INPUT $REJECT_LINE -m state --state NEW -p tcp --dport 80 -j ACCEPT
+sudo iptables -I INPUT $REJECT_LINE -m state --state NEW -p tcp --dport 443 -j ACCEPT
 sudo netfilter-persistent save
+sudo iptables -L INPUT -n --line-numbers   # 80/443이 REJECT보다 위에 있는지 재확인
 ```
 
 ## 3. Node.js 설치
