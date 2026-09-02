@@ -725,8 +725,8 @@ function buildFeedSection(prog) {
     </tr>`).join('');
   return `<div style="margin-top:10px">
     <div style="font-size:12px;font-weight:700;color:var(--green);background:var(--green-bg);padding:6px 10px;border-radius:6px 6px 0 0">🌾 사료 첨가제</div>
-    <div style="border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;overflow:hidden">
-      <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <div style="border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;overflow-x:auto">
+      <table style="width:100%;min-width:320px;border-collapse:collapse;font-size:12px">
         <thead><tr style="background:var(--bg)">
           <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)">제품명</th>
           <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)">첨가량</th>

@@ -101,7 +101,7 @@ function renderScheduleView() {
         </div>
       </div>
       ${prog.focus ? `<div style="padding:8px 12px;background:var(--amber-bg);border-radius:6px;font-size:12px;color:var(--amber);margin-bottom:14px">⚠️ <strong>중점 관리사항:</strong> ${prog.focus}</div>` : ''}
-      <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
+      <div style="border:1px solid var(--border);border-radius:8px;overflow-x:auto">
         <div class="program-day-row${envCls}" style="background:var(--bg)">
           <div class="program-cell head" style="text-align:center">일령</div>
           <div class="program-cell head">💊 약품투약</div>

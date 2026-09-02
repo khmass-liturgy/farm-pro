@@ -262,7 +262,7 @@ function renderBatchDetail() {
     </div>
     <div class="card mb-16">
       <div class="card-header"><div class="card-title">일자별 계획 대비 실적</div></div>
-      ${prog ? `<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
+      ${prog ? `<div style="border:1px solid var(--border);border-radius:8px;overflow-x:auto">
         <div class="day-plan-row" style="background:var(--bg)">
           <div class="program-cell head" style="text-align:center">일령</div>
           <div class="program-cell head">💊 약품투약</div>

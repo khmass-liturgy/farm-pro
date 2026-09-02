@@ -129,6 +129,12 @@ body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; backgrou
 /* 테이블 */
 .tbl-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
+/* width:100%만 있으면 좁은 화면에서 표가 옆으로 넘치는 대신 각 칸이 강제로
+   줄어들어, 특히 자유 텍스트가 들어가는 칸(진료기록의 "내용" 등)이 한 글자씩
+   줄바꿈되며 행이 세로로 한없이 길어진다(투약상담 및 처방 화면 등). 표 폭을
+   내용이 필요로 하는 최소 폭 아래로는 줄지 않게 하고, 그 대신 .tbl-wrap의
+   overflow-x:auto로 좌우 스크롤을 쓰게 한다. */
+.tbl-wrap table { min-width: max-content; }
 table th {
   background: var(--bg); padding: 10px 12px; text-align: left;
   font-size: 11px; font-weight: 700; color: var(--text-secondary);
@@ -278,12 +284,20 @@ table tr:hover td { background: #f9fbff; }
 .empty-state p { font-size: 14px; }
 
 /* 투약 프로그램 상세 */
-.program-day-row { display: grid; grid-template-columns: 60px 1fr 1fr 1fr; gap: 0; border-bottom: 1px solid var(--border); }
+/* 1fr 칸은 내용(약품 pill, 비고 메모 등)이 많으면 자동 최소폭이 한 글자
+   수준까지 줄어들어, 좁은 화면에서 한 글자씩 세로로 쌓이며 행이 한없이
+   길어질 수 있다(투약 일정/입추 상세와 같은 문제). 행에만 최소폭을 주는
+   것으로는 부족하다 — 약품/백신 칸처럼 pill(nowrap)이 든 칸이 자기 내용만큼
+   폭을 먼저 차지해버리면, 남는 폭이 전부 비고 칸 하나로 쏠려 오히려 비고
+   칸이 없는 폭까지 쥐어짜인다(실측: 500px 행에서 비고 칸이 33px로 줄어듦).
+   그래서 각 1fr 칸에 minmax()로 자기 몫의 최소폭을 개별로 보장한다.
+   이 최소폭보다 화면이 좁으면 부모의 overflow-x:auto로 옆으로 스크롤한다. */
+.program-day-row { display: grid; grid-template-columns: 60px minmax(90px,1fr) minmax(90px,1fr) minmax(90px,1fr); gap: 0; border-bottom: 1px solid var(--border); min-width: 330px; }
 /* 조건에 따라 칸이 붙는다 — 품종이 있으면 온·습도, 계군이 연결돼 있으면 실적.
    헤더 행에도 같은 클래스를 줘야 칸이 어긋나지 않는다. 네 조합을 모두 정의한다. */
-.program-day-row.with-env { grid-template-columns: 60px 1fr 1fr 92px 1fr; }
-.program-day-row.with-status { grid-template-columns: 60px 1fr 1fr 76px 1fr; }
-.program-day-row.with-env.with-status { grid-template-columns: 60px 1fr 1fr 92px 76px 1fr; }
+.program-day-row.with-env { grid-template-columns: 60px minmax(90px,1fr) minmax(90px,1fr) 92px minmax(90px,1fr); min-width: 422px; }
+.program-day-row.with-status { grid-template-columns: 60px minmax(90px,1fr) minmax(90px,1fr) 76px minmax(90px,1fr); min-width: 406px; }
+.program-day-row.with-env.with-status { grid-template-columns: 60px minmax(90px,1fr) minmax(90px,1fr) 92px 76px minmax(90px,1fr); min-width: 498px; }
 .program-day-row:last-child { border-bottom: none; }
 .program-cell { padding: 7px 10px; font-size: 12px; }
 .program-cell.num { background: var(--bg); font-weight: 700; color: var(--accent); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; line-height: 1.3; }
@@ -293,7 +307,13 @@ table tr:hover td { background: #f9fbff; }
 /* 배치(입추) 상세 뷰 */
 .batch-hero { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
 .batch-hero .stat-value.big { font-size: 32px; }
-.day-plan-row { display: grid; grid-template-columns: 60px 1fr 1fr 1fr 140px; gap: 0; border-bottom: 1px solid var(--border); align-items: center; }
+/* 농장명·프로그램명처럼 긴 값이 들어가는 칸이라, program-day-row와 같은 이유로
+   좁은 화면에서 4칸을 다 욱여넣으면 한 글자씩 세로로 쌓인다. 768px 이하에서는
+   2×2로 접어 칸마다 폭을 넉넉히 준다. */
+@media (max-width: 768px) {
+  .batch-hero { grid-template-columns: repeat(2,1fr); }
+}
+.day-plan-row { display: grid; grid-template-columns: 60px minmax(90px,1fr) minmax(90px,1fr) minmax(90px,1fr) 140px; gap: 0; border-bottom: 1px solid var(--border); align-items: center; min-width: 470px; }
 .day-plan-row.today { background: var(--accent-light); }
 .day-plan-row.future { opacity: 0.55; }
 .day-plan-row:last-child { border-bottom: none; }
