@@ -1,5 +1,5 @@
-// ─── 문자 발송 (뿌리오 SMS API, Supabase Edge Function 경유) ────────────────
-// 뿌리오 인증키는 이 파일 어디에도 없다. 여기서는 수신자(등록된 농장) 선택 UI와
+// ─── 문자 발송 (알리고 SMS API, Supabase Edge Function 경유) ────────────────
+// 알리고 인증키는 이 파일 어디에도 없다. 여기서는 수신자(등록된 농장) 선택 UI와
 // 바이트수 표시만 담당하고, 실제 발송은 sb.functions.invoke('send-sms', ...)로
 // Edge Function(supabase/functions/send-sms)에 위임한다 — 인증키는 그 함수의
 // 서버 쪽 환경변수에만 있고 브라우저로는 절대 내려오지 않는다.
@@ -8,13 +8,13 @@
 // 넣는 건 추후 필요에 맞게 추가한다(각 화면에서 이 모달을 프리필해 열도록 하면 됨).
 
 const SMS_BYTE_LIMIT_SMS = 90;   // 표준 단문(SMS) 바이트 한도
-const SMS_BYTE_LIMIT_LMS = 2000; // 장문(LMS) 바이트 한도(뿌리오 기준)
+const SMS_BYTE_LIMIT_LMS = 2000; // 장문(LMS) 바이트 한도(알리고 기준)
 
 let smsSelectedFarmIds = new Set();
 
 // EUC-KR 근사 바이트 계산: ASCII 1바이트, 그 외(한글 등)는 2바이트로 어림한다.
 // supabase/functions/send-sms/index.ts의 byteLength()와 반드시 같은 방식이어야
-// 한다 — 여기서 "SMS"로 보여준 걸 서버가 "LMS"로 판정하면 요금/글자수가 어긋난다.
+// 한다 — 여기서 "SMS"로 보여준 걸 서버(알리고)가 "LMS"로 판정하면 요금/글자수가 어긋난다.
 function smsByteLength(text) {
   let bytes = 0;
   for (const ch of text) bytes += ch.charCodeAt(0) > 0x7f ? 2 : 1;
