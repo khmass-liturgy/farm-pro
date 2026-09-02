@@ -41,7 +41,7 @@ function renderSmsFarmList() {
     const checked = smsSelectedFarmIds.has(f.id) ? 'checked' : '';
     const noPhone = !f.phone;
     return `<label style="display:flex;align-items:center;gap:8px;padding:6px 4px;${noPhone ? 'opacity:0.5' : ''}">
-      <input type="checkbox" ${checked} ${noPhone ? 'disabled' : ''} onchange="toggleSmsFarm('${f.id}', this.checked)">
+      <input type="checkbox" style="width:auto;flex:none" ${checked} ${noPhone ? 'disabled' : ''} onchange="toggleSmsFarm('${f.id}', this.checked)">
       <span style="flex:1">${f.name} <span class="text-muted">(${f.owner})</span></span>
       <span class="text-muted" style="font-size:11px">${f.phone || '연락처 없음'}</span>
     </label>`;
