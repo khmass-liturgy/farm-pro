@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>농장 투약관리 시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260902b">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260902b">
-<link rel="icon" href="img/favicon.ico?v=20260902b">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260902b">
-<link rel="stylesheet" href="css/styles.css?v=20260902b">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260902c">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260902c">
+<link rel="icon" href="img/favicon.ico?v=20260902c">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260902c">
+<link rel="stylesheet" href="css/styles.css?v=20260902c">
 </head>
 <body>
 
@@ -560,6 +560,8 @@
       <label>받는 사람 * <span class="text-muted">(등록된 농장 중 선택, 여러 곳 가능)</span></label>
       <input class="search-input mb-16" id="sms-farm-search" placeholder="🔍 농장명, 농장주 검색..." oninput="renderSmsFarmList()" style="width:100%">
       <div id="sms-farm-list" style="max-height:220px; overflow-y:auto; border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:6px 8px;"></div>
+      <div class="text-muted mt-8" style="font-size:11px">등록되지 않은 번호는 아래에 직접 입력하세요 (여러 개는 쉼표로 구분)</div>
+      <input id="sms-manual-numbers" placeholder="예) 01012345678, 010-9876-5432" oninput="updateSmsRecipientSummary()">
       <div class="text-muted mt-8" id="sms-recipient-summary">선택된 수신자 없음</div>
     </div>
     <div class="form-group"><label>발신번호</label><input id="sms-from" placeholder="예) 01091508844"></div>
@@ -570,7 +572,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-sms')">취소</button>
-      <button class="btn btn-primary" id="sms-send-btn" onclick="sendSmsToSelectedFarms()">발송</button>
+      <button class="btn btn-primary" id="sms-send-btn" onclick="sendSms()">발송</button>
     </div>
   </div>
 </div>
@@ -1122,26 +1124,26 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=20260902b"></script>
-<script src="js/supabaseClient.js?v=20260902b"></script>
-<script src="js/auth.js?v=20260902b"></script>
-<script src="js/breedStandards.js?v=20260902b"></script>
-<script src="js/farms.js?v=20260902b"></script>
-<script src="js/sms.js?v=20260902b"></script>
-<script src="js/masterdata.js?v=20260902b"></script>
-<script src="js/rxProducts.js?v=20260902b"></script>
-<script src="js/drugSearch.js?v=20260902b"></script>
-<script src="js/programs.js?v=20260902b"></script>
-<script src="js/batches.js?v=20260902b"></script>
-<script src="js/medicationLog.js?v=20260902b"></script>
-<script src="js/prescriptions.js?v=20260902b"></script>
-<script src="js/clinicalAssessment.js?v=20260902b"></script>
-<script src="js/rodentControl.js?v=20260902b"></script>
-<script src="js/schedule.js?v=20260902b"></script>
-<script src="js/dashboard.js?v=20260902b"></script>
-<script src="js/reports.js?v=20260902b"></script>
-<script src="js/print.js?v=20260902b"></script>
-<script src="js/backup.js?v=20260902b"></script>
-<script src="js/app.js?v=20260902b"></script>
+<script src="js/config.js?v=20260902c"></script>
+<script src="js/supabaseClient.js?v=20260902c"></script>
+<script src="js/auth.js?v=20260902c"></script>
+<script src="js/breedStandards.js?v=20260902c"></script>
+<script src="js/farms.js?v=20260902c"></script>
+<script src="js/sms.js?v=20260902c"></script>
+<script src="js/masterdata.js?v=20260902c"></script>
+<script src="js/rxProducts.js?v=20260902c"></script>
+<script src="js/drugSearch.js?v=20260902c"></script>
+<script src="js/programs.js?v=20260902c"></script>
+<script src="js/batches.js?v=20260902c"></script>
+<script src="js/medicationLog.js?v=20260902c"></script>
+<script src="js/prescriptions.js?v=20260902c"></script>
+<script src="js/clinicalAssessment.js?v=20260902c"></script>
+<script src="js/rodentControl.js?v=20260902c"></script>
+<script src="js/schedule.js?v=20260902c"></script>
+<script src="js/dashboard.js?v=20260902c"></script>
+<script src="js/reports.js?v=20260902c"></script>
+<script src="js/print.js?v=20260902c"></script>
+<script src="js/backup.js?v=20260902c"></script>
+<script src="js/app.js?v=20260902c"></script>
 </body>
 </html>
