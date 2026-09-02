@@ -82,8 +82,15 @@ function revealSectionOfActiveItem(activeItem) {
   }
 }
 
+// 좁은 화면에서는 메뉴 항목을 누르면 본문이 전체 화면을 덮는다(모바일 레이아웃,
+// css/styles.css 참고). closeMobileNav()의 ✕ 버튼으로 다시 메뉴로 돌아간다.
+function closeMobileNav() {
+  document.body.classList.remove('mobile-nav-open');
+}
+
 function showPage(name) {
   currentPage = name;
+  document.body.classList.add('mobile-nav-open');
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');

@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>농장 투약관리 시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260902c">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260902c">
-<link rel="icon" href="img/favicon.ico?v=20260902c">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260902c">
-<link rel="stylesheet" href="css/styles.css?v=20260902c">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260903a">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260903a">
+<link rel="icon" href="img/favicon.ico?v=20260903a">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260903a">
+<link rel="stylesheet" href="css/styles.css?v=20260903a">
 </head>
 <body>
 
@@ -110,7 +110,10 @@
 <!-- 메인 -->
 <div id="main">
   <div class="topbar">
-    <div class="topbar-title" id="topbar-title">대시보드</div>
+    <div class="flex-gap">
+      <button class="mobile-back-btn" onclick="closeMobileNav()" title="메뉴로 돌아가기">✕ 메뉴</button>
+      <div class="topbar-title" id="topbar-title">대시보드</div>
+    </div>
     <div class="flex-gap">
       <button class="btn btn-outline btn-sm" onclick="manualRefresh()" title="최신 데이터 새로고침">🔄 새로고침</button>
       <div class="topbar-actions" id="topbar-actions"></div>
@@ -1124,26 +1127,26 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=20260902c"></script>
-<script src="js/supabaseClient.js?v=20260902c"></script>
-<script src="js/auth.js?v=20260902c"></script>
-<script src="js/breedStandards.js?v=20260902c"></script>
-<script src="js/farms.js?v=20260902c"></script>
-<script src="js/sms.js?v=20260902c"></script>
-<script src="js/masterdata.js?v=20260902c"></script>
-<script src="js/rxProducts.js?v=20260902c"></script>
-<script src="js/drugSearch.js?v=20260902c"></script>
-<script src="js/programs.js?v=20260902c"></script>
-<script src="js/batches.js?v=20260902c"></script>
-<script src="js/medicationLog.js?v=20260902c"></script>
-<script src="js/prescriptions.js?v=20260902c"></script>
-<script src="js/clinicalAssessment.js?v=20260902c"></script>
-<script src="js/rodentControl.js?v=20260902c"></script>
-<script src="js/schedule.js?v=20260902c"></script>
-<script src="js/dashboard.js?v=20260902c"></script>
-<script src="js/reports.js?v=20260902c"></script>
-<script src="js/print.js?v=20260902c"></script>
-<script src="js/backup.js?v=20260902c"></script>
-<script src="js/app.js?v=20260902c"></script>
+<script src="js/config.js?v=20260903a"></script>
+<script src="js/supabaseClient.js?v=20260903a"></script>
+<script src="js/auth.js?v=20260903a"></script>
+<script src="js/breedStandards.js?v=20260903a"></script>
+<script src="js/farms.js?v=20260903a"></script>
+<script src="js/sms.js?v=20260903a"></script>
+<script src="js/masterdata.js?v=20260903a"></script>
+<script src="js/rxProducts.js?v=20260903a"></script>
+<script src="js/drugSearch.js?v=20260903a"></script>
+<script src="js/programs.js?v=20260903a"></script>
+<script src="js/batches.js?v=20260903a"></script>
+<script src="js/medicationLog.js?v=20260903a"></script>
+<script src="js/prescriptions.js?v=20260903a"></script>
+<script src="js/clinicalAssessment.js?v=20260903a"></script>
+<script src="js/rodentControl.js?v=20260903a"></script>
+<script src="js/schedule.js?v=20260903a"></script>
+<script src="js/dashboard.js?v=20260903a"></script>
+<script src="js/reports.js?v=20260903a"></script>
+<script src="js/print.js?v=20260903a"></script>
+<script src="js/backup.js?v=20260903a"></script>
+<script src="js/app.js?v=20260903a"></script>
 </body>
 </html>

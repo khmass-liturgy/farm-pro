@@ -167,6 +167,24 @@ table tr:hover td { background: #f9fbff; }
 .modal-close:hover { color: var(--red); }
 .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
 
+/* ── 모바일 레이아웃 ──────────────────────────────────────────────────────
+   좁은 화면에서는 220px 사이드바 + 본문을 나란히 두면 본문이 찌그러진다.
+   그래서 기본은 메뉴(사이드바) 화면 전체를 보여주고, 메뉴 항목을 누르면
+   본문이 화면 전체를 덮으며(문자 발송 모달과 같은 방식), 상단 ✕ 버튼으로
+   다시 메뉴로 돌아간다. showPage()가 body에 mobile-nav-open을 붙이고
+   closeMobileNav()가 뗀다.*/
+.mobile-back-btn { display: none; }
+@media (max-width: 768px) {
+  #sidebar, #main { position: fixed; inset: 0; width: 100%; z-index: 10; }
+  #main { display: none; }
+  body.mobile-nav-open #sidebar { display: none; }
+  body.mobile-nav-open #main { display: flex; }
+  .mobile-back-btn {
+    display: inline-flex; align-items: center; background: none; border: none;
+    font-size: 14px; font-weight: 700; color: var(--accent); cursor: pointer; padding: 4px;
+  }
+}
+
 /* 투약 스케줄 테이블 */
 .schedule-table { font-size: 12px; }
 .schedule-table th { font-size: 11px; padding: 7px 8px; }
