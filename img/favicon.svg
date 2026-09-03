@@ -19,6 +19,10 @@
       <stop offset="0%" stop-color="#FFE066"/>
       <stop offset="100%" stop-color="#FFA500"/>
     </linearGradient>
+    <linearGradient id="tubeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5B8AA6"/>
+      <stop offset="100%" stop-color="#3E6E8C"/>
+    </linearGradient>
   </defs>
 
   <!-- 흰색 스티커 테두리 -->
@@ -74,6 +78,14 @@
   <path d="M100 104 L120 118 c 0 10 -9 17 -20 17 c -11 0 -20 -7 -20 -17 Z" fill="#6B3A12"/>
   <path d="M100 108 L115 119 c 0 7 -7 12 -15 12 c -8 0 -15 -5 -15 -12 Z" fill="url(#beakGrad)"/>
   <path d="M100 108 L108 114 L100 116 L92 114 Z" fill="#FFF3C4"/>
+
+  <!-- 청진기 (컨설팅/왕진 상징) -->
+  <path d="M42 132 C 40 158, 66 176, 100 176 C 134 176, 160 158, 158 132"
+    fill="none" stroke="url(#tubeGrad)" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="42" cy="130" r="9" fill="#7FA9C4" stroke="#3E6E8C" stroke-width="2"/>
+  <circle cx="158" cy="130" r="9" fill="#7FA9C4" stroke="#3E6E8C" stroke-width="2"/>
+  <circle cx="100" cy="179" r="12" fill="#8FB4CC" stroke="#3E6E8C" stroke-width="3"/>
+  <circle cx="100" cy="179" r="5" fill="#3E6E8C"/>
 
   <!-- 육수(볏 아래 늘어진 부분) -->
   <ellipse cx="92" cy="140" rx="10" ry="13" fill="url(#wattleGrad)"/>
