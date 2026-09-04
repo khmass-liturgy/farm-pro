@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>농장 투약관리 시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260903d">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260903d">
-<link rel="icon" href="img/favicon.ico?v=20260903d">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260903d">
-<link rel="stylesheet" href="css/styles.css?v=20260903d">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260904a">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260904a">
+<link rel="icon" href="img/favicon.ico?v=20260904a">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260904a">
+<link rel="stylesheet" href="css/styles.css?v=20260904a">
 </head>
 <body>
 
@@ -1041,6 +1041,41 @@
   </div>
 </div>
 
+<!-- 모달: 일령별 계획 변경 (입추 상세의 일자별 표 → "변경") -->
+<!-- 프로그램 전체 편집 모달과 달리 한 일령만 고친다. 전체 편집은 500일치 표를 다시
+     그리고 저장 시 입추 자동 등록까지 함께 도는 무거운 흐름이라, 현장에서 "오늘 약만
+     바꿔야 하는" 경우에 쓰기 부담스럽다. -->
+<div class="modal-bg" id="modal-day-plan">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-day-plan-title">계획 변경</div>
+      <button class="modal-close" onclick="closeModal('modal-day-plan')">✕</button>
+    </div>
+    <div class="text-muted mb-16" id="dp-context"></div>
+    <div class="form-group">
+      <label>💊 약품투약</label>
+      <div id="dp-drug-slots"></div>
+      <button type="button" class="btn btn-outline btn-sm mt-8" onclick="addDpDrugSlot()">+ 약품추가</button>
+    </div>
+    <div class="form-group">
+      <label>💉 백신사항 <span class="text-muted">(농장 축종에 맞는 백신)</span></label>
+      <select id="dp-vaccine-sel" onchange="onDpVaccineChange()"></select>
+      <div id="dp-vaccine-custom" style="display:none;margin-top:6px">
+        <input id="dp-vaccine-text" placeholder="백신명 직접 입력">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>⚠️ 중요사항/비고</label>
+      <textarea id="dp-note" placeholder="약품·백신을 고르면 용법이 자동으로 채워집니다. 직접 수정할 수 있습니다."
+        oninput="this.dataset.manualEdit='1'"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-day-plan')">취소</button>
+      <button class="btn btn-primary" id="dp-save-btn" onclick="saveDayPlan()">저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- 모달: 처방전 발급 -->
 <div class="modal-bg" id="modal-prescription">
   <div class="modal">
@@ -1127,26 +1162,26 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=20260903d"></script>
-<script src="js/supabaseClient.js?v=20260903d"></script>
-<script src="js/auth.js?v=20260903d"></script>
-<script src="js/breedStandards.js?v=20260903d"></script>
-<script src="js/farms.js?v=20260903d"></script>
-<script src="js/sms.js?v=20260903d"></script>
-<script src="js/masterdata.js?v=20260903d"></script>
-<script src="js/rxProducts.js?v=20260903d"></script>
-<script src="js/drugSearch.js?v=20260903d"></script>
-<script src="js/programs.js?v=20260903d"></script>
-<script src="js/batches.js?v=20260903d"></script>
-<script src="js/medicationLog.js?v=20260903d"></script>
-<script src="js/prescriptions.js?v=20260903d"></script>
-<script src="js/clinicalAssessment.js?v=20260903d"></script>
-<script src="js/rodentControl.js?v=20260903d"></script>
-<script src="js/schedule.js?v=20260903d"></script>
-<script src="js/dashboard.js?v=20260903d"></script>
-<script src="js/reports.js?v=20260903d"></script>
-<script src="js/print.js?v=20260903d"></script>
-<script src="js/backup.js?v=20260903d"></script>
-<script src="js/app.js?v=20260903d"></script>
+<script src="js/config.js?v=20260904a"></script>
+<script src="js/supabaseClient.js?v=20260904a"></script>
+<script src="js/auth.js?v=20260904a"></script>
+<script src="js/breedStandards.js?v=20260904a"></script>
+<script src="js/farms.js?v=20260904a"></script>
+<script src="js/sms.js?v=20260904a"></script>
+<script src="js/masterdata.js?v=20260904a"></script>
+<script src="js/rxProducts.js?v=20260904a"></script>
+<script src="js/drugSearch.js?v=20260904a"></script>
+<script src="js/programs.js?v=20260904a"></script>
+<script src="js/batches.js?v=20260904a"></script>
+<script src="js/medicationLog.js?v=20260904a"></script>
+<script src="js/prescriptions.js?v=20260904a"></script>
+<script src="js/clinicalAssessment.js?v=20260904a"></script>
+<script src="js/rodentControl.js?v=20260904a"></script>
+<script src="js/schedule.js?v=20260904a"></script>
+<script src="js/dashboard.js?v=20260904a"></script>
+<script src="js/reports.js?v=20260904a"></script>
+<script src="js/print.js?v=20260904a"></script>
+<script src="js/backup.js?v=20260904a"></script>
+<script src="js/app.js?v=20260904a"></script>
 </body>
 </html>

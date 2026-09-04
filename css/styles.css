@@ -313,7 +313,9 @@ table tr:hover td { background: #f9fbff; }
 @media (max-width: 768px) {
   .batch-hero { grid-template-columns: repeat(2,1fr); }
 }
-.day-plan-row { display: grid; grid-template-columns: 60px minmax(90px,1fr) minmax(90px,1fr) minmax(90px,1fr) 140px; gap: 0; border-bottom: 1px solid var(--border); align-items: center; min-width: 470px; }
+/* 마지막 칸은 그 일령의 프로그램 계획을 바로 고치는 "변경" 버튼이다.
+   버튼 폭(약 47px)에 program-cell 좌우 여백을 더해 76px이면 줄바꿈 없이 들어간다. */
+.day-plan-row { display: grid; grid-template-columns: 60px minmax(90px,1fr) minmax(90px,1fr) minmax(90px,1fr) 140px 76px; gap: 0; border-bottom: 1px solid var(--border); align-items: center; min-width: 546px; }
 .day-plan-row.today { background: var(--accent-light); }
 .day-plan-row.future { opacity: 0.55; }
 .day-plan-row:last-child { border-bottom: none; }

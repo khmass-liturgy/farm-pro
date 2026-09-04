@@ -225,12 +225,16 @@ function renderBatchDetail() {
           statusCell = '<span class="text-muted">예정</span>';
         }
       }
+      // 계획이 없는 날에도 버튼을 둔다 — 빈 날에 약품/백신을 새로 넣는 통로이기도 하다.
       rowsHtml += `<div class="day-plan-row ${isToday?'today':''} ${isFuture?'future':''}">
         <div class="program-cell num">${i}일<div style="font-size:10px;color:var(--text-secondary);font-weight:400">${programDayDateShort(b.placementDate, i)}</div></div>
         <div class="program-cell">${dayDrugPillsHtml(d)}</div>
         <div class="program-cell">${dayVaccinePillHtml(d)}</div>
         <div class="program-cell" style="color:var(--text-secondary);font-size:11px">${d?.note||''}</div>
         <div class="program-cell">${statusCell}</div>
+        <div class="program-cell" style="text-align:center">
+          <button class="btn btn-outline btn-sm" onclick="openDayPlanModal('${b.id}',${i})" title="${i}일령의 투약 프로그램 계획을 고칩니다">변경</button>
+        </div>
       </div>`;
     }
   }
@@ -269,6 +273,7 @@ function renderBatchDetail() {
           <div class="program-cell head">💉 백신사항</div>
           <div class="program-cell head">⚠️ 중요사항</div>
           <div class="program-cell head">기록상태</div>
+          <div class="program-cell head" style="text-align:center">계획</div>
         </div>
         ${rowsHtml}
       </div>` : '<div class="empty-state"><p>연결된 투약 프로그램이 없습니다. 편집에서 프로그램을 선택하세요.</p></div>'}

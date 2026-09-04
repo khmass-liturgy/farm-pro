@@ -842,6 +842,199 @@ function viewProgram(id) {
   openModal('modal-prog-view');
 }
 
+// ─── 일령 하나만 고치는 계획 변경 모달 ─────────────────────────────────────
+// 입추 상세의 "일자별 계획 대비 실적" 표에서 그 줄의 계획(약품/백신/중요사항)만
+// 바로 고친다. openProgramModal()로 전체를 여는 것과 일부러 나눠 둔다 —
+// 전체 편집은 일령 수만큼(최대 500줄) 표를 다시 그려 무겁고, 저장할 때
+// syncProgramBatch()가 함께 돌아 입추 기록까지 건드리기 때문이다.
+// 여기서는 programs.days에서 그 일령 항목 하나만 갈아끼운다.
+let editingDayPlan = { programId: null, day: null };
+let dpSlotCount = 0;
+// 백신 목록을 농장 축종에 맞춰 거를 때 쓴다. 모달을 여는 시점에 정해 두고
+// 슬롯을 다시 그릴 때도 같은 기준을 쓴다.
+let dpAllowedVaccineSpecies = null;
+
+function dpDrugSlotHtml(idx, entry) {
+  const isCustom = !!(entry && !entry.drugId);
+  return `<div id="dp-drug-slot-${idx}" style="${idx > 0 ? 'margin-top:6px' : ''}">
+    <div style="display:flex;align-items:center;gap:6px">
+      <select id="dp-drug-sel-${idx}" onchange="onDpDrugChange(${idx})" style="flex:1;min-width:0">
+        ${getDrugOptions(isCustom ? '__custom__' : (entry?.drugId || ''))}
+      </select>
+      <button type="button" onclick="removeDpDrugSlot(${idx})" title="이 약품 빼기"
+        style="flex:none;background:var(--red-bg);color:var(--red);border:none;border-radius:6px;padding:7px 11px;cursor:pointer;font-size:15px;line-height:1;font-family:inherit">×</button>
+    </div>
+    <div id="dp-drug-custom-${idx}" style="display:${isCustom ? '' : 'none'};margin-top:6px">
+      <input id="dp-drug-text-${idx}" value="${isCustom ? (entry.name || '') : ''}" placeholder="약품명 직접 입력">
+    </div>
+  </div>`;
+}
+
+function addDpDrugSlot(entry) {
+  const wrap = document.getElementById('dp-drug-slots');
+  if (!wrap) return;
+  wrap.insertAdjacentHTML('beforeend', dpDrugSlotHtml(dpSlotCount, entry));
+  dpSlotCount++;
+}
+
+function removeDpDrugSlot(idx) {
+  document.getElementById(`dp-drug-slot-${idx}`)?.remove();
+  updateDpNote();
+}
+
+function onDpDrugChange(idx) {
+  const sel = document.getElementById(`dp-drug-sel-${idx}`);
+  const custom = document.getElementById(`dp-drug-custom-${idx}`);
+  if (!sel || !custom) return;
+  const isCustom = sel.value === '__custom__';
+  custom.style.display = isCustom ? '' : 'none';
+  if (isCustom) document.getElementById(`dp-drug-text-${idx}`)?.focus();
+  updateDpNote();
+}
+
+function onDpVaccineChange() {
+  const sel = document.getElementById('dp-vaccine-sel');
+  const custom = document.getElementById('dp-vaccine-custom');
+  const isCustom = sel.value === '__custom__';
+  custom.style.display = isCustom ? '' : 'none';
+  if (isCustom) document.getElementById('dp-vaccine-text')?.focus();
+  updateDpNote();
+}
+
+// 프로그램 편집 모달의 updateDayNote()와 같은 규칙으로 중요사항을 자동 조합한다.
+// 사용자가 직접 손댄 문구(manualEdit)는 덮지 않는다.
+function updateDpNote() {
+  const noteEl = document.getElementById('dp-note');
+  if (!noteEl || noteEl.dataset.manualEdit === '1') return;
+  const notes = [];
+  document.querySelectorAll('#dp-drug-slots select').forEach(sel => {
+    if (!sel.value || sel.value === '__custom__') return;
+    const opt = sel.options[sel.selectedIndex];
+    if (opt.dataset.dose) notes.push(`${opt.dataset.name}: ${opt.dataset.dose}`);
+    else if (opt.dataset.withdrawal) notes.push(`${opt.dataset.name} (휴약${opt.dataset.withdrawal})`);
+  });
+  const vsel = document.getElementById('dp-vaccine-sel');
+  if (vsel?.value && vsel.value !== '__custom__') {
+    const vopt = vsel.options[vsel.selectedIndex];
+    if (vopt.dataset.dilution) notes.push(`[백신] ${vopt.dataset.name}: ${vopt.dataset.dilution}`);
+    else if (vopt.dataset.method) notes.push(`[백신] ${vopt.dataset.name} ${vopt.dataset.method}`);
+  }
+  noteEl.value = notes.join(' / ');
+}
+
+// 입추(배치)에서 진입한다 — 날짜 표시를 그 입추의 입추일 기준으로 맞추기 위함이다
+// (프로그램에 적힌 입추일과 실제 입추일이 다를 수 있다).
+function openDayPlanModal(batchId, day) {
+  const batch = load('batches').find(b => b.id === batchId);
+  const prog = batch?.programId ? load('programs').find(p => p.id === batch.programId) : null;
+  if (!prog) { alert('연결된 투약 프로그램을 찾을 수 없습니다.'); return; }
+
+  const dayNum = Number(day);
+  editingDayPlan = { programId: prog.id, day: dayNum };
+  const d = (prog.days || []).find(x => x.day === dayNum) || null;
+
+  document.getElementById('modal-day-plan-title').textContent = `${dayNum}일령 계획 변경`;
+
+  // 같은 프로그램을 여러 입추가 함께 쓰는 경우가 있다. 여기서 고치면 그 입추들의
+  // 계획도 같이 바뀌므로, 저장하기 전에 몇 건이 영향을 받는지 알려준다.
+  const sharedCount = load('batches').filter(b => b.programId === prog.id).length;
+  const dateStr = programDayDate(batch.placementDate, dayNum);
+  document.getElementById('dp-context').innerHTML =
+    `📋 <strong>${prog.name}</strong>의 ${dayNum}일령${dateStr ? ` (${dateStr})` : ''} 계획을 고칩니다.`
+    + (sharedCount > 1
+      ? `<br>⚠️ 이 프로그램을 함께 쓰는 입추가 ${sharedCount}건이라, 나머지 입추의 계획도 같이 바뀝니다.`
+      : '');
+
+  const farmType = load('farms').find(f => f.id === prog.farmId)?.type || '';
+  dpAllowedVaccineSpecies = allowedVaccineSpecies(farmType);
+
+  dpSlotCount = 0;
+  document.getElementById('dp-drug-slots').innerHTML = '';
+  const drugs = d?.drugs || [];
+  if (drugs.length) drugs.forEach(x => addDpDrugSlot(x));
+  else addDpDrugSlot();
+
+  const v = d?.vaccine || null;
+  const isCustomV = !!(v && !v.vaccineId);
+  document.getElementById('dp-vaccine-sel').innerHTML =
+    getVaccineOptions(isCustomV ? '__custom__' : (v?.vaccineId || ''), dpAllowedVaccineSpecies);
+  document.getElementById('dp-vaccine-custom').style.display = isCustomV ? '' : 'none';
+  document.getElementById('dp-vaccine-text').value = isCustomV ? (v.name || '') : '';
+
+  // 이미 적어둔 중요사항이 있으면 "직접 입력한 문구"로 취급한다. 약품을 하나 바꿨다고
+  // 현장에서 적어둔 메모가 자동 문구로 지워지면 안 되기 때문이다(전체 편집 모달과
+  // 다른 점 — 거기는 표를 처음부터 다시 채우는 흐름이라 자동 조합을 그대로 둔다).
+  const noteEl = document.getElementById('dp-note');
+  noteEl.value = d?.note || '';
+  if (noteEl.value) noteEl.dataset.manualEdit = '1';
+  else delete noteEl.dataset.manualEdit;
+
+  openModal('modal-day-plan');
+}
+
+function collectDpDrugs() {
+  const drugs = [];
+  // DOM 순서 = 화면에 보이는 순서. 슬롯을 지웠다 추가해도 번호가 아니라 순서를 따른다.
+  document.querySelectorAll('#dp-drug-slots > div').forEach(div => {
+    const idx = div.id.replace('dp-drug-slot-', '');
+    const sel = document.getElementById(`dp-drug-sel-${idx}`);
+    if (!sel) return;
+    if (sel.value === '__custom__') {
+      const txt = document.getElementById(`dp-drug-text-${idx}`)?.value.trim();
+      if (txt) drugs.push({ drugId: null, name: txt });
+    } else if (sel.value) {
+      const name = sel.options[sel.selectedIndex].dataset.name || '';
+      if (name) drugs.push({ drugId: sel.value, name });
+    }
+  });
+  return drugs;
+}
+
+async function saveDayPlan() {
+  const { programId, day } = editingDayPlan;
+  const prog = load('programs').find(p => p.id === programId);
+  if (!prog) { alert('프로그램을 찾을 수 없습니다. 새로고침 후 다시 시도하세요.'); return; }
+
+  const drugs = collectDpDrugs();
+  const vsel = document.getElementById('dp-vaccine-sel');
+  let vaccine = null;
+  if (vsel.value === '__custom__') {
+    const txt = document.getElementById('dp-vaccine-text').value.trim();
+    if (txt) vaccine = { vaccineId: null, name: txt };
+  } else if (vsel.value) {
+    const vname = vsel.options[vsel.selectedIndex].dataset.name || '';
+    if (vname) vaccine = { vaccineId: vsel.value, name: vname };
+  }
+  const note = document.getElementById('dp-note').value.trim();
+
+  // 세 칸이 모두 비면 그 일령 항목 자체를 뺀다. 빈 항목을 남기면 프로그램 목록의
+  // "투약 일수"나 상세·인쇄 표에 내용 없는 줄이 생긴다(saveProgram()과 같은 규칙).
+  const days = (prog.days || []).filter(x => x.day !== day);
+  if (drugs.length || vaccine || note) days.push({ day, drugs, vaccine, note });
+  days.sort((a, b) => a.day - b.day);
+
+  const btn = document.getElementById('dp-save-btn');
+  btn.disabled = true;
+  try {
+    // days만 넘기면 toRow()가 나머지 컬럼을 전부 null로 덮어써 프로그램이 비워진다.
+    // 반드시 기존 값을 통째로 실어 보내고 days만 바꾼다.
+    await updateRow('programs', programId, { ...prog, days });
+  } catch (e) {
+    alert('저장 실패: ' + e.message);
+    return;
+  } finally {
+    btn.disabled = false;
+  }
+
+  editingDayPlan = { programId: null, day: null };
+  closeModal('modal-day-plan');
+  // 이 모달은 입추 상세에서만 열리지만, 프로그램 목록이 열려 있는 채로 저장될
+  // 가능성도 있어 함께 갱신한다(같은 데이터를 각자 그리는 화면들이라).
+  if (document.getElementById('page-batch-detail')?.classList.contains('active')) renderBatchDetail();
+  if (document.getElementById('page-programs')?.classList.contains('active')) renderPrograms();
+  if (document.getElementById('page-schedule')?.classList.contains('active')) renderScheduleView();
+}
+
 function renderPrograms() {
   const q = (document.getElementById('prog-search')?.value||'').toLowerCase();
   const ff = document.getElementById('prog-filter-farm')?.value||'';
