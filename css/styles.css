@@ -292,12 +292,14 @@ table tr:hover td { background: #f9fbff; }
    칸이 없는 폭까지 쥐어짜인다(실측: 500px 행에서 비고 칸이 33px로 줄어듦).
    그래서 각 1fr 칸에 minmax()로 자기 몫의 최소폭을 개별로 보장한다.
    이 최소폭보다 화면이 좁으면 부모의 overflow-x:auto로 옆으로 스크롤한다. */
-.program-day-row { display: grid; grid-template-columns: 60px minmax(90px,1fr) minmax(90px,1fr) minmax(90px,1fr); gap: 0; border-bottom: 1px solid var(--border); min-width: 330px; }
+/* 맨 끝 76px는 그 일령의 계획을 고치는 "변경" 버튼 칸으로, 조건과 무관하게 항상 붙는다
+   (day-plan-row의 같은 칸과 폭을 맞춘다). */
+.program-day-row { display: grid; grid-template-columns: 60px minmax(90px,1fr) minmax(90px,1fr) minmax(90px,1fr) 76px; gap: 0; border-bottom: 1px solid var(--border); min-width: 406px; }
 /* 조건에 따라 칸이 붙는다 — 품종이 있으면 온·습도, 계군이 연결돼 있으면 실적.
    헤더 행에도 같은 클래스를 줘야 칸이 어긋나지 않는다. 네 조합을 모두 정의한다. */
-.program-day-row.with-env { grid-template-columns: 60px minmax(90px,1fr) minmax(90px,1fr) 92px minmax(90px,1fr); min-width: 422px; }
-.program-day-row.with-status { grid-template-columns: 60px minmax(90px,1fr) minmax(90px,1fr) 76px minmax(90px,1fr); min-width: 406px; }
-.program-day-row.with-env.with-status { grid-template-columns: 60px minmax(90px,1fr) minmax(90px,1fr) 92px 76px minmax(90px,1fr); min-width: 498px; }
+.program-day-row.with-env { grid-template-columns: 60px minmax(90px,1fr) minmax(90px,1fr) 92px minmax(90px,1fr) 76px; min-width: 498px; }
+.program-day-row.with-status { grid-template-columns: 60px minmax(90px,1fr) minmax(90px,1fr) 76px minmax(90px,1fr) 76px; min-width: 482px; }
+.program-day-row.with-env.with-status { grid-template-columns: 60px minmax(90px,1fr) minmax(90px,1fr) 92px 76px minmax(90px,1fr) 76px; min-width: 574px; }
 .program-day-row:last-child { border-bottom: none; }
 .program-cell { padding: 7px 10px; font-size: 12px; }
 .program-cell.num { background: var(--bg); font-weight: 700; color: var(--accent); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; line-height: 1.3; }

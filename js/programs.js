@@ -922,12 +922,13 @@ function updateDpNote() {
   noteEl.value = notes.join(' / ');
 }
 
-// 입추(배치)에서 진입한다 — 날짜 표시를 그 입추의 입추일 기준으로 맞추기 위함이다
-// (프로그램에 적힌 입추일과 실제 입추일이 다를 수 있다).
-function openDayPlanModal(batchId, day) {
-  const batch = load('batches').find(b => b.id === batchId);
-  const prog = batch?.programId ? load('programs').find(p => p.id === batch.programId) : null;
-  if (!prog) { alert('연결된 투약 프로그램을 찾을 수 없습니다.'); return; }
+// 어느 입추일을 기준으로 날짜를 보여줄지는 부르는 화면이 정해서 넘긴다.
+// 입추 상세는 그 입추의 입추일, 투약 일정 화면은 연결된 사육중 계군의 입추일(없으면
+// 프로그램에 적힌 입추일)을 쓰는데, 프로그램에 적힌 날짜와 실제 입추일이 다를 수 있어
+// 여기서 하나로 정해버리면 화면에 보이던 날짜와 모달의 날짜가 어긋난다.
+function openDayPlanModal(programId, day, placementDate) {
+  const prog = load('programs').find(p => p.id === programId);
+  if (!prog) { alert('투약 프로그램을 찾을 수 없습니다.'); return; }
 
   const dayNum = Number(day);
   editingDayPlan = { programId: prog.id, day: dayNum };
@@ -938,7 +939,7 @@ function openDayPlanModal(batchId, day) {
   // 같은 프로그램을 여러 입추가 함께 쓰는 경우가 있다. 여기서 고치면 그 입추들의
   // 계획도 같이 바뀌므로, 저장하기 전에 몇 건이 영향을 받는지 알려준다.
   const sharedCount = load('batches').filter(b => b.programId === prog.id).length;
-  const dateStr = programDayDate(batch.placementDate, dayNum);
+  const dateStr = programDayDate(placementDate, dayNum);
   document.getElementById('dp-context').innerHTML =
     `📋 <strong>${prog.name}</strong>의 ${dayNum}일령${dateStr ? ` (${dateStr})` : ''} 계획을 고칩니다.`
     + (sharedCount > 1

@@ -87,6 +87,9 @@ function renderScheduleView() {
       </div>` : ''}
       ${showStatus ? `<div class="program-cell" style="text-align:center">${dayStatusHtml(i, !!(d && ((d.drugs && d.drugs.length) || d.vaccine)))}</div>` : ''}
       <div class="program-cell" style="color:var(--text-secondary);font-size:11px">${d?.note||''}</div>
+      <div class="program-cell" style="text-align:center">
+        <button class="btn btn-outline btn-sm" onclick="openDayPlanModal('${prog.id}',${i},'${refPlacementDate || ''}')" title="${i}일령의 투약 프로그램 계획을 고칩니다">변경</button>
+      </div>
     </div>`;
   }
 
@@ -109,6 +112,7 @@ function renderScheduleView() {
           ${showEnv ? `<div class="program-cell head" style="text-align:center">🌡️ 온·습도</div>` : ''}
           ${showStatus ? `<div class="program-cell head" style="text-align:center">실적</div>` : ''}
           <div class="program-cell head">⚠️ 중요사항</div>
+          <div class="program-cell head" style="text-align:center">계획</div>
         </div>
         ${rows}
       </div>

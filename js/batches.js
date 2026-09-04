@@ -233,7 +233,7 @@ function renderBatchDetail() {
         <div class="program-cell" style="color:var(--text-secondary);font-size:11px">${d?.note||''}</div>
         <div class="program-cell">${statusCell}</div>
         <div class="program-cell" style="text-align:center">
-          <button class="btn btn-outline btn-sm" onclick="openDayPlanModal('${b.id}',${i})" title="${i}일령의 투약 프로그램 계획을 고칩니다">변경</button>
+          <button class="btn btn-outline btn-sm" onclick="openDayPlanModal('${b.programId}',${i},'${b.placementDate}')" title="${i}일령의 투약 프로그램 계획을 고칩니다">변경</button>
         </div>
       </div>`;
     }
