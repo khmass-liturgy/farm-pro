@@ -490,6 +490,50 @@ body { display: block !important; height: auto !important; overflow: visible !im
 .rx-stamp { position: absolute; pointer-events: none; z-index: 2; top: 50%; }
 .rx-stamp-hospital { width: 14.6mm; height: 14.6mm; left: 72%; transform: translate(-50%, -50%); opacity: 0.92; }
 .rx-stamp-pharmacist { width: 14.6mm; height: 14.6mm; left: 78%; transform: translate(-50%, -50%); opacity: 0.92; }
+/* 공수의 업무 1 — 출하전검사(AI 시료채취 내역서).
+   원본 AI-출하전검사.xlsx 「의뢰서식」 시트의 항목 순서와 표 구성을 그대로 옮겼다.
+   처방전(rx-table)처럼 좌표를 실측할 대상이 아니라 관공서 제출용 내역서라,
+   같은 항목이 같은 순서로 빠짐없이 나오는 것을 기준으로 짰다. */
+.ps-title { font-size: 16pt; font-weight: 800; text-align: center; letter-spacing: 6pt; margin-bottom: 2pt; }
+.ps-docno { text-align: right; font-size: 9pt; margin-bottom: 6pt; }
+.ps-head { width: 100%; border-collapse: collapse; font-size: 9pt; margin-bottom: 6pt; }
+.ps-head td { border: 0.5pt solid #999; padding: 3.5pt 5pt; }
+.ps-head td.lbl { font-weight: 700; background: #f0f4fa !important; width: 82pt; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.ps-head td.lbl2 { font-weight: 700; white-space: nowrap; }
+.ps-section { font-size: 9.5pt; font-weight: 700; margin: 8pt 0 3pt; }
+.ps-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; table-layout: fixed; }
+.ps-table th { border: 0.5pt solid #888; background: #e8f0f8 !important; padding: 3pt; text-align: center; font-size: 7.8pt; line-height: 1.3; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.ps-table td { border: 0.5pt solid #999; padding: 3pt 4pt; }
+.ps-table td.ctr { text-align: center; }
+.ps-table tr.ps-total td { font-weight: 700; background: #f5f7fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.ps-foot-note { font-size: 7.5pt; color: #444; margin-top: 4pt; line-height: 1.5; }
+.ps-request { margin: 12pt 0 6pt; font-size: 9.5pt; text-indent: 12pt; }
+
+/* 공수의 업무 2 — 이동승인서(검사증명서·가금류 이동 승인서).
+   원본 AI-이동승인서.xlsx 「이동승인서출력」/「종계장이동승인서」의 11칸 × 16줄 배치를
+   colspan/rowspan으로 1:1 옮긴 표. 두 서식은 7~9줄만 내용이 다르고 나머지는 같다. */
+.mp-table { width: 100%; border-collapse: collapse; font-size: 9pt; table-layout: fixed; }
+/* 11칸이 같은 폭(약 17mm)이라 전화번호·차량번호·날짜가 칸보다 길어지기 쉽다.
+   break-all로 두면 "010-479 / 2-3422"처럼 숫자 한복판에서 잘려 다른 번호로 읽힌다.
+   keep-all로 낱말·번호를 통째로 두고, 대신 값 칸의 글자를 조금 줄여 한 줄에 담는다. */
+.mp-table td { border: 0.6pt solid #333; padding: 5pt 3pt; vertical-align: middle; line-height: 1.35; word-break: keep-all; overflow-wrap: normal; }
+.mp-table td.ctr, .mp-table td.lbl { font-size: 8.2pt; }
+/* 날짜는 한 칸에 다 들어가야 한다 — "2026-09" / "-04"로 갈리면 두 날짜처럼 보인다. */
+.mp-table td.date { white-space: nowrap; font-size: 7.8pt; text-align: center; }
+.mp-table td.noborder { border: none; }
+.mp-table td.lbl { font-weight: 700; text-align: center; background: #f2f2f2 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.mp-table td.ctr { text-align: center; }
+.mp-docno-row td { font-size: 9.5pt; padding-bottom: 4pt; }
+.mp-title { font-size: 17pt; font-weight: 900; text-align: center; letter-spacing: 2pt; padding: 6pt 0 12pt !important; }
+.mp-signs { font-size: 8.8pt; letter-spacing: -0.2pt; }
+.mp-rule { font-size: 8.6pt; }
+.mp-closing { font-size: 9.5pt; padding-top: 8pt !important; line-height: 1.6; }
+.mp-date { text-align: center; font-size: 11pt; font-weight: 700; padding: 14pt 0 !important; }
+/* 확인자 줄 오른쪽 끝에 병원 직인을 얹는다(처방전 인쇄와 같은 이미지). */
+.mp-signer { text-align: center; font-size: 10pt; font-weight: 700; position: relative; overflow: visible; padding-top: 6pt !important; }
+.mp-stamp { position: absolute; width: 14mm; height: 14mm; right: 6mm; top: 50%; transform: translateY(-50%); opacity: 0.92; }
+.mp-note { margin-top: 8pt; font-size: 8.5pt; color: #444; }
+
 .no-print { display: none !important; }
 }
 #print-area { display: none; }

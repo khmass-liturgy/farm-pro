@@ -384,6 +384,118 @@ drop trigger if exists trg_rodent_assessments_updated_at on rodent_assessments;
 create trigger trg_rodent_assessments_updated_at before update on rodent_assessments
   for each row execute function set_updated_at();
 
+-- ─────────────────────────────────────────────────────────────────────────
+-- 공수의 업무 1: 출하전검사(AI 시료채취 내역서)
+--
+-- 원본: AI-출하전검사.xlsx의 「의뢰서식」 시트 + 「2026_정밀검사대장」 시트.
+-- 서식 한 장이 곧 한 농장 방문분이고, 동(사육사)별 채취 내역은 줄 수가 들쭉날쭉해
+-- rows(jsonb) 배열로 담는다(투약 프로그램의 days와 같은 이유).
+--
+-- rows 원소 형태: { house:text, breed:text, count:int, ageDays:int, deadCount:int,
+--   clinical:text, env:int, trachea:int, cloaca:int, feces:int, carcass:int, note:text }
+--   env=환경, trachea=인후두, cloaca=총배설강, feces=분변, carcass=폐사체 채취 점수
+--
+-- 농장 정보를 스냅샷으로 함께 남기는 이유는 처방전과 같다 — 농장 등록 정보가
+-- 나중에 바뀌어도 이미 제출한 서식의 내용은 그대로여야 한다.
+-- ─────────────────────────────────────────────────────────────────────────
+create table if not exists pre_shipment_inspections (
+  id uuid primary key default gen_random_uuid(),
+  doc_no text,
+  purpose text not null default '출하전검사',
+  sampled_at date not null default current_date,
+  farm_id uuid references farms(id) on delete set null,
+  farm_name_snapshot text not null,
+  owner_snapshot text,
+  address_snapshot text,
+  phone_snapshot text,
+  scale int,
+  house_count int,
+  species text,
+  breed text,
+  housing_type text,
+  ship_date date,
+  ship_houses text,
+  ship_count int,
+  age_days int,
+  etc_note text,
+  rows jsonb not null default '[]'::jsonb,
+  sampler_org text,
+  sampler_title text,
+  sampler_name text,
+  sampler_phone text,
+  request_org text,
+  requested_at date,
+  created_by_email text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_pre_shipment_farm_id on pre_shipment_inspections(farm_id);
+create index if not exists idx_pre_shipment_sampled_at on pre_shipment_inspections(sampled_at);
+
+drop trigger if exists trg_pre_shipment_updated_at on pre_shipment_inspections;
+create trigger trg_pre_shipment_updated_at before update on pre_shipment_inspections
+  for each row execute function set_updated_at();
+
+-- ─────────────────────────────────────────────────────────────────────────
+-- 공수의 업무 2: 이동승인서(검사증명서 · 가금류 이동 승인서)
+--
+-- 원본: AI-이동승인서.xlsx의 「이동승인서출력」(일반)과 「종계장이동승인서」(종계장)
+-- 두 서식 + 월별 발급대장 시트. 두 서식은 칸 대부분이 같고 아래 세 줄만 다르다:
+--   일반   : 시료채취일 · 정밀검사 결과 / 출하처 · 반출일 / 일령 · 운송인 성명
+--   종계장 : 정밀검사 16·36·56주령 실시여부 / 출하수수 · MG백신 / 운송인(구매자) · 전화
+-- 그래서 테이블은 하나로 두고 form_type으로 나눈다(칸이 비면 그 서식에서 안 쓰는 칸).
+--
+-- 발급번호는 "제 26-3 - 45 호"처럼 시군에서 내려온 문서번호 체계라 DB가 채번하지
+-- 않는다. 앞자리(26-3)와 일련번호(45)를 나눠 받아 다음 발급 때 +1을 제안만 한다.
+--
+-- clinical_signs 원소: '사료섭취감소' | '침울' | '설사' | '호흡기증상' | '안면부종' | '청색증'
+-- ─────────────────────────────────────────────────────────────────────────
+create table if not exists move_permits (
+  id uuid primary key default gen_random_uuid(),
+  form_type text not null default 'general' check (form_type in ('general','breeder')),
+  doc_no_prefix text,
+  doc_no_serial int,
+  issue_date date not null default current_date,
+  farm_id uuid references farms(id) on delete set null,
+  farm_name_snapshot text not null,
+  owner_snapshot text,
+  address_snapshot text,
+  phone_snapshot text,
+  owner_birth_snapshot text,
+  head_count int,
+  clinical_signs jsonb not null default '[]'::jsonb,
+  dead_count int,
+  laying_rate numeric(5,1),
+  clinical_result text not null default '정상',
+  sampling_date date,
+  test_result text,
+  test_16w boolean not null default false,
+  test_36w boolean not null default false,
+  test_56w boolean not null default false,
+  mg_vaccine text,
+  ship_to text,
+  ship_count int,
+  release_date date,
+  vehicle_no text,
+  species text,
+  breed text,
+  age_label text,
+  carrier_name text,
+  carrier_phone text,
+  note text,
+  issued_by_email text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_move_permits_farm_id on move_permits(farm_id);
+create index if not exists idx_move_permits_issue_date on move_permits(issue_date);
+
+drop trigger if exists trg_move_permits_updated_at on move_permits;
+create trigger trg_move_permits_updated_at before update on move_permits
+  for each row execute function set_updated_at();
+
 -- 처방전용 제품 마스터 초기 데이터 (이미 같은 이름의 제품이 있으면 건너뜀)
 insert into prescription_products (name, ingredient, withdrawal_days, purpose, dose_amount, category, usage_method)
 select v.name, v.ingredient, v.withdrawal_days, v.purpose, v.dose_amount, v.category, v.usage_method
@@ -474,7 +586,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['farms','drugs','vaccines','feeds','programs','batches','medication_logs','prescription_products','prescriptions','clinical_assessments','rodent_assessments']
+  foreach t in array array['farms','drugs','vaccines','feeds','programs','batches','medication_logs','prescription_products','prescriptions','clinical_assessments','rodent_assessments','pre_shipment_inspections','move_permits']
   loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists authenticated_full_access on %I', t);

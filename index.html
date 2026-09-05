@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>농장 투약관리 시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260906a">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260906a">
-<link rel="icon" href="img/favicon.ico?v=20260906a">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260906a">
-<link rel="stylesheet" href="css/styles.css?v=20260906a">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260906b">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260906b">
+<link rel="icon" href="img/favicon.ico?v=20260906b">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260906b">
+<link rel="stylesheet" href="css/styles.css?v=20260906b">
 </head>
 <body>
 
@@ -55,6 +55,15 @@
       <div class="sidebar-item" onclick="showPage('rodent')">
         <span class="icon">🐀</span> 구서작업 컨설팅
       </div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">공수의 업무</div>
+    <div class="sidebar-item" onclick="showPage('preshipment')">
+      <span class="icon">🔬</span> 출하전검사
+    </div>
+    <div class="sidebar-item" onclick="showPage('movepermit')">
+      <span class="icon">🚚</span> 이동승인서 발급
     </div>
   </div>
   <div class="sidebar-section">
@@ -309,6 +318,62 @@
         이 목록에는 <strong>진료기록으로 등록한 내용만</strong> 표시됩니다.
         투약 프로그램의 계획일에 맞춰 남긴 <strong>실제 투약 기록</strong>은
         「입추(사육배치) 관리 → 해당 입추 → 일자별 계획 대비 실적」에서 확인하세요.
+      </p>
+    </div>
+
+    <!-- 공수의 업무: 출하전검사 (AI 시료채취 내역서) -->
+    <div id="page-preshipment" class="page">
+      <div class="search-bar">
+        <input class="search-input" id="ps-search" placeholder="🔍  농장명, 축주명 검색..." oninput="renderPreShipments()">
+        <select id="ps-filter-farm" onchange="renderPreShipments()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);"></select>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>시료채취일</th><th>농장</th><th>축종</th><th>사육규모</th><th>검사목적</th><th>채취동</th><th>시료 내역</th><th>출하예정일</th><th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="ps-tbody"></tbody>
+          </table>
+        </div>
+        <div id="ps-empty" class="empty-state" style="display:none">
+          <div class="icon-big">🔬</div>
+          <p>작성한 출하전검사 서식이 없습니다. "+ 출하전검사 작성"으로 기록하세요.</p>
+        </div>
+      </div>
+      <p class="text-muted mt-16">
+        AI-출하전검사.xlsx의 「의뢰서식」과 같은 항목으로 입력하고, 인쇄하면 같은 배치의 A4 시료채취 내역서가 나옵니다.
+        시료채취자·의뢰기관은 기본값으로 채워지며 건별로 고칠 수 있습니다.
+      </p>
+    </div>
+
+    <!-- 공수의 업무: 이동승인서 발급 -->
+    <div id="page-movepermit" class="page">
+      <div class="search-bar">
+        <input class="search-input" id="mp-search" placeholder="🔍  농장명, 운송인, 차량번호, 출하처 검색..." oninput="renderMovePermits()">
+        <select id="mp-filter-farm" onchange="renderMovePermits()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);"></select>
+      </div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>발급일</th><th>발급번호</th><th>서식</th><th>농장</th><th>축종</th><th>출하처</th><th>운송인 / 차량</th><th>반출일</th><th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="mp-tbody"></tbody>
+          </table>
+        </div>
+        <div id="mp-empty" class="empty-state" style="display:none">
+          <div class="icon-big">🚚</div>
+          <p>발급한 이동승인서가 없습니다. "+ 이동승인서 발급"으로 발급하세요.</p>
+        </div>
+      </div>
+      <p class="text-muted mt-16">
+        한 농장에서 차량이 여러 대 나가면 <strong>📄 복제</strong>로 앞 건을 그대로 이어받아 운송인·차량번호만 바꿔 발급하세요.
+        발급번호 일련번호는 같은 앞자리(예: 26-3)로 발급한 것 중 가장 큰 번호 다음으로 제안됩니다.
       </p>
     </div>
 
@@ -1059,6 +1124,181 @@
   </div>
 </div>
 
+<!-- 모달: 출하전검사 서식 (AI-출하전검사.xlsx 「의뢰서식」과 같은 항목 순서) -->
+<div class="modal-bg" id="modal-pre-shipment">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-ps-title">출하전검사 서식 작성</div>
+      <button class="modal-close" onclick="closeModal('modal-pre-shipment')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>검사목적 *</label><select id="ps-purpose"></select></div>
+      <div class="form-group"><label>시료채취일 *</label><input id="ps-sampled-at" type="date" min="1900-01-01" max="2999-12-31"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>농장 *</label>
+        <select id="ps-farm" onchange="onPsFarmChange(true)"><option value="">농장 선택</option></select>
+      </div>
+      <div class="form-group"><label>No. <span class="text-muted">(서식 우측 상단 일련번호)</span></label><input id="ps-doc-no" placeholder="예) 176"></div>
+    </div>
+    <div class="text-muted mb-16" id="ps-farm-info">농장을 선택하면 소재지·축주·연락처·사육규모가 자동으로 채워집니다.</div>
+    <div class="form-row">
+      <div class="form-group"><label>축주명</label><input id="ps-owner"></div>
+      <div class="form-group"><label>전화번호</label><input id="ps-phone"></div>
+    </div>
+    <div class="form-group"><label>소재지</label><input id="ps-address"></div>
+
+    <hr class="divider">
+    <div style="font-size:13px; font-weight:700; margin-bottom:10px;">□ 사육현황</div>
+    <div class="form-row-3">
+      <div class="form-group"><label>사육규모 (수)</label><input id="ps-scale" type="number" min="0"></div>
+      <div class="form-group"><label>사육동수</label><input id="ps-house-count" type="number" min="0"></div>
+      <div class="form-group"><label>사육형태</label><select id="ps-housing-type"></select></div>
+    </div>
+    <div class="form-row-3">
+      <div class="form-group"><label>축종</label><input id="ps-species" placeholder="예) 육계"></div>
+      <div class="form-group"><label>품종</label><input id="ps-breed" placeholder="예) 로쓰"></div>
+      <div class="form-group"><label>일령</label><input id="ps-age-days" type="number" min="0"></div>
+    </div>
+    <div class="form-row-3">
+      <div class="form-group"><label>출하예정일 <span class="text-muted">(도계일)</span></label><input id="ps-ship-date" type="date" min="1900-01-01" max="2999-12-31"></div>
+      <div class="form-group"><label>출하동 <span class="text-muted">(검사동)</span></label><input id="ps-ship-houses" placeholder="예) 1,2동"></div>
+      <div class="form-group"><label>예정수수</label><input id="ps-ship-count" type="number" min="0"></div>
+    </div>
+
+    <hr class="divider">
+    <div class="flex-between mb-16">
+      <div style="font-size:13px; font-weight:700;">□ 사육사별(동별) 시료채취 내역</div>
+      <button type="button" class="btn btn-outline btn-sm" onclick="addPsRow()">+ 동 추가</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%; min-width:820px; border-collapse:collapse; font-size:12px">
+        <thead>
+          <tr style="background:var(--bg)">
+            <th style="padding:6px; border:1px solid var(--border); width:88px">사육사<br>(동,품종)</th>
+            <th style="padding:6px; border:1px solid var(--border); width:78px">사육수수</th>
+            <th style="padding:6px; border:1px solid var(--border); width:64px">일령<br>(주령)</th>
+            <th style="padding:6px; border:1px solid var(--border); width:64px">폐사수수</th>
+            <th style="padding:6px; border:1px solid var(--border); width:96px">기타 임상증상</th>
+            <th style="padding:6px; border:1px solid var(--border); width:60px">환경</th>
+            <th style="padding:6px; border:1px solid var(--border); width:60px">인후두</th>
+            <th style="padding:6px; border:1px solid var(--border); width:70px">총배설강</th>
+            <th style="padding:6px; border:1px solid var(--border); width:60px">분변</th>
+            <th style="padding:6px; border:1px solid var(--border); width:60px">폐사체</th>
+            <th style="padding:6px; border:1px solid var(--border)">비고</th>
+            <th style="padding:6px; border:1px solid var(--border); width:40px"></th>
+          </tr>
+        </thead>
+        <tbody id="ps-rows-body"></tbody>
+      </table>
+    </div>
+    <div class="text-muted mt-8" style="font-size:11px">
+      기타 임상증상 : 폐사 이외의 모든 임상증상을 기록 · 폐사체 : 폐사가 있는 동에 한하여 동별 5수 이하
+    </div>
+    <div class="form-group mt-16"><label>기타사항</label><input id="ps-etc-note" placeholder="대장의 기타사항 칸에 들어갈 내용"></div>
+
+    <hr class="divider">
+    <div style="font-size:13px; font-weight:700; margin-bottom:10px;">시료채취자 · 의뢰</div>
+    <div class="form-row">
+      <div class="form-group"><label>시료채취 기관</label><input id="ps-sampler-org"></div>
+      <div class="form-group"><label>직책</label><input id="ps-sampler-title"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>채취자 성명</label><input id="ps-sampler-name"></div>
+      <div class="form-group"><label>연락처</label><input id="ps-sampler-phone"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>의뢰 기관</label><input id="ps-request-org"></div>
+      <div class="form-group"><label>의뢰 일자</label><input id="ps-requested-at" type="date" min="1900-01-01" max="2999-12-31"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-pre-shipment')">취소</button>
+      <button class="btn btn-primary" onclick="savePreShipment()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 모달: 이동승인서 발급 (AI-이동승인서.xlsx 「이동승인서출력」·「종계장이동승인서」) -->
+<div class="modal-bg" id="modal-move-permit">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-mp-title">이동승인서 발급</div>
+      <button class="modal-close" onclick="closeModal('modal-move-permit')">✕</button>
+    </div>
+    <div id="mp-dup-hint" class="mb-16" style="display:none; padding:10px 14px; background:var(--accent-light); border:1px solid var(--accent); border-radius:8px; font-size:12px; color:var(--accent-dark);">
+      📄 <strong>복제본입니다.</strong> 저장하면 앞 건은 그대로 두고 새 승인서가 하나 발급됩니다.
+      운송인·차량번호만 비워 두었으니 채워 넣으세요. 발급번호는 다음 번호로 제안됩니다.
+    </div>
+    <div class="form-row-3">
+      <div class="form-group"><label>서식 종류 *</label><select id="mp-form-type" onchange="onMpFormTypeChange()"></select></div>
+      <div class="form-group"><label>발급번호 앞자리 <span class="text-muted">(예: 26-3)</span></label><input id="mp-doc-prefix" oninput="onMpPrefixInput()" placeholder="26-3"></div>
+      <div class="form-group"><label>일련번호</label><input id="mp-doc-serial" type="number" min="0" oninput="this.dataset.manualEdit='1'"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>농장 *</label>
+        <select id="mp-farm" onchange="onMpFarmChange(true)"><option value="">농장 선택</option></select>
+      </div>
+      <div class="form-group"><label>발급일 *</label><input id="mp-issue-date" type="date" min="1900-01-01" max="2999-12-31"></div>
+    </div>
+    <div class="text-muted mb-16" id="mp-farm-info">농장을 선택하면 대표자·주소·사육두수·연락처가 자동으로 채워집니다.</div>
+    <div class="form-row-3">
+      <div class="form-group"><label>대표자</label><input id="mp-owner"></div>
+      <div class="form-group"><label>주민등록번호 <span class="text-muted">(앞 6자리)</span></label><input id="mp-owner-birth" placeholder="예) 510216"></div>
+      <div class="form-group"><label>전화번호</label><input id="mp-phone"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>주소</label><input id="mp-address"></div>
+      <div class="form-group"><label>사육두수</label><input id="mp-head-count" type="number" min="0"></div>
+    </div>
+
+    <hr class="divider">
+    <div style="font-size:13px; font-weight:700; margin-bottom:10px;">임상검사 <span class="text-muted">(해당하는 증상에 체크)</span></div>
+    <div id="mp-clinical-signs" class="mb-16"></div>
+    <div class="form-row-3">
+      <div class="form-group"><label>최근 15일 이내 폐사 수수</label><input id="mp-dead-count" type="number" min="0"></div>
+      <div class="form-group"><label>산란율 (%)</label><input id="mp-laying-rate" type="number" min="0" max="100" step="0.1"></div>
+      <div class="form-group"><label>임상관찰결과</label><input id="mp-clinical-result" placeholder="정상"></div>
+    </div>
+    <div class="form-row mp-general-only">
+      <div class="form-group"><label>시료채취일</label><input id="mp-sampling-date" type="date" min="1900-01-01" max="2999-12-31"></div>
+      <div class="form-group"><label>정밀검사 결과</label><input id="mp-test-result" placeholder="음성"></div>
+    </div>
+    <div class="form-row mp-breeder-only" style="display:none">
+      <div class="form-group"><label>정밀검사 실시여부</label>
+        <div style="padding-top:6px">
+          <label style="display:inline-flex;align-items:center;gap:5px;margin-right:14px;font-size:12px"><input type="checkbox" id="mp-test-16w" style="width:auto"> 16주령</label>
+          <label style="display:inline-flex;align-items:center;gap:5px;margin-right:14px;font-size:12px"><input type="checkbox" id="mp-test-36w" style="width:auto"> 36주령</label>
+          <label style="display:inline-flex;align-items:center;gap:5px;font-size:12px"><input type="checkbox" id="mp-test-56w" style="width:auto"> 56주령</label>
+        </div>
+      </div>
+      <div class="form-group"><label>MG 백신 사용여부 <span class="text-muted">(백신명/접종일자)</span></label><input id="mp-mg-vaccine" placeholder="예) 여/75일령"></div>
+    </div>
+
+    <hr class="divider">
+    <div style="font-size:13px; font-weight:700; margin-bottom:10px;">출하 및 운송</div>
+    <div class="form-row">
+      <div class="form-group mp-general-only"><label>출하처</label><input id="mp-ship-to" placeholder="예) 한려식품"></div>
+      <div class="form-group mp-breeder-only" style="display:none"><label>출하수수(개수)</label><input id="mp-ship-count" type="number" min="0"></div>
+      <div class="form-group"><label>반출일</label><input id="mp-release-date" type="date" min="1900-01-01" max="2999-12-31"></div>
+    </div>
+    <div class="form-row-3">
+      <div class="form-group"><label>축종</label><input id="mp-species" placeholder="예) 산란계"></div>
+      <div class="form-group"><label>품종</label><input id="mp-breed" placeholder="예) 하이라인"></div>
+      <div class="form-group mp-general-only"><label>일령</label><input id="mp-age-label" placeholder="예) 95주령"></div>
+    </div>
+    <div class="form-row-3">
+      <div class="form-group"><label>운송차량 번호</label><input id="mp-vehicle-no" placeholder="예) 95거 5897"></div>
+      <div class="form-group"><label>운송인 성명 <span class="text-muted mp-breeder-only" style="display:none">(구매자)</span></label><input id="mp-carrier-name"></div>
+      <div class="form-group"><label>운송인 전화번호</label><input id="mp-carrier-phone"></div>
+    </div>
+    <div class="form-group"><label>비고</label><input id="mp-note"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-move-permit')">취소</button>
+      <button class="btn btn-primary" onclick="saveMovePermit()">저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- 모달: 일령별 계획 변경 (입추 상세의 일자별 표 → "변경") -->
 <!-- 프로그램 전체 편집 모달과 달리 한 일령만 고친다. 전체 편집은 500일치 표를 다시
      그리고 저장 시 입추 자동 등록까지 함께 도는 무거운 흐름이라, 현장에서 "오늘 약만
@@ -1180,26 +1420,28 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=20260906a"></script>
-<script src="js/supabaseClient.js?v=20260906a"></script>
-<script src="js/auth.js?v=20260906a"></script>
-<script src="js/breedStandards.js?v=20260906a"></script>
-<script src="js/farms.js?v=20260906a"></script>
-<script src="js/sms.js?v=20260906a"></script>
-<script src="js/masterdata.js?v=20260906a"></script>
-<script src="js/rxProducts.js?v=20260906a"></script>
-<script src="js/drugSearch.js?v=20260906a"></script>
-<script src="js/programs.js?v=20260906a"></script>
-<script src="js/batches.js?v=20260906a"></script>
-<script src="js/medicationLog.js?v=20260906a"></script>
-<script src="js/prescriptions.js?v=20260906a"></script>
-<script src="js/clinicalAssessment.js?v=20260906a"></script>
-<script src="js/rodentControl.js?v=20260906a"></script>
-<script src="js/schedule.js?v=20260906a"></script>
-<script src="js/dashboard.js?v=20260906a"></script>
-<script src="js/reports.js?v=20260906a"></script>
-<script src="js/print.js?v=20260906a"></script>
-<script src="js/backup.js?v=20260906a"></script>
-<script src="js/app.js?v=20260906a"></script>
+<script src="js/config.js?v=20260906b"></script>
+<script src="js/supabaseClient.js?v=20260906b"></script>
+<script src="js/auth.js?v=20260906b"></script>
+<script src="js/breedStandards.js?v=20260906b"></script>
+<script src="js/farms.js?v=20260906b"></script>
+<script src="js/sms.js?v=20260906b"></script>
+<script src="js/masterdata.js?v=20260906b"></script>
+<script src="js/rxProducts.js?v=20260906b"></script>
+<script src="js/drugSearch.js?v=20260906b"></script>
+<script src="js/programs.js?v=20260906b"></script>
+<script src="js/batches.js?v=20260906b"></script>
+<script src="js/medicationLog.js?v=20260906b"></script>
+<script src="js/prescriptions.js?v=20260906b"></script>
+<script src="js/preShipment.js?v=20260906b"></script>
+<script src="js/movePermit.js?v=20260906b"></script>
+<script src="js/clinicalAssessment.js?v=20260906b"></script>
+<script src="js/rodentControl.js?v=20260906b"></script>
+<script src="js/schedule.js?v=20260906b"></script>
+<script src="js/dashboard.js?v=20260906b"></script>
+<script src="js/reports.js?v=20260906b"></script>
+<script src="js/print.js?v=20260906b"></script>
+<script src="js/backup.js?v=20260906b"></script>
+<script src="js/app.js?v=20260906b"></script>
 </body>
 </html>

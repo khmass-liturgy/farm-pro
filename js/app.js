@@ -6,6 +6,8 @@ const PAGE_TITLES = {
   'pb-consult': '육계/산란계 컨설팅',
   'pb-disease': '양계질병',
   'pb-hpai': 'AI 발생예측통계',
+  preshipment: '출하전검사',
+  movepermit: '이동승인서 발급',
   clinical: '계군 임상평가',
   rodent: '구서작업 컨설팅 평가',
   farms: '농장 등록/관리',
@@ -31,6 +33,8 @@ const PAGE_ACTIONS = {
   rodent: `<button class="btn btn-primary" onclick="openRodentModal()">+ 구서 평가 입력</button>`,
   medconsult: `<button class="btn btn-primary" onclick="openConsultLogModal()">+ 진료기록 추가</button>`,
   prescriptions: `<button class="btn btn-primary" onclick="openRxPrescriptionModal()">+ 처방전 발급</button>`,
+  preshipment: `<button class="btn btn-primary" onclick="openPreShipmentModal()">+ 출하전검사 작성</button>`,
+  movepermit: `<button class="btn btn-primary" onclick="openMovePermitModal()">+ 이동승인서 발급</button>`,
   drugs: `<button class="btn btn-primary" onclick="openDrugModal()">+ 약품 추가</button>`,
   'rx-products': `<button class="btn btn-primary" onclick="openRxProductModal()">+ 제품 추가</button>`,
   vaccines: `<button class="btn btn-primary" onclick="openVaccineModal()">+ 백신 추가</button>`,
@@ -116,6 +120,8 @@ function showPage(name) {
   if (name === 'rodent') { populateRodentFarmFilter(); renderRodentAssessments(); }
   if (name === 'medconsult') populateConsultFilters();
   if (name === 'prescriptions') { populateRxFarmFilter(); renderPrescriptions(); }
+  if (name === 'preshipment') { populatePsFarmFilter(); renderPreShipments(); }
+  if (name === 'movepermit') { populateMpFarmFilter(); renderMovePermits(); }
   if (name === 'schedule') populateScheduleSelects();
   if (name === 'reports') renderReports();
   if (name === 'drugs') renderDrugs();
