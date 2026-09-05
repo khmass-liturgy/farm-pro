@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>농장 투약관리 시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260904b">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260904b">
-<link rel="icon" href="img/favicon.ico?v=20260904b">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260904b">
-<link rel="stylesheet" href="css/styles.css?v=20260904b">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260906a">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260906a">
+<link rel="icon" href="img/favicon.ico?v=20260906a">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260906a">
+<link rel="stylesheet" href="css/styles.css?v=20260906a">
 </head>
 <body>
 
@@ -32,8 +32,22 @@
       <span class="chevron" id="sidebar-chevron-consult">▸</span> 가금컨설팅
     </button>
     <div class="sidebar-section-items" id="sidebar-items-consult">
-      <div class="sidebar-item" onclick="showPage('weather-consult')">
-        <span class="icon">🌤️</span> 날씨별 컨설팅
+      <!-- 아래 다섯은 pb 저장소(농장동물 컨설팅)의 탭을 그대로 여는 항목이다.
+           내용을 복사해오지 않고 배포본을 띄우므로 pb가 바뀌면 여기도 함께 바뀐다. -->
+      <div class="sidebar-item" onclick="showPage('pb-weather')">
+        <span class="icon">🌤️</span> 날씨
+      </div>
+      <div class="sidebar-item" onclick="showPage('pb-vent')">
+        <span class="icon">🌬️</span> 환기가이드
+      </div>
+      <div class="sidebar-item" onclick="showPage('pb-consult')">
+        <span class="icon">🐔</span> 육계/산란계 컨설팅
+      </div>
+      <div class="sidebar-item" onclick="showPage('pb-disease')">
+        <span class="icon">🦠</span> 양계질병
+      </div>
+      <div class="sidebar-item" onclick="showPage('pb-hpai')">
+        <span class="icon">📡</span> AI 발생예측통계
       </div>
       <div class="sidebar-item" onclick="showPage('clinical')">
         <span class="icon">🩺</span> 계군 임상평가
@@ -131,9 +145,13 @@
       <div id="dash-poultry-price"></div>
     </div>
 
-    <!-- 날씨별 컨설팅 -->
-    <div id="page-weather-consult" class="page">
-      <iframe src="weather-consult.html" title="날씨별 컨설팅" style="width:100%; height:calc(100vh - 140px); border:1px solid var(--border); border-radius:var(--radius); background:#fff;"></iframe>
+    <!-- 가금컨설팅(날씨·환기가이드·육계/산란계 컨설팅·양계질병·AI 발생예측통계) —
+         pb 저장소의 배포본을 그대로 띄운다. 다섯 메뉴가 이 화면 하나를 함께 쓰고
+         탭만 바꾼다(js/app.js의 showPbTab). 메뉴마다 iframe을 따로 두면 같은
+         500KB짜리 페이지를 다섯 번 불러오게 된다.
+         src는 비워 두고 처음 들어갈 때 채운다 — 앱을 켤 때마다 미리 받지 않도록. -->
+    <div id="page-pb" class="page">
+      <iframe id="pb-frame" title="농장동물 컨설팅" style="width:100%; height:calc(100vh - 140px); border:1px solid var(--border); border-radius:var(--radius); background:#fff;"></iframe>
     </div>
 
     <!-- 계군 임상평가 (SCS + 확장 임상평가) -->
@@ -1162,26 +1180,26 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=20260904b"></script>
-<script src="js/supabaseClient.js?v=20260904b"></script>
-<script src="js/auth.js?v=20260904b"></script>
-<script src="js/breedStandards.js?v=20260904b"></script>
-<script src="js/farms.js?v=20260904b"></script>
-<script src="js/sms.js?v=20260904b"></script>
-<script src="js/masterdata.js?v=20260904b"></script>
-<script src="js/rxProducts.js?v=20260904b"></script>
-<script src="js/drugSearch.js?v=20260904b"></script>
-<script src="js/programs.js?v=20260904b"></script>
-<script src="js/batches.js?v=20260904b"></script>
-<script src="js/medicationLog.js?v=20260904b"></script>
-<script src="js/prescriptions.js?v=20260904b"></script>
-<script src="js/clinicalAssessment.js?v=20260904b"></script>
-<script src="js/rodentControl.js?v=20260904b"></script>
-<script src="js/schedule.js?v=20260904b"></script>
-<script src="js/dashboard.js?v=20260904b"></script>
-<script src="js/reports.js?v=20260904b"></script>
-<script src="js/print.js?v=20260904b"></script>
-<script src="js/backup.js?v=20260904b"></script>
-<script src="js/app.js?v=20260904b"></script>
+<script src="js/config.js?v=20260906a"></script>
+<script src="js/supabaseClient.js?v=20260906a"></script>
+<script src="js/auth.js?v=20260906a"></script>
+<script src="js/breedStandards.js?v=20260906a"></script>
+<script src="js/farms.js?v=20260906a"></script>
+<script src="js/sms.js?v=20260906a"></script>
+<script src="js/masterdata.js?v=20260906a"></script>
+<script src="js/rxProducts.js?v=20260906a"></script>
+<script src="js/drugSearch.js?v=20260906a"></script>
+<script src="js/programs.js?v=20260906a"></script>
+<script src="js/batches.js?v=20260906a"></script>
+<script src="js/medicationLog.js?v=20260906a"></script>
+<script src="js/prescriptions.js?v=20260906a"></script>
+<script src="js/clinicalAssessment.js?v=20260906a"></script>
+<script src="js/rodentControl.js?v=20260906a"></script>
+<script src="js/schedule.js?v=20260906a"></script>
+<script src="js/dashboard.js?v=20260906a"></script>
+<script src="js/reports.js?v=20260906a"></script>
+<script src="js/print.js?v=20260906a"></script>
+<script src="js/backup.js?v=20260906a"></script>
+<script src="js/app.js?v=20260906a"></script>
 </body>
 </html>

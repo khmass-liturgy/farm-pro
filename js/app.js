@@ -1,7 +1,11 @@
 // ─── 네비게이션 / 부팅 ──────────────────────────────────────────────────────
 const PAGE_TITLES = {
   dashboard: '대시보드',
-  'weather-consult': '날씨별 컨설팅',
+  'pb-weather': '날씨',
+  'pb-vent': '환기가이드',
+  'pb-consult': '육계/산란계 컨설팅',
+  'pb-disease': '양계질병',
+  'pb-hpai': 'AI 발생예측통계',
   clinical: '계군 임상평가',
   rodent: '구서작업 컨설팅 평가',
   farms: '농장 등록/관리',
@@ -93,7 +97,8 @@ function showPage(name) {
   document.body.classList.add('mobile-nav-open');
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
+  // pb 메뉴 다섯은 각자 화면을 갖지 않고 page-pb 하나(iframe)를 함께 쓴다.
+  document.getElementById(PB_TABS[name] ? 'page-pb' : 'page-' + name).classList.add('active');
   document.querySelectorAll('.sidebar-item').forEach(i => {
     if (i.getAttribute('onclick') && i.getAttribute('onclick').includes("'" + name + "'")) {
       i.classList.add('active');
@@ -117,6 +122,42 @@ function showPage(name) {
   if (name === 'rx-products') renderRxProducts();
   if (name === 'vaccines') renderVaccines();
   if (name === 'feeds') renderFeeds();
+  if (PB_TABS[name]) showPbTab(PB_TABS[name]);
+}
+
+// ─── 가금컨설팅 = pb(농장동물 컨설팅) 배포본 임베드 ─────────────────────────
+// 내용을 이 저장소로 복사해 오지 않고 pb의 배포본을 그대로 띄운다. 그래서 pb에서
+// 자료나 화면이 바뀌면 여기에도 바로 반영된다(따로 옮겨 붙이는 작업이 없다).
+// 사이드바 항목 → pb의 탭 이름. pb/index.html의 TAB_IDS와 같은 이름이어야 한다.
+const PB_BASE_URL = 'https://khmass-liturgy.github.io/pb/';
+const PB_TABS = {
+  'pb-weather': 'weather',
+  'pb-vent': 'vent',
+  'pb-consult': 'consult',
+  'pb-disease': 'disease',
+  'pb-hpai': 'hpai',
+};
+
+// 아직 iframe이 다 뜨지 않았는데 다른 메뉴를 누른 경우를 위해 마지막으로 고른 탭을 기억한다.
+// (로드 전에 보낸 postMessage는 받을 쪽이 없어 그냥 사라진다)
+let pbWantedTab = null;
+
+function showPbTab(tab) {
+  const frame = document.getElementById('pb-frame');
+  if (!frame) return;
+  pbWantedTab = tab;
+  if (!frame.getAttribute('src')) {
+    // 처음 들어온 경우에만 불러온다. 주소 끝의 #탭이름을 pb가 읽어 그 탭으로 연다.
+    frame.addEventListener('load', () => {
+      frame.dataset.ready = '1';
+      frame.contentWindow?.postMessage({ pbTab: pbWantedTab }, '*');
+    }, { once: true });
+    frame.src = PB_BASE_URL + '#' + tab;
+    return;
+  }
+  // 이미 떠 있으면 탭만 바꾼다. src를 다시 넣으면 페이지를 통째로 다시 읽어
+  // 사용자가 설정해둔 농장 위치·스크롤·펼친 항목이 초기화된다.
+  if (frame.dataset.ready) frame.contentWindow?.postMessage({ pbTab: tab }, '*');
 }
 
 // ─── 모달 ───────────────────────────────────────────────────────────────────
