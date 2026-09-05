@@ -26,7 +26,7 @@ const PAGE_TITLES = {
   backup: '백업 / 복원',
 };
 const PAGE_ACTIONS = {
-  farms: `<button class="btn btn-primary" onclick="openFarmModal()">+ 농장 추가</button>`,
+  farms: `<button class="btn btn-outline" onclick="exportFarmsExcel()">📤 엑셀로 내보내기</button><button class="btn btn-primary" onclick="openFarmModal()">+ 농장 추가</button>`,
   programs: `<button class="btn btn-primary" onclick="openProgramModal()">+ 프로그램 추가</button>`,
   batches: `<button class="btn btn-primary" onclick="openBatchModal()">+ 입추 등록</button>`,
   clinical: `<button class="btn btn-primary" onclick="openClinicalModal()">+ 계군 임상평가 입력</button>`,

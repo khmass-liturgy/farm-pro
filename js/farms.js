@@ -55,13 +55,19 @@ async function deleteFarm(id) {
   renderFarms();
 }
 
-function renderFarms() {
+// renderFarms()와 exportFarmsExcel()이 "화면에 지금 보이는 것과 내보내는 것을
+// 같게" 유지하도록 같은 필터 로직을 공유한다.
+function filteredFarms() {
   const q = (document.getElementById('farm-search')?.value||'').toLowerCase();
   const ft = document.getElementById('farm-filter-type')?.value||'';
-  let farms = load('farms').filter(f =>
+  return load('farms').filter(f =>
     (!q || f.name.includes(q) || f.address.includes(q) || f.owner.includes(q)) &&
     (!ft || f.type === ft)
   );
+}
+
+function renderFarms() {
+  let farms = filteredFarms();
   const badgeMap = { '육계':'badge-blue', '삼계':'badge-green', '산란계':'badge-red', '토종닭':'badge-amber', '오리':'badge-teal', '기타':'badge-purple' };
   const tbody = document.getElementById('farm-tbody');
   const empty = document.getElementById('farm-empty');
@@ -81,4 +87,33 @@ function renderFarms() {
         <button class="btn btn-danger btn-sm" onclick="deleteFarm('${f.id}')">삭제</button>
       </div></td>
     </tr>`).join('');
+}
+
+// ─── 농장 목록 엑셀로 내보내기 ──────────────────────────────────────────────
+// 사용자가 예전부터 써온 주소록.xlsx와 같은 열 순서(이름·농장명·동수·주소·전화번호·
+// 사육수수·생년월일·축종·품종)로 내보낸다 — 다른 프로그램에서 그대로 열어보거나
+// 인쇄해서 들고 다니기 위함. 검색·축종 필터를 걸어둔 채 누르면 그 결과만 담긴다.
+function farmBreedNameFor(farmId) {
+  const d = farmBreedDefault(farmId); // js/programs.js — 그 농장 계군(입추)에 입력된 품종
+  if (!d) return '';
+  const speciesKey = speciesKeyOf(d.species);
+  return (speciesKey && CONSULT_BREEDS[speciesKey]?.breeds[d.breed]?.name) || d.breed || '';
+}
+
+function exportFarmsExcel() {
+  const farms = filteredFarms();
+  if (!farms.length) { alert('내보낼 농장이 없습니다.'); return; }
+  const header = ['이름', '농장명', '동수', '주소', '전화번호', '사육수수', '생년월일', '축종', '품종'];
+  const rows = farms.map(f => [
+    f.owner || '', f.name || '', f.houses ?? '', f.address || '', f.phone || '',
+    f.count ?? '',
+    // 원본 주소록과 같은 표기(생년월일 앞 6자리, 구분자 없음)로 맞춘다.
+    (f.owner_birth || '').replace(/-/g, '').slice(2),
+    f.type || '', farmBreedNameFor(f.id),
+  ]);
+  const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+  ws['!cols'] = [{ wch: 10 }, { wch: 14 }, { wch: 6 }, { wch: 38 }, { wch: 15 }, { wch: 10 }, { wch: 9 }, { wch: 8 }, { wch: 12 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '주소록');
+  XLSX.writeFile(wb, `농장주소록_${new Date().toISOString().slice(0, 10)}.xlsx`);
 }

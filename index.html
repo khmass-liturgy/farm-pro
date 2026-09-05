@@ -3,20 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>농장 투약관리 시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260906d">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260906d">
-<link rel="icon" href="img/favicon.ico?v=20260906d">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260906d">
-<link rel="stylesheet" href="css/styles.css?v=20260906d">
+<title>대한동물병원 업무시스템</title>
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260906f">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260906f">
+<link rel="icon" href="img/favicon.ico?v=20260906f">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260906f">
+<link rel="stylesheet" href="css/styles.css?v=20260906f">
 </head>
 <body>
 
 <!-- 사이드바 -->
 <nav id="sidebar">
   <div class="sidebar-logo">
-    <h1>🐔 투약관리 시스템</h1>
-    <span>Poultry Farm Manager</span>
+    <h1>🐔 대한동물병원 업무시스템</h1>
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-label">메인</div>
@@ -1420,28 +1419,32 @@
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="js/config.js?v=20260906d"></script>
-<script src="js/supabaseClient.js?v=20260906d"></script>
-<script src="js/auth.js?v=20260906d"></script>
-<script src="js/breedStandards.js?v=20260906d"></script>
-<script src="js/farms.js?v=20260906d"></script>
-<script src="js/sms.js?v=20260906d"></script>
-<script src="js/masterdata.js?v=20260906d"></script>
-<script src="js/rxProducts.js?v=20260906d"></script>
-<script src="js/drugSearch.js?v=20260906d"></script>
-<script src="js/programs.js?v=20260906d"></script>
-<script src="js/batches.js?v=20260906d"></script>
-<script src="js/medicationLog.js?v=20260906d"></script>
-<script src="js/prescriptions.js?v=20260906d"></script>
-<script src="js/preShipment.js?v=20260906d"></script>
-<script src="js/movePermit.js?v=20260906d"></script>
-<script src="js/clinicalAssessment.js?v=20260906d"></script>
-<script src="js/rodentControl.js?v=20260906d"></script>
-<script src="js/schedule.js?v=20260906d"></script>
-<script src="js/dashboard.js?v=20260906d"></script>
-<script src="js/reports.js?v=20260906d"></script>
-<script src="js/print.js?v=20260906d"></script>
-<script src="js/backup.js?v=20260906d"></script>
-<script src="js/app.js?v=20260906d"></script>
+<!-- 농장 목록 엑셀 내보내기(js/farms.js exportFarmsExcel)에만 쓴다. 마지막 npm 배포판(0.18.5)을
+     버전 고정해 불러온다 — SheetJS는 그 뒤로 자체 CDN(cdn.sheetjs.com)으로 옮겨갔지만
+     unpkg에 이미 있는 안정 버전을 그대로 쓰는 편이 새 CDN 도메인을 하나 더 신뢰하는 것보다 낫다. -->
+<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="js/config.js?v=20260906f"></script>
+<script src="js/supabaseClient.js?v=20260906f"></script>
+<script src="js/auth.js?v=20260906f"></script>
+<script src="js/breedStandards.js?v=20260906f"></script>
+<script src="js/farms.js?v=20260906f"></script>
+<script src="js/sms.js?v=20260906f"></script>
+<script src="js/masterdata.js?v=20260906f"></script>
+<script src="js/rxProducts.js?v=20260906f"></script>
+<script src="js/drugSearch.js?v=20260906f"></script>
+<script src="js/programs.js?v=20260906f"></script>
+<script src="js/batches.js?v=20260906f"></script>
+<script src="js/medicationLog.js?v=20260906f"></script>
+<script src="js/prescriptions.js?v=20260906f"></script>
+<script src="js/preShipment.js?v=20260906f"></script>
+<script src="js/movePermit.js?v=20260906f"></script>
+<script src="js/clinicalAssessment.js?v=20260906f"></script>
+<script src="js/rodentControl.js?v=20260906f"></script>
+<script src="js/schedule.js?v=20260906f"></script>
+<script src="js/dashboard.js?v=20260906f"></script>
+<script src="js/reports.js?v=20260906f"></script>
+<script src="js/print.js?v=20260906f"></script>
+<script src="js/backup.js?v=20260906f"></script>
+<script src="js/app.js?v=20260906f"></script>
 </body>
 </html>
