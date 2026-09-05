@@ -62,12 +62,23 @@ function renderPreShipments() {
     (!q || (p.farmName || '').toLowerCase().includes(q) || (p.owner || '').toLowerCase().includes(q)) &&
     (!ff || p.farmId === ff)
   );
+  // 삭제된 항목의 선택 표시가 남지 않도록, 지금 존재하는 id만 유지한다.
+  const liveIds = new Set(load('preShipments').map(p => p.id));
+  psSelectedIds.forEach(id => { if (!liveIds.has(id)) psSelectedIds.delete(id); });
+
   const tbody = document.getElementById('ps-tbody');
   const empty = document.getElementById('ps-empty');
-  if (!list.length) { tbody.innerHTML = ''; empty.style.display = ''; return; }
+  const checkAll = document.getElementById('ps-check-all');
+  if (!list.length) {
+    tbody.innerHTML = ''; empty.style.display = '';
+    if (checkAll) checkAll.checked = false;
+    return;
+  }
   empty.style.display = 'none';
+  if (checkAll) checkAll.checked = list.every(p => psSelectedIds.has(p.id));
   tbody.innerHTML = list.map(p => `
     <tr>
+      <td style="text-align:center"><input type="checkbox" ${psSelectedIds.has(p.id) ? 'checked' : ''} onchange="togglePsSelect('${p.id}', this.checked)"></td>
       <td>${p.sampledAt}</td>
       <td><strong>${p.farmName}</strong><div style="font-size:11px;color:var(--text-secondary)">${p.owner || ''}</div></td>
       <td>${p.species || '-'}</td>
@@ -262,9 +273,11 @@ async function deletePreShipment(id) {
 }
 
 // ─── A4 인쇄 (원본 「의뢰서식」 시트 배치를 그대로 옮김) ────────────────────
-function printPreShipment(id) {
-  const ps = load('preShipments').find(x => x.id === id);
-  if (!ps) return;
+// buildPreShipmentHtml()은 한 건의 .print-page 마크업만 만들고, 실제 출력은
+// printPreShipment()(한 건) / printSelectedPreShipments()(여러 건)가 맡는다.
+// 여러 건을 이어붙여도 각 페이지가 print-page(page-break-after: always)라
+// 인쇄 대화상자를 한 번만 띄우면서 건마다 새 용지로 넘어간다.
+function buildPreShipmentHtml(ps) {
   const n = v => (v == null || v === '' ? '' : Number(v).toLocaleString());
   const sampleTotals = {};
   PS_SAMPLE_COLS.forEach(c => {
@@ -282,7 +295,7 @@ function printPreShipment(id) {
       <td>${r.note || ''}</td>
     </tr>`).join('');
 
-  const html = `
+  return `
   <div class="print-page">
     <div class="ps-title">시료채취 내역서</div>
     <div class="ps-docno">No. ${ps.docNo || ''}</div>
@@ -354,7 +367,32 @@ function printPreShipment(id) {
       <tr><td class="lbl">□ 의뢰 일자</td><td colspan="5">${ps.requestedAt || ''}</td></tr>
     </table>
   </div>`;
+}
 
-  document.getElementById('print-area').innerHTML = html;
+function printPreShipment(id) {
+  const ps = load('preShipments').find(x => x.id === id);
+  if (!ps) return;
+  document.getElementById('print-area').innerHTML = buildPreShipmentHtml(ps);
+  setTimeout(() => window.print(), 200);
+}
+
+// 목록 왼쪽 체크박스로 고른 여러 건을 한 번의 인쇄로 묶는다.
+let psSelectedIds = new Set();
+
+function togglePsSelectAll(checked) {
+  const ids = load('preShipments').map(p => p.id);
+  psSelectedIds = checked ? new Set(ids) : new Set();
+  renderPreShipments();
+}
+function togglePsSelect(id, checked) {
+  if (checked) psSelectedIds.add(id); else psSelectedIds.delete(id);
+  const all = document.getElementById('ps-check-all');
+  if (all) all.checked = psSelectedIds.size > 0 && psSelectedIds.size === load('preShipments').length;
+}
+
+function printSelectedPreShipments() {
+  const list = load('preShipments').filter(p => psSelectedIds.has(p.id));
+  if (!list.length) { alert('인쇄할 항목을 먼저 체크해주세요.'); return; }
+  document.getElementById('print-area').innerHTML = list.map(buildPreShipmentHtml).join('');
   setTimeout(() => window.print(), 200);
 }

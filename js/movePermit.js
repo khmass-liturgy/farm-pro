@@ -35,6 +35,20 @@ function mpDocNo(mp) {
   return `제 ${mp.docNoPrefix || ''} - ${mp.docNoSerial ?? ''} 호`;
 }
 
+// 목록 왼쪽 체크박스로 고른 여러 건을 한 번의 인쇄로 묶는다(출하전검사와 같은 패턴).
+let mpSelectedIds = new Set();
+
+function toggleMpSelectAll(checked) {
+  const ids = load('movePermits').map(m => m.id);
+  mpSelectedIds = checked ? new Set(ids) : new Set();
+  renderMovePermits();
+}
+function toggleMpSelect(id, checked) {
+  if (checked) mpSelectedIds.add(id); else mpSelectedIds.delete(id);
+  const all = document.getElementById('mp-check-all');
+  if (all) all.checked = mpSelectedIds.size > 0 && mpSelectedIds.size === load('movePermits').length;
+}
+
 function renderMovePermits() {
   const q = (document.getElementById('mp-search')?.value || '').toLowerCase();
   const ff = document.getElementById('mp-filter-farm')?.value || '';
@@ -43,12 +57,22 @@ function renderMovePermits() {
       (m.vehicleNo || '').toLowerCase().includes(q) || (m.shipTo || '').toLowerCase().includes(q)) &&
     (!ff || m.farmId === ff)
   );
+  const liveIds = new Set(load('movePermits').map(m => m.id));
+  mpSelectedIds.forEach(id => { if (!liveIds.has(id)) mpSelectedIds.delete(id); });
+
   const tbody = document.getElementById('mp-tbody');
   const empty = document.getElementById('mp-empty');
-  if (!list.length) { tbody.innerHTML = ''; empty.style.display = ''; return; }
+  const checkAll = document.getElementById('mp-check-all');
+  if (!list.length) {
+    tbody.innerHTML = ''; empty.style.display = '';
+    if (checkAll) checkAll.checked = false;
+    return;
+  }
   empty.style.display = 'none';
+  if (checkAll) checkAll.checked = list.every(m => mpSelectedIds.has(m.id));
   tbody.innerHTML = list.map(m => `
     <tr>
+      <td style="text-align:center"><input type="checkbox" ${mpSelectedIds.has(m.id) ? 'checked' : ''} onchange="toggleMpSelect('${m.id}', this.checked)"></td>
       <td>${m.issueDate}</td>
       <td>${mpDocNo(m)}</td>
       <td><span class="badge ${m.formType === 'breeder' ? 'badge-purple' : 'badge-blue'}">${m.formType === 'breeder' ? '종계장' : '일반'}</span></td>
@@ -275,9 +299,10 @@ function mpFormatDateMD(dateStr) {
   return `${m}월 ${d}일`;
 }
 
-function printMovePermit(id) {
-  const mp = load('movePermits').find(x => x.id === id);
-  if (!mp) return;
+// buildMovePermitHtml()은 한 건의 .print-page 마크업만 만든다. printMovePermit()
+// (한 건)과 printSelectedMovePermits()(여러 건, 출하전검사와 같은 패턴)가
+// 이걸 이어붙여 인쇄 대화상자를 한 번만 띄운다.
+function buildMovePermitHtml(mp) {
   const isBreeder = mp.formType === 'breeder';
   const signs = mp.clinicalSigns || [];
   const sign = s => `${mpCheck(signs.includes(s))} ${s}`;
@@ -316,7 +341,7 @@ function printMovePermit(id) {
     : ['상기 가축은 가축전염병예방법에 의거 임상 관찰, 정밀검사 결과 특이 증상이 없고',
        '운반차량이 관련 규정에 의거 적절하게 청소·소독되었음을 확인합니다.'];
 
-  const html = `
+  return `
   <div class="print-page">
     <table class="mp-table">
       <colgroup>${'<col style="width:9.09%">'.repeat(11)}</colgroup>
@@ -367,7 +392,18 @@ function printMovePermit(id) {
     </table>
     ${mp.note ? `<div class="mp-note">비고 : ${mp.note}</div>` : ''}
   </div>`;
+}
 
-  document.getElementById('print-area').innerHTML = html;
+function printMovePermit(id) {
+  const mp = load('movePermits').find(x => x.id === id);
+  if (!mp) return;
+  document.getElementById('print-area').innerHTML = buildMovePermitHtml(mp);
+  setTimeout(() => window.print(), 200);
+}
+
+function printSelectedMovePermits() {
+  const list = load('movePermits').filter(m => mpSelectedIds.has(m.id));
+  if (!list.length) { alert('인쇄할 항목을 먼저 체크해주세요.'); return; }
+  document.getElementById('print-area').innerHTML = list.map(buildMovePermitHtml).join('');
   setTimeout(() => window.print(), 200);
 }

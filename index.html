@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>대한동물병원 업무시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260906g">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260906g">
-<link rel="icon" href="img/favicon.ico?v=20260906g">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260906g">
-<link rel="stylesheet" href="css/styles.css?v=20260906g">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260906h">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260906h">
+<link rel="icon" href="img/favicon.ico?v=20260906h">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260906h">
+<link rel="stylesheet" href="css/styles.css?v=20260906h">
 </head>
 <body>
 
@@ -88,11 +88,11 @@
   </div>
   <div class="sidebar-section">
     <div class="sidebar-section-label">바로가기</div>
-    <!-- 이 앱과 별개로 배포된 대한동물병원 사이트(daehan 저장소)로 나간다.
+    <!-- 이 앱과 별개로 배포된 대한가축약품 사이트(daehan 저장소)로 나간다.
          이 SPA 안의 화면이 아니라 완전히 다른 사이트라 showPage()로 전환하지 않고
          새 탭으로 연다(여기서 하던 작업 화면이 그대로 남아있게). -->
     <div class="sidebar-item" onclick="openDaehanSite()">
-      <span class="icon">🌐</span> 대한동물병원 홈페이지 ↗
+      <span class="icon">🌐</span> 대한가축약품 ↗
     </div>
   </div>
   <div class="sidebar-section">
@@ -334,12 +334,14 @@
       <div class="search-bar">
         <input class="search-input" id="ps-search" placeholder="🔍  농장명, 축주명 검색..." oninput="renderPreShipments()">
         <select id="ps-filter-farm" onchange="renderPreShipments()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);"></select>
+        <button class="btn btn-outline" onclick="printSelectedPreShipments()" title="왼쪽 체크박스로 고른 여러 건을 한 번에 인쇄합니다">🖨️ 선택 인쇄</button>
       </div>
       <div class="card">
         <div class="tbl-wrap">
           <table>
             <thead>
               <tr>
+                <th style="text-align:center"><input type="checkbox" id="ps-check-all" onchange="togglePsSelectAll(this.checked)" title="전체 선택"></th>
                 <th>시료채취일</th><th>농장</th><th>축종</th><th>사육규모</th><th>검사목적</th><th>채취동</th><th>시료 내역</th><th>출하예정일</th><th>관리</th>
               </tr>
             </thead>
@@ -362,12 +364,14 @@
       <div class="search-bar">
         <input class="search-input" id="mp-search" placeholder="🔍  농장명, 운송인, 차량번호, 출하처 검색..." oninput="renderMovePermits()">
         <select id="mp-filter-farm" onchange="renderMovePermits()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);"></select>
+        <button class="btn btn-outline" onclick="printSelectedMovePermits()" title="왼쪽 체크박스로 고른 여러 건을 한 번에 인쇄합니다">🖨️ 선택 인쇄</button>
       </div>
       <div class="card">
         <div class="tbl-wrap">
           <table>
             <thead>
               <tr>
+                <th style="text-align:center"><input type="checkbox" id="mp-check-all" onchange="toggleMpSelectAll(this.checked)" title="전체 선택"></th>
                 <th>발급일</th><th>발급번호</th><th>서식</th><th>농장</th><th>축종</th><th>출하처</th><th>운송인 / 차량</th><th>반출일</th><th>관리</th>
               </tr>
             </thead>
@@ -1432,28 +1436,28 @@
      버전 고정해 불러온다 — SheetJS는 그 뒤로 자체 CDN(cdn.sheetjs.com)으로 옮겨갔지만
      unpkg에 이미 있는 안정 버전을 그대로 쓰는 편이 새 CDN 도메인을 하나 더 신뢰하는 것보다 낫다. -->
 <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="js/config.js?v=20260906g"></script>
-<script src="js/supabaseClient.js?v=20260906g"></script>
-<script src="js/auth.js?v=20260906g"></script>
-<script src="js/breedStandards.js?v=20260906g"></script>
-<script src="js/farms.js?v=20260906g"></script>
-<script src="js/sms.js?v=20260906g"></script>
-<script src="js/masterdata.js?v=20260906g"></script>
-<script src="js/rxProducts.js?v=20260906g"></script>
-<script src="js/drugSearch.js?v=20260906g"></script>
-<script src="js/programs.js?v=20260906g"></script>
-<script src="js/batches.js?v=20260906g"></script>
-<script src="js/medicationLog.js?v=20260906g"></script>
-<script src="js/prescriptions.js?v=20260906g"></script>
-<script src="js/preShipment.js?v=20260906g"></script>
-<script src="js/movePermit.js?v=20260906g"></script>
-<script src="js/clinicalAssessment.js?v=20260906g"></script>
-<script src="js/rodentControl.js?v=20260906g"></script>
-<script src="js/schedule.js?v=20260906g"></script>
-<script src="js/dashboard.js?v=20260906g"></script>
-<script src="js/reports.js?v=20260906g"></script>
-<script src="js/print.js?v=20260906g"></script>
-<script src="js/backup.js?v=20260906g"></script>
-<script src="js/app.js?v=20260906g"></script>
+<script src="js/config.js?v=20260906h"></script>
+<script src="js/supabaseClient.js?v=20260906h"></script>
+<script src="js/auth.js?v=20260906h"></script>
+<script src="js/breedStandards.js?v=20260906h"></script>
+<script src="js/farms.js?v=20260906h"></script>
+<script src="js/sms.js?v=20260906h"></script>
+<script src="js/masterdata.js?v=20260906h"></script>
+<script src="js/rxProducts.js?v=20260906h"></script>
+<script src="js/drugSearch.js?v=20260906h"></script>
+<script src="js/programs.js?v=20260906h"></script>
+<script src="js/batches.js?v=20260906h"></script>
+<script src="js/medicationLog.js?v=20260906h"></script>
+<script src="js/prescriptions.js?v=20260906h"></script>
+<script src="js/preShipment.js?v=20260906h"></script>
+<script src="js/movePermit.js?v=20260906h"></script>
+<script src="js/clinicalAssessment.js?v=20260906h"></script>
+<script src="js/rodentControl.js?v=20260906h"></script>
+<script src="js/schedule.js?v=20260906h"></script>
+<script src="js/dashboard.js?v=20260906h"></script>
+<script src="js/reports.js?v=20260906h"></script>
+<script src="js/print.js?v=20260906h"></script>
+<script src="js/backup.js?v=20260906h"></script>
+<script src="js/app.js?v=20260906h"></script>
 </body>
 </html>
