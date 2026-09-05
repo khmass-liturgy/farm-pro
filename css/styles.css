@@ -533,9 +533,14 @@ body { display: block !important; height: auto !important; overflow: visible !im
 .mp-rule { font-size: 8.6pt; }
 .mp-closing { font-size: 9.5pt; padding-top: 8pt !important; line-height: 1.6; }
 .mp-date { text-align: center; font-size: 11pt; font-weight: 700; padding: 14pt 0 !important; }
-/* 확인자 줄 오른쪽 끝에 병원 직인을 얹는다(처방전 인쇄와 같은 이미지). */
-.mp-signer { text-align: center; font-size: 10pt; font-weight: 700; position: relative; overflow: visible; padding-top: 6pt !important; }
-.mp-stamp { position: absolute; width: 14mm; height: 14mm; right: 6mm; top: 50%; transform: translateY(-50%); opacity: 0.92; }
+/* 확인자 줄 — 실제 서류에 사람이 도장을 찍을 때처럼 병원·수의사 이름 위에
+   찍히도록, "확인자(...)" 라벨과 "병원명 수의사" 부분을 별도 span으로 나눈다.
+   직인을 줄 끝(right)에 고정하면 라벨 길이가 바뀔 때마다 이름과 어긋나므로,
+   이름을 담은 span 자체를 기준(position:relative)으로 삼아 그 위에 겹친다. */
+.mp-signer { text-align: center; font-size: 10pt; font-weight: 700; padding-top: 6pt !important; }
+.mp-signer-label { margin-right: 4pt; }
+.mp-signer-name { position: relative; display: inline-block; }
+.mp-stamp { position: absolute; width: 15mm; height: 15mm; left: 50%; top: 50%; transform: translate(-50%, -50%); opacity: 0.9; pointer-events: none; }
 .mp-note { margin-top: 8pt; font-size: 8.5pt; color: #444; }
 
 .no-print { display: none !important; }

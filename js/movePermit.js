@@ -259,6 +259,22 @@ async function deleteMovePermit(id) {
 // ─── A4 인쇄 (원본 서식의 11칸 × 16줄 배치를 그대로 옮김) ───────────────────
 function mpCheck(on) { return on ? '■' : '□'; }
 
+// 서식 안에서 날짜가 나오는 자리마다 표기 방식이 다르다(원본 엑셀의 서로 다른
+// 셀 서식을 그대로 옮김) — 하나로 통일하면 실제 서식과 달라진다.
+//   문서번호 줄  : "0716"      — 월일만, 구분자 없음(제 26-3-45 0716 호)
+//   시료채취일 등: "07월 16일" — 월일만, 앞자리 0 유지
+//   확인 서명란 : "2026년 7월 16일" — 연도 포함, 앞자리 0 없음(rxFormatDateKo와 동일)
+function mpFormatMMDD(dateStr) {
+  if (!dateStr) return '';
+  const [, m, d] = dateStr.split('-');
+  return `${m}${d}`;
+}
+function mpFormatDateMD(dateStr) {
+  if (!dateStr) return '';
+  const [, m, d] = dateStr.split('-');
+  return `${m}월 ${d}일`;
+}
+
 function printMovePermit(id) {
   const mp = load('movePermits').find(x => x.id === id);
   if (!mp) return;
@@ -273,7 +289,7 @@ function printMovePermit(id) {
        <td class="lbl" colspan="3">정밀검사실시여부</td>
        <td class="ctr">${mpCheck(mp.test16w)}16주령</td><td class="ctr">${mpCheck(mp.test36w)}36주령</td><td class="ctr">${mpCheck(mp.test56w)}56주령</td>`
     : `<td class="lbl" colspan="3">임상관찰결과</td><td colspan="2">${mp.clinicalResult || ''}</td>
-       <td class="lbl" colspan="3">시료채취일</td><td class="date">${mp.samplingDate || ''}</td>
+       <td class="lbl" colspan="3">시료채취일</td><td class="date">${mpFormatDateMD(mp.samplingDate)}</td>
        <td class="lbl">정밀검사<br>결과</td><td class="ctr">${mp.testResult || ''}</td>`;
 
   const row8 = isBreeder
@@ -281,7 +297,7 @@ function printMovePermit(id) {
        <td class="lbl" colspan="3">MG 백신 사용여부<br>(MG 백신명/접종일자)</td><td class="ctr">${mp.mgVaccine || ''}</td>
        <td class="lbl">운송차량<br>번　　호</td><td class="ctr">${mp.vehicleNo || ''}</td>`
     : `<td class="lbl" colspan="2">출 하</td><td colspan="2">${mp.shipTo || ''}</td>
-       <td class="lbl" colspan="3">반출일</td><td class="date">${mp.releaseDate || ''}</td>
+       <td class="lbl" colspan="3">반출일</td><td class="date">${mpFormatDateMD(mp.releaseDate)}</td>
        <td class="lbl">운송차량<br>번호</td><td class="ctr">${mp.vehicleNo || ''}</td>`;
 
   const row9 = isBreeder
@@ -307,7 +323,7 @@ function printMovePermit(id) {
       <tr class="mp-docno-row">
         <td colspan="2" class="noborder">제 ${mp.docNoPrefix || ''} -</td>
         <td class="noborder ctr">${mp.docNoSerial ?? ''}</td>
-        <td class="noborder date">${mp.issueDate || ''}</td>
+        <td class="noborder date">${mpFormatMMDD(mp.issueDate)}</td>
         <td class="noborder">호</td>
         <td class="noborder" colspan="6"></td>
       </tr>
@@ -342,10 +358,11 @@ function printMovePermit(id) {
       </tr>`).join('')}
       <tr><td colspan="11" class="mp-closing noborder">${closing[0]}</td></tr>
       <tr><td colspan="11" class="mp-closing noborder">${closing[1]}</td></tr>
-      <tr><td colspan="11" class="mp-date noborder">${mp.issueDate || ''}</td></tr>
+      <tr><td colspan="11" class="mp-date noborder">${rxFormatDateKo(mp.issueDate)}</td></tr>
       <tr><td colspan="11" class="mp-signer noborder">
-        확 인 자(가축방역관 소속 및 성명) ${RX_CLINIC.name} ${RX_CLINIC.vetName} 수의사 (인 또는 서명)
-        <img class="mp-stamp" src="img/rx-stamp-hospital.png" alt="">
+        <span class="mp-signer-label">확 인 자(가축방역관 소속 및 성명)</span>
+        <span class="mp-signer-name">${RX_CLINIC.name} ${RX_CLINIC.vetName} 수의사<img class="mp-stamp" src="img/rx-stamp-hospital.png" alt=""></span>
+        (인 또는 서명)
       </td></tr>
     </table>
     ${mp.note ? `<div class="mp-note">비고 : ${mp.note}</div>` : ''}
