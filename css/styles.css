@@ -141,7 +141,11 @@ table th {
   border-bottom: 1.5px solid var(--border); white-space: nowrap;
 }
 table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-table tr:last-child td { border-bottom: none; }
+/* .tbl-wrap 안의 목록 표(농장·약품 등, 마지막 줄 아래는 카드 경계가 대신함)에만
+   적용한다. 범위를 안 주면 이 규칙이 모든 <table>에 걸려, 처방전·출하전검사·
+   이동승인서 인쇄 표처럼 사방 테두리가 있는 표까지 맨 아래 줄의 가로선만
+   지워버린다(마지막 줄만 셀 border-bottom이 없는 것처럼 보이는 원인이었다). */
+.tbl-wrap table tr:last-child td { border-bottom: none; }
 table tr:hover td { background: #f9fbff; }
 
 /* 배지 */
