@@ -166,6 +166,12 @@ function showPbTab(tab) {
   if (frame.dataset.ready) frame.contentWindow?.postMessage({ pbTab: tab }, '*');
 }
 
+// 사이드바 "바로가기" — 이 앱과 별개로 배포된 대한동물병원 사이트로 나간다.
+// showPage()를 거치지 않으므로 현재 화면·입력 중이던 내용이 그대로 남는다.
+function openDaehanSite() {
+  window.open('https://khmass-liturgy.github.io/daehan/', '_blank', 'noopener');
+}
+
 // ─── 모달 ───────────────────────────────────────────────────────────────────
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }

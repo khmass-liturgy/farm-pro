@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>대한동물병원 업무시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260906f">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260906f">
-<link rel="icon" href="img/favicon.ico?v=20260906f">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260906f">
-<link rel="stylesheet" href="css/styles.css?v=20260906f">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260906g">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260906g">
+<link rel="icon" href="img/favicon.ico?v=20260906g">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260906g">
+<link rel="stylesheet" href="css/styles.css?v=20260906g">
 </head>
 <body>
 
@@ -84,6 +84,15 @@
     </div>
     <div class="sidebar-item" onclick="showPage('schedule')">
       <span class="icon">📅</span> 투약 일정
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">바로가기</div>
+    <!-- 이 앱과 별개로 배포된 대한동물병원 사이트(daehan 저장소)로 나간다.
+         이 SPA 안의 화면이 아니라 완전히 다른 사이트라 showPage()로 전환하지 않고
+         새 탭으로 연다(여기서 하던 작업 화면이 그대로 남아있게). -->
+    <div class="sidebar-item" onclick="openDaehanSite()">
+      <span class="icon">🌐</span> 대한동물병원 홈페이지 ↗
     </div>
   </div>
   <div class="sidebar-section">
@@ -1423,28 +1432,28 @@
      버전 고정해 불러온다 — SheetJS는 그 뒤로 자체 CDN(cdn.sheetjs.com)으로 옮겨갔지만
      unpkg에 이미 있는 안정 버전을 그대로 쓰는 편이 새 CDN 도메인을 하나 더 신뢰하는 것보다 낫다. -->
 <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="js/config.js?v=20260906f"></script>
-<script src="js/supabaseClient.js?v=20260906f"></script>
-<script src="js/auth.js?v=20260906f"></script>
-<script src="js/breedStandards.js?v=20260906f"></script>
-<script src="js/farms.js?v=20260906f"></script>
-<script src="js/sms.js?v=20260906f"></script>
-<script src="js/masterdata.js?v=20260906f"></script>
-<script src="js/rxProducts.js?v=20260906f"></script>
-<script src="js/drugSearch.js?v=20260906f"></script>
-<script src="js/programs.js?v=20260906f"></script>
-<script src="js/batches.js?v=20260906f"></script>
-<script src="js/medicationLog.js?v=20260906f"></script>
-<script src="js/prescriptions.js?v=20260906f"></script>
-<script src="js/preShipment.js?v=20260906f"></script>
-<script src="js/movePermit.js?v=20260906f"></script>
-<script src="js/clinicalAssessment.js?v=20260906f"></script>
-<script src="js/rodentControl.js?v=20260906f"></script>
-<script src="js/schedule.js?v=20260906f"></script>
-<script src="js/dashboard.js?v=20260906f"></script>
-<script src="js/reports.js?v=20260906f"></script>
-<script src="js/print.js?v=20260906f"></script>
-<script src="js/backup.js?v=20260906f"></script>
-<script src="js/app.js?v=20260906f"></script>
+<script src="js/config.js?v=20260906g"></script>
+<script src="js/supabaseClient.js?v=20260906g"></script>
+<script src="js/auth.js?v=20260906g"></script>
+<script src="js/breedStandards.js?v=20260906g"></script>
+<script src="js/farms.js?v=20260906g"></script>
+<script src="js/sms.js?v=20260906g"></script>
+<script src="js/masterdata.js?v=20260906g"></script>
+<script src="js/rxProducts.js?v=20260906g"></script>
+<script src="js/drugSearch.js?v=20260906g"></script>
+<script src="js/programs.js?v=20260906g"></script>
+<script src="js/batches.js?v=20260906g"></script>
+<script src="js/medicationLog.js?v=20260906g"></script>
+<script src="js/prescriptions.js?v=20260906g"></script>
+<script src="js/preShipment.js?v=20260906g"></script>
+<script src="js/movePermit.js?v=20260906g"></script>
+<script src="js/clinicalAssessment.js?v=20260906g"></script>
+<script src="js/rodentControl.js?v=20260906g"></script>
+<script src="js/schedule.js?v=20260906g"></script>
+<script src="js/dashboard.js?v=20260906g"></script>
+<script src="js/reports.js?v=20260906g"></script>
+<script src="js/print.js?v=20260906g"></script>
+<script src="js/backup.js?v=20260906g"></script>
+<script src="js/app.js?v=20260906g"></script>
 </body>
 </html>
