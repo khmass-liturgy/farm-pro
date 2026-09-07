@@ -350,10 +350,14 @@ function buildMovePermitHtml(mp) {
   // 이 전부를 표 한 장에 넣고 noborder로 테두리만 지워서 흉내 냈는데, 그러면 표 자체에
   // 굵은 외곽선을 줄 수가 없다(표의 제 border는 첫/끝 행에도 그대로 걸린다). 그래서
   // 표는 실제로 테두리가 있는 부분만 담고, 문서번호/제목/맺음말/서명란은 표 밖 div로 뺐다.
+  // 표를 감싸는 mp-frame div가 굵은 외곽선을 담당한다 — border-collapse에서는 table
+  // 자신의 border가 칸 border와의 충돌에서 안정적으로 이기지 않아(실측 확인), table에
+  // 직접 굵은 테두리를 주는 방식은 외곽선이 전혀 안 보이는 문제가 있었다.
   return `
   <div class="print-page">
     <div class="mp-docno">제 ${mp.docNoPrefix || ''} - ${mp.docNoSerial ?? ''} ${mpFormatMMDD(mp.issueDate)} 호</div>
     <div class="mp-title">${isBreeder ? '가금류 이동 승인서' : '검사증명서(가금류 이동 승인서)'}</div>
+    <div class="mp-frame">
     <table class="mp-table">
       <colgroup>${'<col style="width:9.09%">'.repeat(11)}</colgroup>
       <tr>
@@ -385,6 +389,7 @@ function buildMovePermitHtml(mp) {
         <td colspan="8" class="mp-rule">■ ${rule}</td>
       </tr>`).join('')}
     </table>
+    </div>
     <div class="mp-closing">${closing[0]}</div>
     <div class="mp-closing">${closing[1]}</div>
     <div class="mp-date">${rxFormatDateKo(mp.issueDate)}</div>
