@@ -305,7 +305,7 @@ function buildPreShipmentHtml(ps) {
       <tr><td class="lbl">□ 시료채취일</td><td colspan="5">${ps.sampledAt || ''}</td></tr>
       <tr>
         <td class="lbl">□ 시료채취자</td><td>${ps.samplerOrg || ''}</td>
-        <td class="lbl2">${ps.samplerTitle || ''}</td><td>: ${ps.samplerName || ''}</td>
+        <td class="lbl2">${ps.samplerTitle || ''}</td><td>${ps.samplerName || ''}</td>
         <td class="lbl2">(연락처)</td><td>${ps.samplerPhone || ''}</td>
       </tr>
       <tr><td class="lbl">□ 농장명</td><td colspan="5">${ps.farmName || ''}</td></tr>
@@ -325,10 +325,8 @@ function buildPreShipmentHtml(ps) {
         <td class="lbl2">○ 품　　종</td><td>${ps.breed || ''}</td>
         <td class="lbl2">○ 일　　령</td><td>${ps.ageDays ?? ''}</td>
       </tr>
-      ${(ps.shipDate || ps.shipHouses || ps.shipCount) ? `<tr>
-        <td class="lbl">□ 출하예정</td><td>${ps.shipDate || ''}</td>
-        <td class="lbl2">○ 출하동</td><td>${ps.shipHouses || ''}</td>
-        <td class="lbl2">○ 예정수수</td><td>${n(ps.shipCount)}</td>
+      ${ps.shipDate ? `<tr>
+        <td class="lbl">□ 출하예정</td><td colspan="5">${ps.shipDate}</td>
       </tr>` : ''}
     </table>
 
