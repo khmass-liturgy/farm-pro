@@ -73,49 +73,6 @@ function computeUpcomingSchedule(horizonDays = UPCOMING_SCHEDULE_HORIZON_DAYS) {
   return items;
 }
 
-// 입추일이 입력된 모든 투약 프로그램에서, 그 프로그램의 입추일 기준 "오늘"에 해당하는
-// 일령부터 7일치 계획. computeUpcomingSchedule과 달리 배치(사육중 여부)와 무관하게
-// 프로그램 자체를 훑는다(입추 전/후 상관없이 프로그램만 등록돼 있으면 대상).
-const PROGRAM_SCHEDULE_HORIZON_DAYS = 6; // offset 0~6 = 오늘 포함 7일
-// 목록에 못 들어간 프로그램은 그 사유도 함께 돌려준다. 조건이 안 맞는다고 카드를 그냥
-// 비우면 "방금 만든 프로그램이 대시보드에 안 뜬다"로만 보이고 원인을 알 수 없다.
-// 특히 입추일은 프로그램 등록 시 선택 항목이라, 안 넣으면 여기서 통째로 빠진다.
-function computeProgramNextDays(horizonDays = PROGRAM_SCHEDULE_HORIZON_DAYS) {
-  const items = [];
-  const excluded = [];
-  load('programs').forEach(p => {
-    const label = { programId: p.id, programName: p.name, farmName: p.farmName || '' };
-    if (!p.placementDate) {
-      excluded.push({ ...label, reason: '입추일이 입력되지 않음 — 프로그램 편집에서 입추일을 넣으면 표시됩니다' });
-      return;
-    }
-    const dayAge = computeDayAge(p.placementDate);
-    const before = items.length;
-    for (let offset = 0; offset <= horizonDays; offset++) {
-      const day = dayAge + offset;
-      if (day < 1 || day > p.duration) continue;
-      const d = p.days.find(x => x.day === day);
-      const hasPlan = d && ((d.drugs && d.drugs.length) || d.vaccine);
-      if (!hasPlan) continue;
-      items.push({
-        date: programDayDate(p.placementDate, day),
-        programId: p.id, programName: p.name, farmName: p.farmName, day, offset,
-        drugLabel: dayDrugLabel(d), vaccineLabel: dayVaccineLabel(d),
-      });
-    }
-    if (items.length === before) {
-      const reason = dayAge > p.duration
-        ? `프로그램 기간이 지남 (${p.duration}일령 프로그램인데 입추일 기준 오늘 ${dayAge}일령)`
-        : dayAge + horizonDays < 1
-          ? `아직 입추 전 (입추일 ${p.placementDate})`
-          : '앞으로 7일 안에 약품·백신 계획이 있는 날이 없음';
-      excluded.push({ ...label, reason });
-    }
-  });
-  items.sort((a, b) => a.date.localeCompare(b.date) || a.farmName.localeCompare(b.farmName));
-  return { items, excluded };
-}
-
 function renderDashboard() {
   const farms = load('farms'), programs = load('programs');
   const batches = load('batches'), logs = load('medicationLogs');
@@ -149,42 +106,6 @@ function renderDashboard() {
     upcomingEl.innerHTML = `<div class="card mb-16">
       <div class="card-header"><div class="card-title">📅 다가오는 ${UPCOMING_SCHEDULE_HORIZON_DAYS}일 투약 일정</div></div>
       <div class="tbl-wrap"><table><thead><tr><th>날짜</th><th>농장</th><th>일령</th><th>약품</th><th>백신</th><th>상태</th></tr></thead><tbody>${upcomingRows}</tbody></table></div>
-    </div>`;
-  }
-
-  const { items: progDays, excluded: progDaysExcluded } = computeProgramNextDays();
-  const progDaysEl = document.getElementById('dash-program-15days');
-  // 목록에 못 들어간 프로그램이 있으면 사유를 함께 적는다(왜 안 뜨는지 화면에서 알 수 있게).
-  const excludedHtml = progDaysExcluded.length ? `
-    <div class="${progDays.length ? 'mt-16' : ''}" style="font-size:11px;color:var(--text-secondary)">
-      <div style="font-weight:700;margin-bottom:4px">아래 프로그램은 이 목록에 포함되지 않았습니다</div>
-      ${progDaysExcluded.map(e => `<div style="padding:3px 0;cursor:pointer" onclick="showPage('programs')">
-        · <strong>${e.programName}</strong>${e.farmName ? ` <span class="text-muted">(${e.farmName})</span>` : ''} — ${e.reason}
-      </div>`).join('')}
-    </div>` : '';
-
-  if (!progDays.length && !progDaysExcluded.length) {
-    progDaysEl.innerHTML = ''; // 프로그램 자체가 없으면 할 말도 없다
-  } else if (!progDays.length) {
-    progDaysEl.innerHTML = `<div class="card mt-16">
-      <div class="card-header"><div class="card-title">📋 프로그램 기준 오늘부터 7일 일정</div></div>
-      <p class="text-muted mb-16">앞으로 7일 안에 예정된 투약 계획이 없습니다.</p>
-      ${excludedHtml}
-    </div>`;
-  } else {
-    const progDaysRows = progDays.map(it => `
-      <tr onclick="showPage('programs')" style="cursor:pointer">
-        <td>${it.date}${it.offset === 0 ? ' <span class="badge badge-red">오늘</span>' : ''}</td>
-        <td><strong>${it.farmName}</strong></td>
-        <td style="color:var(--text-secondary)">${it.programName}</td>
-        <td>${it.day}일령</td>
-        <td>${it.drugLabel ? `<span class="drug-pill">${it.drugLabel}</span>` : '-'}</td>
-        <td>${it.vaccineLabel ? `<span class="vaccine-pill">💉 ${it.vaccineLabel}</span>` : '-'}</td>
-      </tr>`).join('');
-    progDaysEl.innerHTML = `<div class="card mt-16">
-      <div class="card-header"><div class="card-title">📋 프로그램 기준 오늘부터 7일 일정</div></div>
-      <div class="tbl-wrap"><table><thead><tr><th>날짜</th><th>농장</th><th>프로그램</th><th>일령</th><th>약품</th><th>백신</th></tr></thead><tbody>${progDaysRows}</tbody></table></div>
-      ${excludedHtml}
     </div>`;
   }
 
