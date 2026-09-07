@@ -229,6 +229,19 @@ async function saveMedicationLog() {
   const logDate = document.getElementById('ml-log-date').value;
   if (!batchId || !logDate) { alert(standalone ? '농장/입추와 날짜는 필수입니다.' : '날짜는 필수입니다.'); return; }
 
+  // 구글 드라이브 인증 요청은 이 클릭 이벤트 핸들러 안에서 가능한 한 일찍(아직 아무
+  // await도 거치지 않은 지금) 시작해야 한다. 아래 Supabase 업로드 등 여러 await를 거친
+  // 뒤에 요청하면 브라우저가 "사용자 동작과 무관한 요청"으로 보고 동의 팝업을 조용히
+  // 차단한다 — 오류도 없이 그냥 드라이브에 아무것도 안 올라가는 상태가 된다.
+  // 여기서는 시작만 해두고(모달을 막지 않음), 실제 업로드 시점에 이 promise를 기다린다.
+  let driveTokenPromise = null;
+  if (googleDriveEnabled() && mlPhotoState.newFiles.length) {
+    driveTokenPromise = getGDriveAccessToken().catch(e => {
+      console.warn('구글 드라이브 인증 실패(부검사진은 Supabase에는 정상 저장됨):', e);
+      return null;
+    });
+  }
+
   const dsel = document.getElementById('ml-drug-sel');
   let drugId = null, drugName = '';
   if (dsel.value === '__custom__') drugName = document.getElementById('ml-drug-custom-input').value.trim();
@@ -281,7 +294,7 @@ async function saveMedicationLog() {
   if (mlPhotoState.newFiles.length) {
     const batch = load('batches').find(b => b.id === batchId);
     const farm = batch ? load('farms').find(f => f.id === batch.farmId) : null;
-    backupPhotosToGoogleDrive(mlPhotoState.newFiles.map(f => f.file), farm?.name, logDate);
+    backupPhotosToGoogleDrive(mlPhotoState.newFiles.map(f => f.file), farm?.name, logDate, driveTokenPromise);
   }
 
   editingId.medicationLog = null;

@@ -113,10 +113,16 @@ async function gDriveUploadFile(file, folderId, token, filename) {
 // 올린다. files가 비어 있거나 연동이 아직 설정 안 됐으면 조용히 넘어간다.
 // 실패해도 예외를 던지지 않는다 — 이 시점엔 Supabase Storage 저장이 이미 끝나 있어서,
 // 여기서 막으면 "사진은 저장됐는데 알 수 없는 이유로 진료기록 저장 실패"처럼 보이게 된다.
-async function backupPhotosToGoogleDrive(files, farmName, logDate) {
+//
+// tokenPromise: 이미 시작해 둔 getGDriveAccessToken() 호출이 있으면 그걸 넘긴다.
+// 구글 동의 팝업은 반드시 사용자 클릭 이벤트 핸들러 안에서 지연 없이 요청해야
+// 브라우저가 막지 않으므로(호출부인 saveMedicationLog() 참고), 이 함수 안에서
+// 새로 요청하면 이미 여러 await를 거친 뒤라 팝업이 조용히 차단된다.
+async function backupPhotosToGoogleDrive(files, farmName, logDate, tokenPromise) {
   if (!googleDriveEnabled() || !files || !files.length) return { ok: true, skipped: true };
   try {
-    const token = await getGDriveAccessToken();
+    const token = tokenPromise ? await tokenPromise : await getGDriveAccessToken();
+    if (!token) throw new Error('구글 드라이브 인증 토큰을 받지 못했습니다.');
     const folderId = await gDriveFindOrCreateFolder(farmName || '농장미상', window.GOOGLE_DRIVE_FOLDER_ID, token);
     for (const file of files) {
       const filename = `${logDate || ''}_${sanitizeFileNameForStorage(file.name)}`.replace(/^_/, '');
