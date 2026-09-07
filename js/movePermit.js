@@ -309,29 +309,33 @@ function buildMovePermitHtml(mp) {
   const n = v => (v == null || v === '' ? '' : Number(v).toLocaleString());
 
   // 7~9행만 서식에 따라 달라진다(위 주석의 표 참고).
+  // 값 칸 정렬: 정밀검사결과·일령·운송인성명처럼 한두 단어로 끝나는 짧은 값은 전부
+  // 가운데 정렬로 통일한다(같은 줄의 임상관찰결과만 왼쪽에 남아 있으면 줄 안에서
+  // 정렬이 어긋나 보인다). 농장명·주소·대표자·주민등록번호처럼 길어질 수 있는
+  // 텍스트만 왼쪽 정렬로 남겨 둔다.
   const row7 = isBreeder
-    ? `<td class="lbl" colspan="3">임상관찰결과</td><td colspan="2">${mp.clinicalResult || ''}</td>
+    ? `<td class="lbl" colspan="3">임상관찰결과</td><td colspan="2" class="ctr">${mp.clinicalResult || ''}</td>
        <td class="lbl" colspan="3">정밀검사실시여부</td>
        <td class="ctr">${mpCheck(mp.test16w)}16주령</td><td class="ctr">${mpCheck(mp.test36w)}36주령</td><td class="ctr">${mpCheck(mp.test56w)}56주령</td>`
-    : `<td class="lbl" colspan="3">임상관찰결과</td><td colspan="2">${mp.clinicalResult || ''}</td>
+    : `<td class="lbl" colspan="3">임상관찰결과</td><td colspan="2" class="ctr">${mp.clinicalResult || ''}</td>
        <td class="lbl" colspan="3">시료채취일</td><td class="date">${mpFormatDateMD(mp.samplingDate)}</td>
        <td class="lbl">정밀검사<br>결과</td><td class="ctr">${mp.testResult || ''}</td>`;
 
   const row8 = isBreeder
-    ? `<td class="lbl" colspan="2">출 하<br>수수(개수)</td><td colspan="2">${n(mp.shipCount)}</td>
+    ? `<td class="lbl" colspan="2">출 하<br>수수(개수)</td><td colspan="2" class="ctr">${n(mp.shipCount)}</td>
        <td class="lbl" colspan="3">MG 백신 사용여부<br>(MG 백신명/접종일자)</td><td class="ctr">${mp.mgVaccine || ''}</td>
        <td class="lbl">운송차량<br>번　　호</td><td class="ctr">${mp.vehicleNo || ''}</td>`
-    : `<td class="lbl" colspan="2">출 하</td><td colspan="2">${mp.shipTo || ''}</td>
+    : `<td class="lbl" colspan="2">출 하</td><td colspan="2" class="ctr">${mp.shipTo || ''}</td>
        <td class="lbl" colspan="3">반출일</td><td class="date">${mpFormatDateMD(mp.releaseDate)}</td>
        <td class="lbl">운송차량<br>번호</td><td class="ctr">${mp.vehicleNo || ''}</td>`;
 
   const row9 = isBreeder
-    ? `<td class="lbl" colspan="2">축 종</td><td>${mp.species || ''}</td>
-       <td class="lbl">품종</td><td colspan="2">${mp.breed || ''}</td>
+    ? `<td class="lbl" colspan="2">축 종</td><td class="ctr">${mp.species || ''}</td>
+       <td class="lbl">품종</td><td colspan="2" class="ctr">${mp.breed || ''}</td>
        <td class="lbl">운송인 성명<br>(구매자)</td><td class="ctr">${mp.carrierName || ''}</td>
        <td class="lbl">전화번호</td><td class="ctr">${mp.carrierPhone || ''}</td>`
-    : `<td class="lbl" colspan="2">축 종</td><td>${mp.species || ''}</td>
-       <td class="lbl">품종</td><td colspan="2">${mp.breed || ''}</td>
+    : `<td class="lbl" colspan="2">축 종</td><td class="ctr">${mp.species || ''}</td>
+       <td class="lbl">품종</td><td colspan="2" class="ctr">${mp.breed || ''}</td>
        <td class="lbl">일령</td><td class="ctr">${mp.ageLabel || ''}</td>
        <td class="lbl">운송인<br>성명</td><td class="ctr">${mp.carrierName || ''}</td>`;
 
@@ -341,18 +345,17 @@ function buildMovePermitHtml(mp) {
     : ['상기 가축은 가축전염병예방법에 의거 임상 관찰, 정밀검사 결과 특이 증상이 없고',
        '운반차량이 관련 규정에 의거 적절하게 청소·소독되었음을 확인합니다.'];
 
+  // 실제 서식은 문서번호·제목이 표 바깥에 테두리 없이 떠 있고, 그 아래 농장현황부터
+  // 운반차량까지만 굵은 테두리 표로 묶여 있다(맺음말·날짜·서명란도 표 바깥). 예전엔
+  // 이 전부를 표 한 장에 넣고 noborder로 테두리만 지워서 흉내 냈는데, 그러면 표 자체에
+  // 굵은 외곽선을 줄 수가 없다(표의 제 border는 첫/끝 행에도 그대로 걸린다). 그래서
+  // 표는 실제로 테두리가 있는 부분만 담고, 문서번호/제목/맺음말/서명란은 표 밖 div로 뺐다.
   return `
   <div class="print-page">
+    <div class="mp-docno">제 ${mp.docNoPrefix || ''} - ${mp.docNoSerial ?? ''} ${mpFormatMMDD(mp.issueDate)} 호</div>
+    <div class="mp-title">${isBreeder ? '가금류 이동 승인서' : '검사증명서(가금류 이동 승인서)'}</div>
     <table class="mp-table">
       <colgroup>${'<col style="width:9.09%">'.repeat(11)}</colgroup>
-      <tr class="mp-docno-row">
-        <td colspan="2" class="noborder">제 ${mp.docNoPrefix || ''} -</td>
-        <td class="noborder ctr">${mp.docNoSerial ?? ''}</td>
-        <td class="noborder date">${mpFormatMMDD(mp.issueDate)}</td>
-        <td class="noborder">호</td>
-        <td class="noborder" colspan="6"></td>
-      </tr>
-      <tr><td colspan="11" class="mp-title noborder">${isBreeder ? '가금류 이동 승인서' : '검사증명서(가금류 이동 승인서)'}</td></tr>
       <tr>
         <td class="lbl" rowspan="2">농장<br>현황</td>
         <td class="lbl">농장명</td><td colspan="2">${mp.farmName || ''}</td>
@@ -381,15 +384,15 @@ function buildMovePermitHtml(mp) {
         ${i === 0 ? '<td class="lbl" colspan="2" rowspan="3">운 반<br>차 량</td>' : ''}
         <td colspan="8" class="mp-rule">■ ${rule}</td>
       </tr>`).join('')}
-      <tr><td colspan="11" class="mp-closing noborder">${closing[0]}</td></tr>
-      <tr><td colspan="11" class="mp-closing noborder">${closing[1]}</td></tr>
-      <tr><td colspan="11" class="mp-date noborder">${rxFormatDateKo(mp.issueDate)}</td></tr>
-      <tr><td colspan="11" class="mp-signer noborder">
-        <span class="mp-signer-label">확 인 자(가축방역관 소속 및 성명)</span>
-        <span class="mp-signer-name">${RX_CLINIC.name} ${RX_CLINIC.vetName} 수의사<img class="mp-stamp" src="img/rx-stamp-hospital.png" alt=""></span>
-        (인 또는 서명)
-      </td></tr>
     </table>
+    <div class="mp-closing">${closing[0]}</div>
+    <div class="mp-closing">${closing[1]}</div>
+    <div class="mp-date">${rxFormatDateKo(mp.issueDate)}</div>
+    <div class="mp-signer">
+      <span class="mp-signer-label">확 인 자(가축방역관 소속 및 성명)</span>
+      <span class="mp-signer-name">${RX_CLINIC.name} ${RX_CLINIC.vetName} 수의사</span>
+      <span class="mp-signer-seal">(인 또는 서명)<img class="mp-stamp" src="img/rx-stamp-hospital.png" alt=""></span>
+    </div>
     ${mp.note ? `<div class="mp-note">비고 : ${mp.note}</div>` : ''}
   </div>`;
 }
