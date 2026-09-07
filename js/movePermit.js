@@ -377,14 +377,14 @@ function buildMovePermitHtml(mp) {
       </tr>
       <tr>${row7}</tr>
       <tr>
-        <td class="lbl" rowspan="5">출하<br><br>및<br><br>운송</td>
+        <td class="lbl" rowspan="3">출하<br><br>및<br><br>운송</td>
         ${row8}
       </tr>
       <tr>${row9}</tr>
-      ${MP_VEHICLE_RULES.map((rule, i) => `<tr>
-        ${i === 0 ? '<td class="lbl" colspan="2" rowspan="3">운 반<br>차 량</td>' : ''}
-        <td colspan="8" class="mp-rule">■ ${rule}</td>
-      </tr>`).join('')}
+      <tr>
+        <td class="lbl" colspan="2">운 반<br>차 량</td>
+        <td colspan="8" class="mp-rule">${MP_VEHICLE_RULES.map(rule => `■ ${rule}`).join('<br>')}</td>
+      </tr>
     </table>
     <div class="mp-closing">${closing[0]}</div>
     <div class="mp-closing">${closing[1]}</div>
