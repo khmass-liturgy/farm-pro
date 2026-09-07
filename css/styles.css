@@ -516,21 +516,21 @@ body { display: block !important; height: auto !important; overflow: visible !im
 /* 공수의 업무 2 — 이동승인서(검사증명서·가금류 이동 승인서).
    원본 AI-이동승인서.xlsx 「이동승인서출력」/「종계장이동승인서」의 11칸 × 16줄 배치를
    colspan/rowspan으로 1:1 옮긴 표. 두 서식은 7~9줄만 내용이 다르고 나머지는 같다.
-   실제 서식은 문서번호·제목이 표 바깥에 테두리 없이 놓이고, 맺음말·날짜·서명란도
-   표 밖 문단이다 — 테두리 있는 표는 농장현황~운반차량까지만이다. 그래서 이 부분만
-   진짜 <table>로 두고, 나머지는 표 밖 div로 둔다(표 하나로 합쳐 noborder로 테두리만
-   지우면, 표 자체에 굵은 외곽선을 줄 수 없다 — 표의 border는 첫·끝 행에도 걸린다). */
+   문서번호만 굵은 외곽선 밖에 뜨고, 제목·표·맺음말·날짜·서명란은 전부 하나의 굵은
+   외곽선(mp-frame) 안에 들어간다. */
 .mp-docno { font-size: 9.5pt; margin-bottom: 4pt; }
-.mp-title { font-size: 17pt; font-weight: 900; text-align: center; letter-spacing: 2pt; margin: 6pt 0 12pt; }
 /* border-collapse는 table 자신의 border를 안정적으로 외곽선 충돌에 반영하지 않는다
    (실측: table에 1.4pt를 줘도 getComputedStyle이 칸 테두리와 같은 값으로 뭉개 보여줌
    — 굵은 외곽선이 전혀 적용되지 않아 표 밖 문단과 안 어울리는 원인이었다). 그래서
-   외곽선은 표를 감싸는 별도 div(mp-frame)에 주고, 표는 안쪽 칸 선만 그린다.
-   두께 값도 실측으로 다시 골랐다 — pt 단위는 화면 배율에 따라 정수 픽셀로 내림 처리돼
-   0.75pt와 1.4pt가 둘 다 1px로 뭉개지는 걸 확인했다(즉 이전 값으로는 "두꺼운 외곽선"이
-   화면·인쇄 모두에서 안쪽 칸 선과 구별되지 않았다). 1pt와 2pt처럼 배수 차이를 크게
-   벌려야 어떤 해상도에서 내림돼도 굵기 차이가 실제로 보인다. */
-.mp-frame { border: 2pt solid #000; }
+   외곽선은 표(와 제목·맺음말·서명란까지)를 감싸는 별도 div(mp-frame)에 주고, 표는
+   안쪽 칸 선만 그린다. 두께 값도 실측으로 다시 골랐다 — pt 단위는 화면 배율에 따라
+   정수 픽셀로 내림 처리돼 0.75pt와 1.4pt가 둘 다 1px로 뭉개지는 걸 확인했다(즉 이전
+   값으로는 "두꺼운 외곽선"이 화면·인쇄 모두에서 안쪽 칸 선과 구별되지 않았다). 1pt와
+   2pt처럼 배수 차이를 크게 벌려야 어떤 해상도에서 내림돼도 굵기 차이가 실제로 보인다.
+   표는 외곽선에 바로 붙어야 칸 경계와 자연스럽게 이어지지만, 제목·맺음말·서명란은
+   글자라 외곽선에 붙으면 답답해 보인다 — 그 줄들에만 좌우 padding을 따로 준다. */
+.mp-frame { border: 2pt solid #000; padding-bottom: 8pt; }
+.mp-title { font-size: 17pt; font-weight: 900; text-align: center; letter-spacing: 2pt; margin: 6pt 0 12pt; padding: 0 8pt; }
 .mp-table { width: 100%; border-collapse: collapse; font-size: 9pt; table-layout: fixed; }
 .mp-table td { border: 1pt solid #333; padding: 5pt 3pt; vertical-align: middle; line-height: 1.35; word-break: keep-all; overflow-wrap: normal; }
 .mp-table td.ctr, .mp-table td.lbl { font-size: 8.2pt; }
@@ -540,14 +540,14 @@ body { display: block !important; height: auto !important; overflow: visible !im
 .mp-table td.ctr { text-align: center; }
 .mp-signs { font-size: 8.8pt; letter-spacing: -0.2pt; }
 .mp-rule { font-size: 8.6pt; }
-.mp-closing { font-size: 9.5pt; line-height: 1.6; }
+.mp-closing { font-size: 9.5pt; line-height: 1.6; padding: 0 8pt; }
 .mp-closing:first-of-type { margin-top: 8pt; }
-.mp-date { text-align: center; font-size: 11pt; font-weight: 700; padding: 14pt 0; }
+.mp-date { text-align: center; font-size: 11pt; font-weight: 700; padding: 14pt 8pt; }
 /* 확인자 줄 — 실제 서류에 사람이 도장을 찍을 때처럼 "(인 또는 서명)" 위에 찍히도록
    그 글자만 별도 span으로 두고, 도장을 그 span 기준(position:relative)으로 겹친다.
    글자 크기는 바로 위 맺음말(.mp-closing)과 같은 9.5pt로 맞춘다 — 10pt로 남아 있으면
    이 줄만 유독 커 보인다. */
-.mp-signer { text-align: center; font-size: 9.5pt; font-weight: 700; padding-top: 6pt; }
+.mp-signer { text-align: center; font-size: 9.5pt; font-weight: 700; padding: 6pt 8pt 0; }
 .mp-signer-label { margin-right: 4pt; }
 .mp-signer-seal { position: relative; display: inline-block; margin-left: 4pt; }
 .mp-stamp { position: absolute; width: 22.5mm; height: 22.5mm; left: 50%; top: 50%; transform: translate(-50%, -50%); opacity: 0.9; pointer-events: none; }
