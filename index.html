@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>대한동물병원 업무시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260907f">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260907f">
-<link rel="icon" href="img/favicon.ico?v=20260907f">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260907f">
-<link rel="stylesheet" href="css/styles.css?v=20260907f">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260907g">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260907g">
+<link rel="icon" href="img/favicon.ico?v=20260907g">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260907g">
+<link rel="stylesheet" href="css/styles.css?v=20260907g">
 </head>
 <body>
 
@@ -1435,28 +1435,33 @@
      버전 고정해 불러온다 — SheetJS는 그 뒤로 자체 CDN(cdn.sheetjs.com)으로 옮겨갔지만
      unpkg에 이미 있는 안정 버전을 그대로 쓰는 편이 새 CDN 도메인을 하나 더 신뢰하는 것보다 낫다. -->
 <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="js/config.js?v=20260907f"></script>
-<script src="js/supabaseClient.js?v=20260907f"></script>
-<script src="js/auth.js?v=20260907f"></script>
-<script src="js/breedStandards.js?v=20260907f"></script>
-<script src="js/farms.js?v=20260907f"></script>
-<script src="js/sms.js?v=20260907f"></script>
-<script src="js/masterdata.js?v=20260907f"></script>
-<script src="js/rxProducts.js?v=20260907f"></script>
-<script src="js/drugSearch.js?v=20260907f"></script>
-<script src="js/programs.js?v=20260907f"></script>
-<script src="js/batches.js?v=20260907f"></script>
-<script src="js/medicationLog.js?v=20260907f"></script>
-<script src="js/prescriptions.js?v=20260907f"></script>
-<script src="js/preShipment.js?v=20260907f"></script>
-<script src="js/movePermit.js?v=20260907f"></script>
-<script src="js/clinicalAssessment.js?v=20260907f"></script>
-<script src="js/rodentControl.js?v=20260907f"></script>
-<script src="js/schedule.js?v=20260907f"></script>
-<script src="js/dashboard.js?v=20260907f"></script>
-<script src="js/reports.js?v=20260907f"></script>
-<script src="js/print.js?v=20260907f"></script>
-<script src="js/backup.js?v=20260907f"></script>
-<script src="js/app.js?v=20260907f"></script>
+<!-- 진료기록 부검사진의 구글 드라이브 자동 백업(js/googleDrive.js)에만 쓴다.
+     async defer라 이 스크립트가 늦게 끝나도 페이지 로드를 막지 않는다 — 실제로
+     쓰는 시점(사진 첨부 후 저장)엔 이미 다 로드돼 있다. -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="js/config.js?v=20260907g"></script>
+<script src="js/supabaseClient.js?v=20260907g"></script>
+<script src="js/auth.js?v=20260907g"></script>
+<script src="js/googleDrive.js?v=20260907g"></script>
+<script src="js/breedStandards.js?v=20260907g"></script>
+<script src="js/farms.js?v=20260907g"></script>
+<script src="js/sms.js?v=20260907g"></script>
+<script src="js/masterdata.js?v=20260907g"></script>
+<script src="js/rxProducts.js?v=20260907g"></script>
+<script src="js/drugSearch.js?v=20260907g"></script>
+<script src="js/programs.js?v=20260907g"></script>
+<script src="js/batches.js?v=20260907g"></script>
+<script src="js/medicationLog.js?v=20260907g"></script>
+<script src="js/prescriptions.js?v=20260907g"></script>
+<script src="js/preShipment.js?v=20260907g"></script>
+<script src="js/movePermit.js?v=20260907g"></script>
+<script src="js/clinicalAssessment.js?v=20260907g"></script>
+<script src="js/rodentControl.js?v=20260907g"></script>
+<script src="js/schedule.js?v=20260907g"></script>
+<script src="js/dashboard.js?v=20260907g"></script>
+<script src="js/reports.js?v=20260907g"></script>
+<script src="js/print.js?v=20260907g"></script>
+<script src="js/backup.js?v=20260907g"></script>
+<script src="js/app.js?v=20260907g"></script>
 </body>
 </html>

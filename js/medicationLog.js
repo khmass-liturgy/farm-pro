@@ -276,6 +276,14 @@ async function saveMedicationLog() {
     catch (e) { /* Storage 정리 실패는 로그 저장 자체를 막지 않는다 */ }
   }
 
+  // 새로 첨부한 사진은 구글 드라이브(농장명 폴더)에도 한 부 더 남긴다(js/googleDrive.js).
+  // 원본은 이미 Supabase Storage에 저장됐으니, 여기서 실패해도 조용히 넘어간다.
+  if (mlPhotoState.newFiles.length) {
+    const batch = load('batches').find(b => b.id === batchId);
+    const farm = batch ? load('farms').find(f => f.id === batch.farmId) : null;
+    backupPhotosToGoogleDrive(mlPhotoState.newFiles.map(f => f.file), farm?.name, logDate);
+  }
+
   editingId.medicationLog = null;
   closeModal('modal-medlog');
   if (document.getElementById('page-batch-detail')?.classList.contains('active')) renderBatchDetail();

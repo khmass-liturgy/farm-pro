@@ -5,3 +5,9 @@
 
 window.SUPABASE_URL = 'https://rigoefdhnqazacdehgqg.supabase.co';
 window.SUPABASE_ANON_KEY = 'sb_publishable_evs0gXiGRdQbYqVDMTie-w_EulUQUYf';
+
+// 진료기록의 부검사진을 구글 드라이브(대한동물병원업무시스템 폴더)에도 자동 백업한다.
+// 폴더는 이미 만들어져 있지만, CLIENT_ID는 Google Cloud Console에서 발급받아야 한다
+// (js/googleDrive.js 상단 주석 참고) — 그 전까지는 이 기능이 조용히 꺼진 채로 동작한다.
+window.GOOGLE_DRIVE_CLIENT_ID = ''; // TODO: Google Cloud Console에서 발급받은 OAuth 클라이언트 ID
+window.GOOGLE_DRIVE_FOLDER_ID = '1ol2X9FiViU3zZ6vGtd0HSrTWjAlv_eaU';
