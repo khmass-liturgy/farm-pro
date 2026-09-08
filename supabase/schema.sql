@@ -496,6 +496,26 @@ drop trigger if exists trg_move_permits_updated_at on move_permits;
 create trigger trg_move_permits_updated_at before update on move_permits
   for each row execute function set_updated_at();
 
+-- ─────────────────────────────────────────────────────────────────────────
+-- 텔레그램 일령 알림에서 뺄 농장 목록.
+--
+-- scripts/send_daily_age.py가 매일 알림을 보내기 전에, 같은 텔레그램 채팅방으로
+-- 들어온 새 메시지를 확인해 이 표에 넣거나(제외) 뺀다(포함 재개). 사용법은
+-- 그 스크립트 상단 주석 참고 — 요약하면 농장명만 보내면 제외, "포함 농장명"을
+-- 보내면 다시 알림을 받는다.
+--
+-- 다른 테이블과 달리 이 표는 farm-pro 앱(로그인한 사용자)에게 전혀 노출하지
+-- 않는다 — RLS는 켜두되 정책을 하나도 안 걸어서(default deny) anon/authenticated
+-- 양쪽 다 막고, 오직 service_role 키를 쓰는 그 스크립트만 접근하게 한다. farms
+-- 테이블처럼 알림 대상 농장의 id를 참조하지 않고 이름(문자열)만 저장하는 이유는,
+-- 그 스크립트가 애초에 programs.farm_name_snapshot(문자열 스냅샷)만으로 알림
+-- 목록을 만들기 때문이다 — 같은 키로 맞춰야 대조가 된다.
+create table if not exists telegram_notify_exclusions (
+  farm_name text primary key,
+  created_at timestamptz not null default now()
+);
+alter table telegram_notify_exclusions enable row level security;
+
 -- 처방전용 제품 마스터 초기 데이터 (이미 같은 이름의 제품이 있으면 건너뜀)
 insert into prescription_products (name, ingredient, withdrawal_days, purpose, dose_amount, category, usage_method)
 select v.name, v.ingredient, v.withdrawal_days, v.purpose, v.dose_amount, v.category, v.usage_method
