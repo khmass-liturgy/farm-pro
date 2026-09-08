@@ -497,21 +497,43 @@ create trigger trg_move_permits_updated_at before update on move_permits
   for each row execute function set_updated_at();
 
 -- ─────────────────────────────────────────────────────────────────────────
--- 텔레그램 일령 알림에서 뺄 농장 목록.
+-- 텔레그램 일령 알림에서 뺄 계군(program) 목록.
 --
 -- scripts/send_daily_age.py가 매일 알림을 보내기 전에, 같은 텔레그램 채팅방으로
--- 들어온 새 메시지를 확인해 이 표에 넣거나(제외) 뺀다(포함 재개). 사용법은
--- 그 스크립트 상단 주석 참고 — 요약하면 농장명만 보내면 제외, "포함 농장명"을
--- 보내면 다시 알림을 받는다.
+-- 들어온 새 메시지를 확인해 이 표에 넣거나(제외) 뺀다(포함/복원). 사용법은
+-- 그 스크립트 상단 주석 참고.
+--
+-- farm_name(문자열)이 아니라 program_id로 건다 — 소래축산처럼 한 농장주가
+-- 여러 계군(평사/부화/오골계/용미 등)을 같은 농장명으로 동시에 운영하는 경우가
+-- 있어서, 이름만으로 제외하면 그중 하나만 빼려던 게 전부 조용해진다. 그리고
+-- program_id를 쓰면 "이 계군이 끝난 뒤 같은 농장명으로 새로 시작한 다음 계군"이
+-- 예전 제외를 물려받지 않는다(문자열 매칭이면 물려받아 버린다). 대신 텔레그램
+-- 명령에서 어느 계군인지는 이름(접두어)과 그 순간의 일령으로 찾아 program_id로
+-- 바꿔 저장한다 — "풍천27"처럼 숫자를 붙이면 그 일령의 계군을 콕 집고, 그 농장에
+-- 계군이 하나뿐이면 숫자 없이 이름만 보내도 된다.
 --
 -- 다른 테이블과 달리 이 표는 farm-pro 앱(로그인한 사용자)에게 전혀 노출하지
 -- 않는다 — RLS는 켜두되 정책을 하나도 안 걸어서(default deny) anon/authenticated
--- 양쪽 다 막고, 오직 service_role 키를 쓰는 그 스크립트만 접근하게 한다. farms
--- 테이블처럼 알림 대상 농장의 id를 참조하지 않고 이름(문자열)만 저장하는 이유는,
--- 그 스크립트가 애초에 programs.farm_name_snapshot(문자열 스냅샷)만으로 알림
--- 목록을 만들기 때문이다 — 같은 키로 맞춰야 대조가 된다.
+-- 양쪽 다 막고, 오직 service_role 키를 쓰는 그 스크립트만 접근하게 한다.
+--
+-- (이전 버전은 farm_name을 기본키로 썼다. 그 구조로 이미 만들어져 있으면 새로
+-- 만든다 — 텔레그램으로 등록해본 지 얼마 안 돼 보존할 실데이터가 없다시피 해서,
+-- 지우지 않고 이름만 비켜두는 정도로 충분하다.)
+do $$
+begin
+  if to_regclass('public.telegram_notify_exclusions') is not null
+     and not exists (
+       select 1 from information_schema.columns
+       where table_schema = 'public' and table_name = 'telegram_notify_exclusions' and column_name = 'program_id'
+     )
+  then
+    alter table telegram_notify_exclusions rename to telegram_notify_exclusions_old_by_name;
+  end if;
+end $$;
+
 create table if not exists telegram_notify_exclusions (
-  farm_name text primary key,
+  program_id uuid primary key references programs(id) on delete cascade,
+  farm_name_snapshot text not null,
   created_at timestamptz not null default now()
 );
 alter table telegram_notify_exclusions enable row level security;
