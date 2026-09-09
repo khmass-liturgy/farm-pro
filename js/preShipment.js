@@ -32,6 +32,44 @@ function psDefaultSampler() {
   };
 }
 
+// 일련번호 자동표기: yymmdd + 그 날짜로 이미 등록된 건수 다음 번호(예: 260909-1, -2).
+// docNo가 "yymmdd-N" 형식이 아닌 예전 기록(수기 번호 등)은 그냥 카운트에서 빠진다 —
+// 이 형식은 지금부터 적용하는 새 규칙이라 과거 데이터까지 맞출 필요는 없다.
+function psNextDocNo(dateStr) {
+  const d = dateStr ? new Date(dateStr + 'T00:00:00') : new Date();
+  const prefix = String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+  const used = load('preShipments')
+    .filter(p => (p.docNo || '').startsWith(prefix + '-'))
+    .map(p => Number(p.docNo.split('-')[1]) || 0);
+  return `${prefix}-${used.length ? Math.max(...used) + 1 : 1}`;
+}
+
+// 시료채취일을 바꾸면 그 날짜 기준으로 다시 제안한다. 편집 중이거나 사용자가 직접 적어둔
+// 상태면 건드리지 않는다(movePermit.js의 onMpPrefixInput과 같은 패턴).
+function onPsSampledAtChange() {
+  const docNoEl = document.getElementById('ps-doc-no');
+  if (editingId.preShipment || docNoEl.dataset.manualEdit === '1') return;
+  docNoEl.value = psNextDocNo(document.getElementById('ps-sampled-at').value);
+}
+
+// 새로 추가하는 동별 줄의 기본값. 사육사는 몇 번째 줄인지로 "N동"을 채우고, 사육수수는
+// 사육규모÷사육동수로 어림한다(둘 다 아직 안 채워졌으면 빈 칸). 인후두·총배설강은
+// AI 채취 표준 수량인 5로, 기타임상증상은 "정상"으로 미리 채운다 — 전부 그대로 두는
+// 경우가 대부분이고, 다를 때만 고쳐 쓰면 되게 하기 위함이다. 기존 저장 데이터를 불러올
+// 때(row가 있을 때)는 이 기본값을 쓰지 않는다.
+function psDefaultRow(rowNum) {
+  const scale = Number(document.getElementById('ps-scale')?.value) || 0;
+  const houseCount = Number(document.getElementById('ps-house-count')?.value) || 0;
+  return {
+    house: `${rowNum}동`,
+    count: (scale && houseCount) ? Math.round(scale / houseCount) : null,
+    clinical: '정상',
+    deadCount: 5,
+    trachea: 5,
+    cloaca: 5,
+  };
+}
+
 // ─── 목록 ───────────────────────────────────────────────────────────────────
 function populatePsFarmFilter() {
   const sel = document.getElementById('ps-filter-farm');
@@ -106,7 +144,7 @@ function psRowHtml(idx, row) {
     <td><input id="ps-count-${idx}" type="number" min="0" value="${v('count')}" style="width:100%"></td>
     <td><input id="ps-age-${idx}" type="number" min="0" value="${v('ageDays')}" style="width:100%"></td>
     <td><input id="ps-dead-${idx}" type="number" min="0" value="${v('deadCount')}" style="width:100%"></td>
-    <td><input id="ps-clinical-${idx}" value="${v('clinical') || '정상'}" style="width:100%"></td>
+    <td><input id="ps-clinical-${idx}" value="${v('clinical')}" style="width:100%"></td>
     ${sampleInputs}
     <td><input id="ps-note-${idx}" value="${v('note')}" placeholder="예) 계사,시설" style="width:100%"></td>
     <td style="text-align:center"><button type="button" class="btn btn-danger btn-sm" onclick="removePsRow(${idx})">×</button></td>
@@ -116,7 +154,8 @@ function psRowHtml(idx, row) {
 function addPsRow(row) {
   const tbody = document.getElementById('ps-rows-body');
   if (!tbody) return;
-  tbody.insertAdjacentHTML('beforeend', psRowHtml(psRowSeq, row));
+  const data = row || psDefaultRow(tbody.children.length + 1);
+  tbody.insertAdjacentHTML('beforeend', psRowHtml(psRowSeq, data));
   psRowSeq++;
 }
 
@@ -191,7 +230,9 @@ function openPreShipmentModal(id) {
   const today = new Date().toISOString().slice(0, 10);
   const sampler = psDefaultSampler();
 
-  document.getElementById('ps-doc-no').value = ps?.docNo || '';
+  const docNoEl = document.getElementById('ps-doc-no');
+  docNoEl.value = ps?.docNo || psNextDocNo(ps?.sampledAt || today);
+  delete docNoEl.dataset.manualEdit;
   document.getElementById('ps-purpose').innerHTML = PS_PURPOSES.map(p =>
     `<option value="${p}"${ps?.purpose === p ? ' selected' : ''}>${p}</option>`).join('');
   if (!ps) document.getElementById('ps-purpose').value = '출하전검사';
