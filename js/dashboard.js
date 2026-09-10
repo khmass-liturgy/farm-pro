@@ -40,7 +40,7 @@ function computeDueSoonAlerts(horizonDays = DUE_SOON_HORIZON_DAYS, startOffset =
 // 활성 입추 배치 중, 오늘부터 horizonDays일 이내에 투약/백신 계획이 있는 항목 전체
 // (기록 여부 상관없이) — "다가오는 일정" 목록용. computeDueSoonAlerts는 미기록 건만
 // 골라 경고 문구로 보여주는 반면, 이건 며칠치 계획을 날짜순으로 그대로 보여준다.
-const UPCOMING_SCHEDULE_HORIZON_DAYS = 3;
+const UPCOMING_SCHEDULE_HORIZON_DAYS = 2;
 function computeUpcomingSchedule(horizonDays = UPCOMING_SCHEDULE_HORIZON_DAYS) {
   const batches = load('batches').filter(b => b.status === 'active');
   const farms = load('farms');
@@ -117,6 +117,11 @@ function renderDashboard() {
   if (poultryPriceState.status === 'idle') fetchPoultryPrices(); else renderPoultryPriceCard();
 }
 
+// 육계는 보통 이 일령 전후로 출하돼 그 이후엔 표준 매뉴얼을 볼 일이 없다 — 대시보드
+// 사양표준 요약·계사 목표 온습도 카드 둘 다에서 이 일령을 넘은 육계 배치는 뺀다.
+// 산란계는 출하 개념이 없어(장기간 사육) 이 상한을 적용하지 않는다.
+const BROILER_STANDARD_MAX_AGE = 35;
+
 // ── 사양표준 요약 (육종회사 표준 매뉴얼) ─────────────────────────────────────
 // 축종/품종이 설정된 사육중 배치를 대상으로, 오늘 일령(육계)/주령(산란계)에 해당하는
 // 표준 수치를 js/breedStandards.js의 CONSULT_BREEDS·lookupBroiler·lookupLayerPhase로
@@ -133,6 +138,7 @@ function computeBreedStandardSummary() {
     const farm = farms.find(f => f.id === b.farmId);
     const dayAge = computeDayAge(b.placementDate);
     if (dayAge < 1) return;
+    if (speciesKey === 'broiler' && dayAge > BROILER_STANDARD_MAX_AGE) return;
     let ageLabel, parts = [];
     if (speciesKey === 'broiler') {
       const row = lookupBroiler(breed.data, dayAge);
@@ -240,6 +246,7 @@ function computeEnvStandards() {
       if (!breed) return null;
       const dayAge = computeDayAge(b.placementDate);
       if (dayAge < 1) return null;
+      if (speciesKey === 'broiler' && dayAge > BROILER_STANDARD_MAX_AGE) return null;
       const age = speciesKey === 'broiler' ? dayAge : Math.ceil(dayAge / 7);
       const env = lookupEnvStandard(speciesKey, b.breed, age);
       if (!env) return null;
