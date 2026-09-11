@@ -371,6 +371,11 @@ function isConsultLog(l) {
   return l.programDay == null;
 }
 
+// 편집/삭제 버튼을 행마다 우측 끝에 두면 표가 넓어(칸이 많아) 스크롤해야 눌린다.
+// 그래서 행을 클릭해 하나만 고르면, 카드 상단 툴바의 편집/삭제 버튼이 그 건에
+// 작동하는 방식으로 바꿨다 — 버튼이 항상 스크롤 없이 보이는 위치에 있다.
+let mcSelectedLogId = null;
+
 function renderConsultLogPage() {
   const farmId = document.getElementById('mc-farm-filter')?.value || '';
   const batchId = document.getElementById('mc-batch-filter')?.value || '';
@@ -383,6 +388,13 @@ function renderConsultLogPage() {
     const idsInFarm = new Set(batches.filter(b => b.farmId === farmId).map(b => b.id));
     logs = logs.filter(l => idsInFarm.has(l.batchId));
   }
+  // 필터가 바뀌었거나 삭제돼서 골라둔 항목이 더 이상 목록에 없으면 선택을 비운다.
+  if (mcSelectedLogId && !logs.some(l => l.id === mcSelectedLogId)) mcSelectedLogId = null;
+  const editBtn = document.getElementById('mc-edit-btn');
+  const deleteBtn = document.getElementById('mc-delete-btn');
+  if (editBtn) editBtn.disabled = !mcSelectedLogId;
+  if (deleteBtn) deleteBtn.disabled = !mcSelectedLogId;
+
   const tbody = document.getElementById('medconsult-tbody');
   const empty = document.getElementById('medconsult-empty');
   if (!logs.length) { tbody.innerHTML=''; empty.style.display=''; return; }
@@ -396,7 +408,8 @@ function renderConsultLogPage() {
     // 입추일과 상담일자로 그날의 일령을 계산해 채운다(둘 중 하나라도 없으면 '-').
     const age = b?.placementDate ? dayAgeOnDate(b.placementDate, l.logDate) : null;
     const ageLabel = age == null ? '-' : age < 1 ? '입추 전' : `${age}일령`;
-    return `<tr>
+    const selected = l.id === mcSelectedLogId;
+    return `<tr onclick="selectConsultLog('${l.id}')" style="cursor:pointer${selected ? ';background:var(--accent-light)' : ''}">
       <td>${l.logDate}</td>
       <td>${farm?.name || '-'}</td>
       <td style="color:var(--text-secondary)">${b?.house || '-'}</td>
@@ -406,10 +419,22 @@ function renderConsultLogPage() {
       <td>${medParts.length ? medParts.join(' / ') : '-'}</td>
       <td>${photoCount ? `📷 ${photoCount}장` : '-'}</td>
       <td style="color:var(--text-secondary);font-size:11px">${l.administeredByEmail||'-'}</td>
-      <td>
-        <button class="btn btn-outline btn-sm" onclick="openConsultLogModal('${l.id}')">편집</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteMedicationLog('${l.id}')">삭제</button>
-      </td>
     </tr>`;
   }).join('');
+}
+
+// 같은 행을 다시 클릭하면 선택을 해제한다(다시 눌러 접을 수 있게).
+function selectConsultLog(id) {
+  mcSelectedLogId = mcSelectedLogId === id ? null : id;
+  renderConsultLogPage();
+}
+
+function editSelectedConsultLog() {
+  if (!mcSelectedLogId) return;
+  openConsultLogModal(mcSelectedLogId);
+}
+
+function deleteSelectedConsultLog() {
+  if (!mcSelectedLogId) return;
+  deleteMedicationLog(mcSelectedLogId);
 }
