@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>대한동물병원 업무시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260910a">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260910a">
-<link rel="icon" href="img/favicon.ico?v=20260910a">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260910a">
-<link rel="stylesheet" href="css/styles.css?v=20260910a">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260911a">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260911a">
+<link rel="icon" href="img/favicon.ico?v=20260911a">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260911a">
+<link rel="stylesheet" href="css/styles.css?v=20260911a">
 </head>
 <body>
 
@@ -662,6 +662,13 @@
       <div class="text-muted mt-8" id="sms-recipient-summary">선택된 수신자 없음</div>
     </div>
     <div class="form-group"><label>발신번호</label><input id="sms-from" placeholder="예) 01091508844"></div>
+    <div class="form-group">
+      <label>투약 프로그램 불러오기 <span class="text-muted">(선택하면 아래 내용을 자동으로 채웁니다 — 채운 뒤에도 자유롭게 고쳐 보낼 수 있습니다)</span></label>
+      <div class="flex-gap">
+        <select id="sms-program-select" style="flex:1"><option value="">프로그램 선택...</option></select>
+        <button type="button" class="btn btn-outline btn-sm" onclick="fillSmsFromProgram()">내용 채우기</button>
+      </div>
+    </div>
     <div class="form-group">
       <label>내용 *</label>
       <textarea id="sms-content" rows="6" placeholder="문자 내용을 입력하세요" oninput="updateSmsByteCount()"></textarea>
@@ -1439,29 +1446,29 @@
      async defer라 이 스크립트가 늦게 끝나도 페이지 로드를 막지 않는다 — 실제로
      쓰는 시점(사진 첨부 후 저장)엔 이미 다 로드돼 있다. -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="js/config.js?v=20260910a"></script>
-<script src="js/supabaseClient.js?v=20260910a"></script>
-<script src="js/auth.js?v=20260910a"></script>
-<script src="js/googleDrive.js?v=20260910a"></script>
-<script src="js/breedStandards.js?v=20260910a"></script>
-<script src="js/farms.js?v=20260910a"></script>
-<script src="js/sms.js?v=20260910a"></script>
-<script src="js/masterdata.js?v=20260910a"></script>
-<script src="js/rxProducts.js?v=20260910a"></script>
-<script src="js/drugSearch.js?v=20260910a"></script>
-<script src="js/programs.js?v=20260910a"></script>
-<script src="js/batches.js?v=20260910a"></script>
-<script src="js/medicationLog.js?v=20260910a"></script>
-<script src="js/prescriptions.js?v=20260910a"></script>
-<script src="js/preShipment.js?v=20260910a"></script>
-<script src="js/movePermit.js?v=20260910a"></script>
-<script src="js/clinicalAssessment.js?v=20260910a"></script>
-<script src="js/rodentControl.js?v=20260910a"></script>
-<script src="js/schedule.js?v=20260910a"></script>
-<script src="js/dashboard.js?v=20260910a"></script>
-<script src="js/reports.js?v=20260910a"></script>
-<script src="js/print.js?v=20260910a"></script>
-<script src="js/backup.js?v=20260910a"></script>
-<script src="js/app.js?v=20260910a"></script>
+<script src="js/config.js?v=20260911a"></script>
+<script src="js/supabaseClient.js?v=20260911a"></script>
+<script src="js/auth.js?v=20260911a"></script>
+<script src="js/googleDrive.js?v=20260911a"></script>
+<script src="js/breedStandards.js?v=20260911a"></script>
+<script src="js/farms.js?v=20260911a"></script>
+<script src="js/sms.js?v=20260911a"></script>
+<script src="js/masterdata.js?v=20260911a"></script>
+<script src="js/rxProducts.js?v=20260911a"></script>
+<script src="js/drugSearch.js?v=20260911a"></script>
+<script src="js/programs.js?v=20260911a"></script>
+<script src="js/batches.js?v=20260911a"></script>
+<script src="js/medicationLog.js?v=20260911a"></script>
+<script src="js/prescriptions.js?v=20260911a"></script>
+<script src="js/preShipment.js?v=20260911a"></script>
+<script src="js/movePermit.js?v=20260911a"></script>
+<script src="js/clinicalAssessment.js?v=20260911a"></script>
+<script src="js/rodentControl.js?v=20260911a"></script>
+<script src="js/schedule.js?v=20260911a"></script>
+<script src="js/dashboard.js?v=20260911a"></script>
+<script src="js/reports.js?v=20260911a"></script>
+<script src="js/print.js?v=20260911a"></script>
+<script src="js/backup.js?v=20260911a"></script>
+<script src="js/app.js?v=20260911a"></script>
 </body>
 </html>

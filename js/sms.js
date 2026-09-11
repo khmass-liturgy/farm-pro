@@ -4,8 +4,12 @@
 // Edge Function(supabase/functions/send-sms)에 위임한다 — 인증키는 그 함수의
 // 서버 쪽 환경변수에만 있고 브라우저로는 절대 내려오지 않는다.
 //
-// 내용은 지금은 "직접입력"만 지원한다. 처방전/투약프로그램/보고서 내용을 자동으로
-// 채워 넣는 건 추후 필요에 맞게 추가한다(각 화면에서 이 모달을 프리필해 열도록 하면 됨).
+// 내용은 직접입력이 기본이지만, 투약 프로그램을 골라 "내용 채우기"를 누르면 그
+// 프로그램의 일자별 약품·백신 일정을 문자 내용에 채워 넣는다(그 뒤에도 자유롭게
+// 고쳐서 보낼 수 있다). dayDrugLabel/dayVaccineLabel/programDayDateShort는
+// js/programs.js에 있다 — sms.js가 그보다 먼저 로드되지만, 함수 본문 안에서
+// 참조하는 것뿐이라 실제 호출(사용자가 버튼을 누르는 시점)엔 이미 다 로드돼 있다.
+// 처방전/보고서 내용도 필요해지면 같은 방식으로 추가하면 된다.
 //
 // 수신자는 두 가지를 섞어서 쓸 수 있다: 등록된 농장 선택 + 번호 직접 입력.
 // 아직 농장으로 등록하지 않은 곳(신규 상담처 등)에도 보내야 하는 경우가 있어서다.
@@ -45,8 +49,49 @@ function openSmsModal() {
   document.getElementById('sms-from').value = DEFAULT_VET_PHONE;
   document.getElementById('sms-content').value = '';
   renderSmsFarmList();
+  populateSmsProgramSelect();
   updateSmsByteCount();
   openModal('modal-sms');
+}
+
+// 최근 등록한 프로그램이 위로 오게 정렬한다(방금 만든 프로그램을 보내는 경우가 많다).
+function populateSmsProgramSelect() {
+  const sel = document.getElementById('sms-program-select');
+  if (!sel) return;
+  const programs = load('programs').slice()
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  sel.innerHTML = '<option value="">프로그램 선택...</option>' + programs.map(p =>
+    `<option value="${p.id}">${p.farmName || '농장 미지정'} - ${p.name}</option>`).join('');
+}
+
+// 프로그램의 일자별 계획 중 약품·백신이 실제로 있는 날만 골라 문자로 보낼 수 있는
+// 텍스트로 줄인다. 입추일이 있으면 "N일령(월/일)"로, 없으면 "N일령"만 적는다.
+function buildProgramSmsText(p) {
+  const lines = [`[투약 프로그램 안내] ${p.farmName || ''} - ${p.name}`];
+  (p.days || []).slice().sort((a, b) => a.day - b.day).forEach(d => {
+    const drug = dayDrugLabel(d);
+    const vaccine = dayVaccineLabel(d);
+    if (!drug && !vaccine) return;
+    const dateLabel = p.placementDate ? `(${programDayDateShort(p.placementDate, d.day)})` : '';
+    const parts = [drug, vaccine && `백신 ${vaccine}`].filter(Boolean).join(' / ');
+    lines.push(`${d.day}일령${dateLabel}: ${parts}`);
+  });
+  if (lines.length === 1) lines.push('등록된 투약·백신 일정이 없습니다.');
+  return lines.join('\n');
+}
+
+// "내용 채우기" 버튼. 내용을 채우는 김에 그 프로그램의 농장도 수신자로 함께 체크해준다
+// (프로그램을 보낼 때는 대개 그 농장에 보내는 것이므로) — 이미 체크돼 있으면 그대로 둔다.
+function fillSmsFromProgram() {
+  const sel = document.getElementById('sms-program-select');
+  const prog = load('programs').find(p => p.id === sel.value);
+  if (!prog) { alert('불러올 투약 프로그램을 선택해주세요.'); return; }
+  document.getElementById('sms-content').value = buildProgramSmsText(prog);
+  updateSmsByteCount();
+  if (prog.farmId && !smsSelectedFarmIds.has(prog.farmId)) {
+    smsSelectedFarmIds.add(prog.farmId);
+    renderSmsFarmList();
+  }
 }
 
 function renderSmsFarmList() {
