@@ -181,6 +181,42 @@ async function deleteRxPrescription(id) {
   renderPrescriptions();
 }
 
+// 목록 왼쪽 체크박스로 고른 여러 건을 한 번에 인쇄/편집/삭제한다(이동승인서·출하전검사와 같은 패턴).
+// 편집은 대상이 하나로 좁혀졌을 때만, 인쇄·삭제는 하나 이상 선택됐을 때 활성화된다.
+let rxSelectedIds = new Set();
+
+function toggleRxSelectAll(checked) {
+  const ids = load('prescriptions').map(p => p.id);
+  rxSelectedIds = checked ? new Set(ids) : new Set();
+  renderPrescriptions();
+}
+function toggleRxSelect(id, checked) {
+  if (checked) rxSelectedIds.add(id); else rxSelectedIds.delete(id);
+  renderPrescriptions();
+}
+
+function editSelectedRxPrescription() {
+  if (rxSelectedIds.size !== 1) return;
+  openRxPrescriptionModal([...rxSelectedIds][0]);
+}
+
+async function deleteSelectedRxPrescriptions() {
+  if (!rxSelectedIds.size) return;
+  if (!confirm(`선택한 처방전 ${rxSelectedIds.size}건을 삭제하시겠습니까?`)) return;
+  try {
+    for (const id of rxSelectedIds) await deleteRow('prescriptions', id);
+  } catch (e) { alert('삭제 실패: ' + e.message); return; }
+  rxSelectedIds.clear();
+  renderPrescriptions();
+}
+
+function printSelectedRxPrescriptions() {
+  const list = load('prescriptions').filter(p => rxSelectedIds.has(p.id));
+  if (!list.length) { alert('인쇄할 처방전을 먼저 체크해주세요.'); return; }
+  document.getElementById('print-area').innerHTML = list.map(buildPrescriptionHtml).join('');
+  setTimeout(() => window.print(), 200);
+}
+
 function renderPrescriptions() {
   const q = (document.getElementById('rx-search')?.value || '').toLowerCase();
   const ff = document.getElementById('rx-filter-farm')?.value || '';
@@ -189,26 +225,38 @@ function renderPrescriptions() {
     return (!q || (p.farmName || '').toLowerCase().includes(q) || productNames.includes(q)) &&
       (!ff || p.farmId === ff);
   });
+  const liveIds = new Set(load('prescriptions').map(p => p.id));
+  rxSelectedIds.forEach(id => { if (!liveIds.has(id)) rxSelectedIds.delete(id); });
+
+  const printBtn = document.getElementById('rx-print-btn');
+  const editBtn = document.getElementById('rx-edit-btn');
+  const deleteBtn = document.getElementById('rx-delete-btn');
+  if (printBtn) printBtn.disabled = rxSelectedIds.size === 0;
+  if (editBtn) editBtn.disabled = rxSelectedIds.size !== 1;
+  if (deleteBtn) deleteBtn.disabled = rxSelectedIds.size === 0;
+
   const tbody = document.getElementById('rx-tbody');
   const empty = document.getElementById('rx-empty');
-  if (!list.length) { tbody.innerHTML = ''; empty.style.display = ''; return; }
+  const checkAll = document.getElementById('rx-check-all');
+  if (!list.length) {
+    tbody.innerHTML = ''; empty.style.display = '';
+    if (checkAll) checkAll.checked = false;
+    return;
+  }
   empty.style.display = 'none';
+  if (checkAll) checkAll.checked = list.every(p => rxSelectedIds.has(p.id));
   tbody.innerHTML = list.map(p => {
     const items = p.items || [];
     const productLabel = items.map(it => it.productName).join(', ') || '-';
     return `
     <tr>
+      <td style="text-align:center"><input type="checkbox" ${rxSelectedIds.has(p.id) ? 'checked' : ''} onchange="toggleRxSelect('${p.id}', this.checked)"></td>
       <td>${p.issueNo != null ? '#' + p.issueNo : '-'}</td>
       <td>${p.issueDate}</td>
       <td><strong>${p.farmName}</strong></td>
       <td>${p.owner || '-'}</td>
       <td>${productLabel}</td>
       <td>${items.length}개</td>
-      <td><div class="flex-gap">
-        <button class="btn btn-primary btn-sm" onclick="printPrescription('${p.id}')">🖨️ 인쇄</button>
-        <button class="btn btn-outline btn-sm" onclick="openRxPrescriptionModal('${p.id}')">편집</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteRxPrescription('${p.id}')">삭제</button>
-      </div></td>
     </tr>`;
   }).join('');
 }
@@ -254,6 +302,12 @@ function renderRxTable(cellDefs) {
 function printPrescription(id) {
   const rx = load('prescriptions').find(p => p.id === id);
   if (!rx) return;
+  document.getElementById('print-area').innerHTML = buildPrescriptionHtml(rx);
+  closeModal('modal-prescription');
+  setTimeout(() => window.print(), 200);
+}
+
+function buildPrescriptionHtml(rx) {
   const indivMark = rx.scope === 'individual' ? '■' : ' ';
   const groupMark = rx.scope === 'group' ? '■' : ' ';
   const items = rx.items || [];
@@ -385,9 +439,5 @@ function printPrescription(id) {
     rxCell('footer', 1, 16, 31, 32, '210㎜×297㎜(일반용지 60g/㎡(재활용품))'),
   ];
 
-  const html = `<div class="print-page">${renderRxTable(cells)}</div>`;
-
-  document.getElementById('print-area').innerHTML = html;
-  closeModal('modal-prescription');
-  setTimeout(() => window.print(), 200);
+  return `<div class="print-page">${renderRxTable(cells)}</div>`;
 }

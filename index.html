@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>대한동물병원 업무시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260911c">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260911c">
-<link rel="icon" href="img/favicon.ico?v=20260911c">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260911c">
-<link rel="stylesheet" href="css/styles.css?v=20260911c">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260911d">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260911d">
+<link rel="icon" href="img/favicon.ico?v=20260911d">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260911d">
+<link rel="stylesheet" href="css/styles.css?v=20260911d">
 </head>
 <body>
 
@@ -411,11 +411,20 @@
         </select>
       </div>
       <div class="card">
+        <div class="card-header">
+          <div class="card-title">처방전 발급 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 체크박스로 골라 인쇄·편집·삭제하세요(인쇄·삭제는 여러 건, 편집은 한 건)</span></div>
+          <div class="flex-gap">
+            <button class="btn btn-primary btn-sm" id="rx-print-btn" onclick="printSelectedRxPrescriptions()" disabled>🖨️ 인쇄</button>
+            <button class="btn btn-outline btn-sm" id="rx-edit-btn" onclick="editSelectedRxPrescription()" disabled>편집</button>
+            <button class="btn btn-danger btn-sm" id="rx-delete-btn" onclick="deleteSelectedRxPrescriptions()" disabled>삭제</button>
+          </div>
+        </div>
         <div class="tbl-wrap">
           <table>
             <thead>
               <tr>
-                <th>발급번호</th><th>발급일</th><th>농장명</th><th>농장주</th><th>품목</th><th>품목수</th><th>관리</th>
+                <th style="width:36px"><input type="checkbox" id="rx-check-all" onchange="toggleRxSelectAll(this.checked)"></th>
+                <th>발급번호</th><th>발급일</th><th>농장명</th><th>농장주</th><th>품목</th><th>품목수</th>
               </tr>
             </thead>
             <tbody id="rx-tbody"></tbody>
@@ -1460,29 +1469,29 @@
      async defer라 이 스크립트가 늦게 끝나도 페이지 로드를 막지 않는다 — 실제로
      쓰는 시점(사진 첨부 후 저장)엔 이미 다 로드돼 있다. -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="js/config.js?v=20260911c"></script>
-<script src="js/supabaseClient.js?v=20260911c"></script>
-<script src="js/auth.js?v=20260911c"></script>
-<script src="js/googleDrive.js?v=20260911c"></script>
-<script src="js/breedStandards.js?v=20260911c"></script>
-<script src="js/farms.js?v=20260911c"></script>
-<script src="js/sms.js?v=20260911c"></script>
-<script src="js/masterdata.js?v=20260911c"></script>
-<script src="js/rxProducts.js?v=20260911c"></script>
-<script src="js/drugSearch.js?v=20260911c"></script>
-<script src="js/programs.js?v=20260911c"></script>
-<script src="js/batches.js?v=20260911c"></script>
-<script src="js/medicationLog.js?v=20260911c"></script>
-<script src="js/prescriptions.js?v=20260911c"></script>
-<script src="js/preShipment.js?v=20260911c"></script>
-<script src="js/movePermit.js?v=20260911c"></script>
-<script src="js/clinicalAssessment.js?v=20260911c"></script>
-<script src="js/rodentControl.js?v=20260911c"></script>
-<script src="js/schedule.js?v=20260911c"></script>
-<script src="js/dashboard.js?v=20260911c"></script>
-<script src="js/reports.js?v=20260911c"></script>
-<script src="js/print.js?v=20260911c"></script>
-<script src="js/backup.js?v=20260911c"></script>
-<script src="js/app.js?v=20260911c"></script>
+<script src="js/config.js?v=20260911d"></script>
+<script src="js/supabaseClient.js?v=20260911d"></script>
+<script src="js/auth.js?v=20260911d"></script>
+<script src="js/googleDrive.js?v=20260911d"></script>
+<script src="js/breedStandards.js?v=20260911d"></script>
+<script src="js/farms.js?v=20260911d"></script>
+<script src="js/sms.js?v=20260911d"></script>
+<script src="js/masterdata.js?v=20260911d"></script>
+<script src="js/rxProducts.js?v=20260911d"></script>
+<script src="js/drugSearch.js?v=20260911d"></script>
+<script src="js/programs.js?v=20260911d"></script>
+<script src="js/batches.js?v=20260911d"></script>
+<script src="js/medicationLog.js?v=20260911d"></script>
+<script src="js/prescriptions.js?v=20260911d"></script>
+<script src="js/preShipment.js?v=20260911d"></script>
+<script src="js/movePermit.js?v=20260911d"></script>
+<script src="js/clinicalAssessment.js?v=20260911d"></script>
+<script src="js/rodentControl.js?v=20260911d"></script>
+<script src="js/schedule.js?v=20260911d"></script>
+<script src="js/dashboard.js?v=20260911d"></script>
+<script src="js/reports.js?v=20260911d"></script>
+<script src="js/print.js?v=20260911d"></script>
+<script src="js/backup.js?v=20260911d"></script>
+<script src="js/app.js?v=20260911d"></script>
 </body>
 </html>
