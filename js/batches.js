@@ -145,8 +145,21 @@ async function deleteBatch(id) {
   renderBatches();
 }
 
+// 행 클릭은 이미 상세 화면 이동에 쓰이고 있어서(openBatchDetail), 진료기록처럼
+// 행 전체를 눌러 고르게 하면 편집·삭제를 누르기도 전에 상세로 넘어가 버린다.
+// 그래서 여기는 행 왼쪽의 작은 체크박스로만 고른다(체크박스 칸은 클릭이 상세
+// 이동으로 안 번지게 stopPropagation) — 나머지 행 클릭은 그대로 상세로 이동한다.
+let batchSelectedId = null;
+
 function renderBatches() {
   const batches = load('batches');
+  // 필터가 바뀌었거나 삭제돼서 골라둔 항목이 더 이상 목록에 없으면 선택을 비운다.
+  if (batchSelectedId && !batches.some(b => b.id === batchSelectedId)) batchSelectedId = null;
+  const editBtn = document.getElementById('batch-edit-btn');
+  const deleteBtn = document.getElementById('batch-delete-btn');
+  if (editBtn) editBtn.disabled = !batchSelectedId;
+  if (deleteBtn) deleteBtn.disabled = !batchSelectedId;
+
   const tbody = document.getElementById('batch-tbody');
   const empty = document.getElementById('batch-empty');
   if (!batches.length) { tbody.innerHTML=''; empty.style.display=''; return; }
@@ -162,7 +175,11 @@ function renderBatches() {
     const statusBadge = `<span class="badge ${displayStatus.badgeClass}">${displayStatus.label}</span>`;
     const speciesKey = b.species === '육계' ? 'broiler' : b.species === '산란계' ? 'layer' : null;
     const breedName = speciesKey && b.breed ? (CONSULT_BREEDS[speciesKey].breeds[b.breed]?.name || b.breed) : '-';
-    return `<tr style="cursor:pointer" onclick="openBatchDetail('${b.id}')">
+    const selected = b.id === batchSelectedId;
+    return `<tr style="cursor:pointer${selected ? ';background:var(--accent-light)' : ''}" onclick="openBatchDetail('${b.id}')">
+      <td onclick="event.stopPropagation()" style="text-align:center">
+        <input type="checkbox" ${selected ? 'checked' : ''} onchange="selectBatchRow('${b.id}')" title="선택해서 편집·삭제">
+      </td>
       <td><strong>${farm?.name || '(삭제된 농장)'}</strong></td>
       <td>${prog ? prog.name : (b.programName || '-')}</td>
       <td>${b.placementDate}</td>
@@ -171,12 +188,24 @@ function renderBatches() {
       <td>${b.house || '-'}</td>
       <td>${b.species ? `${b.species}${breedName !== '-' ? ' · '+breedName : ''}` : '-'}</td>
       <td>${statusBadge}</td>
-      <td onclick="event.stopPropagation()"><div class="flex-gap">
-        <button class="btn btn-outline btn-sm" onclick="openBatchModal('${b.id}')">편집</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteBatch('${b.id}')">삭제</button>
-      </div></td>
     </tr>`;
   }).join('');
+}
+
+// 같은 행을 다시 체크하면 선택을 해제한다(다시 눌러 접을 수 있게).
+function selectBatchRow(id) {
+  batchSelectedId = batchSelectedId === id ? null : id;
+  renderBatches();
+}
+
+function editSelectedBatch() {
+  if (!batchSelectedId) return;
+  openBatchModal(batchSelectedId);
+}
+
+function deleteSelectedBatch() {
+  if (!batchSelectedId) return;
+  deleteBatch(batchSelectedId);
 }
 
 function openBatchDetail(id) {
