@@ -306,7 +306,7 @@ def main():
         farm_name = p.get("farm_name_snapshot") or "(농장명 미상)"
         lines.append((farm_name, age))
 
-    lines.sort(key=lambda x: x[0])
+    lines.sort(key=lambda x: x[1])  # 일령 어린(작은) 순
 
     if not lines:
         text = f"📋 {today.isoformat()} 오늘 일령\n입추일이 지난 프로그램이 없습니다."
