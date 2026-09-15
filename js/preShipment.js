@@ -138,15 +138,19 @@ function renderPreShipments() {
 }
 
 // ─── 동별 시료채취 내역 줄 ─────────────────────────────────────────────────
-function psRowHtml(idx, row) {
+function psRowHtml(idx, row, isSaved) {
   const v = k => (row && row[k] != null ? row[k] : '');
+  // 저장된 기존 값을 불러온 줄(isSaved)은 사육현황이 바뀌어도 recalcPsRowDefaults()가
+  // 건드리지 않게 처음부터 manualEdit 표시를 붙여 둔다 — 새로 만든 기본값 줄만
+  // "아직 안 건드림" 상태로 둬서 사육현황을 따라가게 한다.
+  const lockAttr = isSaved ? " data-manual-edit=\"1\"" : '';
   const sampleInputs = PS_SAMPLE_COLS.map(c =>
     `<td><input id="ps-${c.key}-${idx}" type="number" min="0" value="${v(c.key)}" style="width:100%"></td>`
   ).join('');
   return `<tr id="ps-row-${idx}">
     <td><input id="ps-house-${idx}" value="${v('house')}" placeholder="예) 1동" style="width:100%"></td>
-    <td><input id="ps-count-${idx}" type="number" min="0" value="${v('count')}" style="width:100%"></td>
-    <td><input id="ps-age-${idx}" type="number" min="0" value="${v('ageDays')}" style="width:100%"></td>
+    <td><input id="ps-count-${idx}" type="number" min="0" value="${v('count')}" oninput="this.dataset.manualEdit='1'"${lockAttr} style="width:100%"></td>
+    <td><input id="ps-age-${idx}" type="number" min="0" value="${v('ageDays')}" oninput="this.dataset.manualEdit='1'"${lockAttr} style="width:100%"></td>
     <td><input id="ps-dead-${idx}" type="number" min="0" value="${v('deadCount')}" style="width:100%"></td>
     <td><input id="ps-clinical-${idx}" value="${v('clinical')}" style="width:100%"></td>
     ${sampleInputs}
@@ -159,7 +163,7 @@ function addPsRow(row) {
   const tbody = document.getElementById('ps-rows-body');
   if (!tbody) return;
   const data = row || psDefaultRow(tbody.children.length + 1);
-  tbody.insertAdjacentHTML('beforeend', psRowHtml(psRowSeq, data));
+  tbody.insertAdjacentHTML('beforeend', psRowHtml(psRowSeq, data, !!row));
   psRowSeq++;
 }
 
@@ -212,6 +216,7 @@ function onPsFarmChange(force) {
   set('ps-scale', farm.count);
   set('ps-house-count', farm.houses);
   set('ps-species', farm.type);
+  set('ps-ship-count', farm.count);
   // 품종·일령은 농장이 아니라 계군(입추)에 있다. 사육중인 계군이 있으면 거기서 가져온다.
   const b = load('batches')
     .filter(x => x.farmId === farm.id && x.status === 'active')
@@ -223,6 +228,29 @@ function onPsFarmChange(force) {
     const age = computeDayAge(b.placementDate);
     if (age >= 1) set('ps-age-days', age);
   }
+  // 농장을 고르기 전에 이미 추가돼 있던 줄(모달을 열 때 자동으로 생기는 첫 줄 등)은
+  // psDefaultRow()가 그때는 사육규모·사육동수가 비어 있어 사육수수를 못 채웠다.
+  // 그래서 여기서도 한 번 더 채워준다 — 사용자가 직접 고친 칸은 건드리지 않는다.
+  recalcPsRowDefaults();
+}
+
+// 사육현황(사육규모/사육동수/일령)이 바뀔 때마다 아직 손대지 않은 줄들의 사육수수·일령을
+// 다시 계산해 채운다. 사용자가 그 칸을 직접 고치면 psRowHtml에서 dataset.manualEdit를
+// 남기므로, 그 표시가 없는 칸만 갱신한다(직접 고친 값을 덮어쓰지 않기 위함).
+function recalcPsRowDefaults() {
+  const tbody = document.getElementById('ps-rows-body');
+  if (!tbody) return;
+  const scale = Number(document.getElementById('ps-scale')?.value) || 0;
+  const houseCount = Number(document.getElementById('ps-house-count')?.value) || 0;
+  const ageDays = document.getElementById('ps-age-days')?.value || '';
+  const count = (scale && houseCount) ? Math.round(scale / houseCount / 100) * 100 : null;
+  [...tbody.children].forEach(tr => {
+    const idx = tr.id.replace('ps-row-', '');
+    const countEl = document.getElementById(`ps-count-${idx}`);
+    const ageEl = document.getElementById(`ps-age-${idx}`);
+    if (countEl && countEl.dataset.manualEdit !== '1' && count != null) countEl.value = count;
+    if (ageEl && ageEl.dataset.manualEdit !== '1' && ageDays !== '') ageEl.value = ageDays;
+  });
 }
 
 function openPreShipmentModal(id) {
