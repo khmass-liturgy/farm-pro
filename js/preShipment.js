@@ -53,16 +53,20 @@ function onPsSampledAtChange() {
 }
 
 // 새로 추가하는 동별 줄의 기본값. 사육사는 몇 번째 줄인지로 "N동"을 채우고, 사육수수는
-// 사육규모÷사육동수로 어림한다(둘 다 아직 안 채워졌으면 빈 칸). 인후두·총배설강은
-// AI 채취 표준 수량인 5로, 기타임상증상은 "정상"으로 미리 채운다 — 전부 그대로 두는
-// 경우가 대부분이고, 다를 때만 고쳐 쓰면 되게 하기 위함이다. 기존 저장 데이터를 불러올
+// 사육규모÷사육동수를 백 단위로 반올림해 어림한다(예: 3,333 -> 3,300 — 실제 계군수는
+// 동마다 조금씩 달라 십 단위까지 정확한 척 보여줄 필요가 없다). 일령은 사육현황 칸의
+// 일령을 그대로 물려받아 두 곳이 어긋나지 않게 한다. 인후두·총배설강은 AI 채취 표준
+// 수량인 5로, 기타임상증상은 "정상"으로 미리 채운다 — 전부 그대로 두는 경우가
+// 대부분이고, 다를 때만 고쳐 쓰면 되게 하기 위함이다. 기존 저장 데이터를 불러올
 // 때(row가 있을 때)는 이 기본값을 쓰지 않는다.
 function psDefaultRow(rowNum) {
   const scale = Number(document.getElementById('ps-scale')?.value) || 0;
   const houseCount = Number(document.getElementById('ps-house-count')?.value) || 0;
+  const ageDays = document.getElementById('ps-age-days')?.value || '';
   return {
     house: `${rowNum}동`,
-    count: (scale && houseCount) ? Math.round(scale / houseCount) : null,
+    count: (scale && houseCount) ? Math.round(scale / houseCount / 100) * 100 : null,
+    ageDays: ageDays !== '' ? Number(ageDays) : null,
     clinical: '정상',
     deadCount: 5,
     trachea: 5,
