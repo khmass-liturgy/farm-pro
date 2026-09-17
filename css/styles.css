@@ -554,13 +554,15 @@ body { display: block !important; height: auto !important; overflow: visible !im
 .mp-note { margin-top: 8pt; font-size: 8.5pt; color: #444; }
 
 /* 공수의 업무 3 — 산란성계 출하대장(AI노계출하.xlsx 「검사의뢰서」).
-   ps-title·ps-docno·ps-head·ps-request는 출하전검사와 형태가 같아 그대로 쓴다.
+   ps-title·ps-docno·ps-request는 출하전검사와 형태가 같아 그대로 쓴다.
    번호 붙은 항목 1~10줄은 라벨 길이가 "1. 축 종 :"부터 "9. 출하(예정)도축장명 :"까지
    들쭉날쭉해서, 출하전검사의 라벨칸 고정폭(82pt)을 그대로 쓰면 긴 라벨이 잘린다.
-   그래서 라벨칸 폭을 고정하지 않는 전용 표(hs-table)를 따로 둔다. */
+   그래서 라벨칸 폭을 고정하지 않는 전용 표(hs-table)를 따로 둔다 — 대신 테두리는
+   ps-head와 같은 굵기·색으로 줘서 항목 1~10 전체가 하나의 표처럼 보이게 한다.
+   (신청일·의뢰기관명은 표 밖 문단이라 테두리가 없다 — 표는 항목 1~10로 끝난다.) */
 .hs-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin-bottom: 8pt; }
-.hs-table td { padding: 4pt 6pt; vertical-align: top; }
-.hs-table td.lbl { font-weight: 700; white-space: nowrap; width: 1%; }
+.hs-table td { border: 0.5pt solid #999; padding: 4pt 6pt; vertical-align: top; }
+.hs-table td.lbl { font-weight: 700; white-space: nowrap; width: 1%; background: #f0f4fa !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 /* 확인자(농장주) 서명 — 이동승인서 도장과 달리 이름 위에 겹치는 관인이 아니라
    이름 오른쪽에 붙는 개인 서명이라, 겹치지 않고 나란히 놓는다. */
 .hs-signer { text-align: right; font-size: 10pt; font-weight: 700; margin-top: 16pt; }

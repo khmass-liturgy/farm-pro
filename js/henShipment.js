@@ -208,9 +208,7 @@ function buildHenShipmentHtml(hs) {
     </table>
 
     <div class="ps-request">신청일 &#8195;${rxFormatDateKo(hs.appliedAt)}</div>
-    <table class="ps-head">
-      <tr><td class="lbl">의뢰기관명</td><td colspan="5">${hs.requestOrg || ''}</td></tr>
-    </table>
+    <div class="ps-request">의뢰기관명 &#8195;${hs.requestOrg || ''}</div>
 
     <div class="hs-signer">
       ${hs.owner || ''}
