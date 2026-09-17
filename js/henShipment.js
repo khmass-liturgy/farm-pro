@@ -208,8 +208,8 @@ function buildHenShipmentHtml(hs) {
         <tr><td></td><td>${hs.reexam ? '■' : '□'} 재검사</td></tr>
       </table>
 
-      <div class="ps-request">신청일 &#8195;${rxFormatDateKo(hs.appliedAt)}</div>
-      <div class="ps-request">의뢰기관명 &#8195;${hs.requestOrg || ''}</div>
+      <div class="ps-request hs-request">신청일 &#8195;${rxFormatDateKo(hs.appliedAt)}</div>
+      <div class="ps-request hs-request">의뢰기관명 &#8195;${hs.requestOrg || ''}</div>
 
       <div class="hs-signer">
         ${hs.owner || ''}

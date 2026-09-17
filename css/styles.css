@@ -569,9 +569,13 @@ body { display: block !important; height: auto !important; overflow: visible !im
    따로 좌우 여백을 줄 필요가 없다(이동승인서 mp-frame과 달리 표를 프레임 가장자리에
    딱 붙일 이유가 없어 훨씬 단순하다). */
 .hs-frame { border: 1.2pt solid #000; padding: 10pt 14pt; }
+/* 신청일·의뢰기관명은 ps-request(출하전검사와 공용, 9.5pt)를 그대로 쓰면 다른 곳도
+   같이 커지므로, 이 두 줄에만 얹는 보조 클래스로 여기서만 2배(19pt)로 키운다. */
+.hs-request { font-size: 19pt; }
 /* 확인자(농장주) 서명 — 이동승인서 도장과 달리 이름 위에 겹치는 관인이 아니라
-   이름 오른쪽에 붙는 개인 서명이라, 겹치지 않고 나란히 놓는다. */
-.hs-signer { text-align: right; font-size: 10pt; font-weight: 700; margin-top: 16pt; }
+   이름 오른쪽에 붙는 개인 서명이라, 겹치지 않고 나란히 놓는다. 글자 크기는
+   기존 10pt의 2배인 20pt로 키웠다. */
+.hs-signer { text-align: right; font-size: 20pt; font-weight: 700; margin-top: 16pt; }
 .hs-signature-wrap { display: inline-block; width: 32mm; height: 12mm; vertical-align: middle; position: relative; margin: 0 4pt; }
 .hs-signature { position: absolute; width: 100%; height: 100%; object-fit: contain; opacity: 0.92; pointer-events: none; }
 
