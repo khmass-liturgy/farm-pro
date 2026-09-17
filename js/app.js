@@ -8,6 +8,7 @@ const PAGE_TITLES = {
   'pb-hpai': 'AI 발생예측통계',
   preshipment: '출하전검사',
   movepermit: '이동승인서 발급',
+  henshipment: '산란성계 출하대장',
   clinical: '계군 임상평가',
   rodent: '구서작업 컨설팅 평가',
   farms: '농장 등록/관리',
@@ -35,6 +36,7 @@ const PAGE_ACTIONS = {
   prescriptions: `<button class="btn btn-primary" onclick="openRxPrescriptionModal()">+ 처방전 발급</button>`,
   preshipment: `<button class="btn btn-primary" onclick="openPreShipmentModal()">+ 출하전검사 작성</button>`,
   movepermit: `<button class="btn btn-primary" onclick="openMovePermitModal()">+ 이동승인서 발급</button>`,
+  henshipment: `<button class="btn btn-primary" onclick="openHenShipmentModal()">+ 출하대장 작성</button>`,
   drugs: `<button class="btn btn-primary" onclick="openDrugModal()">+ 약품 추가</button>`,
   'rx-products': `<button class="btn btn-primary" onclick="openRxProductModal()">+ 제품 추가</button>`,
   vaccines: `<button class="btn btn-primary" onclick="openVaccineModal()">+ 백신 추가</button>`,
@@ -122,6 +124,7 @@ function showPage(name) {
   if (name === 'prescriptions') { populateRxFarmFilter(); renderPrescriptions(); }
   if (name === 'preshipment') { populatePsFarmFilter(); renderPreShipments(); }
   if (name === 'movepermit') { populateMpFarmFilter(); renderMovePermits(); }
+  if (name === 'henshipment') { populateHsFarmFilter(); renderHenShipments(); }
   if (name === 'schedule') populateScheduleSelects();
   if (name === 'reports') renderReports();
   if (name === 'drugs') renderDrugs();

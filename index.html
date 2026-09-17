@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>대한동물병원 업무시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260917b">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260917b">
-<link rel="icon" href="img/favicon.ico?v=20260917b">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260917b">
-<link rel="stylesheet" href="css/styles.css?v=20260917b">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260917c">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260917c">
+<link rel="icon" href="img/favicon.ico?v=20260917c">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260917c">
+<link rel="stylesheet" href="css/styles.css?v=20260917c">
 </head>
 <body>
 
@@ -63,6 +63,9 @@
     </div>
     <div class="sidebar-item" onclick="showPage('movepermit')">
       <span class="icon">🚚</span> 이동승인서 발급
+    </div>
+    <div class="sidebar-item" onclick="showPage('henshipment')">
+      <span class="icon">🥚</span> 산란성계 출하대장
     </div>
   </div>
   <div class="sidebar-section">
@@ -414,6 +417,43 @@
       <p class="text-muted mt-16">
         한 농장에서 차량이 여러 대 나가면 <strong>📄 복제</strong>로 앞 건을 그대로 이어받아 운송인·차량번호만 바꿔 발급하세요.
         발급번호 일련번호는 같은 앞자리(예: 26-3)로 발급한 것 중 가장 큰 번호 다음으로 제안됩니다.
+      </p>
+    </div>
+
+    <!-- 공수의 업무: 산란성계 출하대장 -->
+    <div id="page-henshipment" class="page">
+      <div class="search-bar">
+        <input class="search-input" id="hs-search" placeholder="🔍  농장명, 농장주 검색..." oninput="renderHenShipments()">
+        <select id="hs-filter-farm" onchange="renderHenShipments()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);"></select>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">산란성계 출하대장 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 체크박스로 골라 인쇄·편집·삭제하세요(인쇄·삭제는 여러 건, 편집은 한 건)</span></div>
+          <div class="flex-gap">
+            <button class="btn btn-primary btn-sm" id="hs-print-btn" onclick="printSelectedHenShipments()" disabled>🖨️ 인쇄</button>
+            <button class="btn btn-outline btn-sm" id="hs-edit-btn" onclick="editSelectedHenShipment()" disabled>편집</button>
+            <button class="btn btn-danger btn-sm" id="hs-delete-btn" onclick="deleteSelectedHenShipments()" disabled>삭제</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align:center"><input type="checkbox" id="hs-check-all" onchange="toggleHsSelectAll(this.checked)" title="전체 선택"></th>
+                <th>발급번호</th><th>신청일</th><th>농장</th><th>출하수수</th><th>출하주령</th><th>출하(예정)일</th><th>출하(예정)도축장</th>
+              </tr>
+            </thead>
+            <tbody id="hs-tbody"></tbody>
+          </table>
+        </div>
+        <div id="hs-empty" class="empty-state" style="display:none">
+          <div class="icon-big">🥚</div>
+          <p>작성한 산란성계 출하대장이 없습니다. "+ 출하대장 작성"으로 기록하세요.</p>
+        </div>
+      </div>
+      <p class="text-muted mt-16">
+        AI노계출하.xlsx의 「검사의뢰서」와 같은 항목으로 입력하고, 인쇄하면 같은 배치의 산란성계 농장 출하전 정밀검사 의뢰서가 나옵니다.
+        발급번호는 "연도-03-순번"으로 자동 채번되며, 농장을 고르면 축주명·주소·연락처가 자동으로 채워집니다.
       </p>
     </div>
 
@@ -1358,6 +1398,54 @@
   </div>
 </div>
 
+<!-- 모달: 산란성계 출하대장 (AI노계출하.xlsx 「검사의뢰서」) -->
+<div class="modal-bg" id="modal-hen-shipment">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-hs-title">산란성계 출하대장 작성</div>
+      <button class="modal-close" onclick="closeModal('modal-hen-shipment')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>농장 *</label>
+        <select id="hs-farm" onchange="onHsFarmChange(true)"><option value="">농장 선택</option></select>
+      </div>
+      <div class="form-group"><label>No. <span class="text-muted">(연도-03-순번으로 자동표기)</span></label><input id="hs-doc-no" oninput="this.dataset.manualEdit='1'"></div>
+    </div>
+    <div class="text-muted mb-16" id="hs-farm-info">농장을 선택하면 축주명·주소·연락처가 자동으로 채워집니다.</div>
+    <div class="form-row">
+      <div class="form-group"><label>2. 농장주</label><input id="hs-owner"></div>
+      <div class="form-group"><label>연락처</label><input id="hs-phone"></div>
+    </div>
+    <div class="form-group"><label>3. 농장주소</label><input id="hs-address"></div>
+    <hr class="divider">
+    <div class="form-row-3">
+      <div class="form-group"><label>4. 도축장 출하 수수</label><input id="hs-ship-count" type="number" min="0" placeholder="예) 20000"></div>
+      <div class="form-group"><label>5. 출하주령</label><input id="hs-ship-week" type="number" min="0" placeholder="예) 100"></div>
+      <div class="form-group"><label>8. 출하(예정)일</label><input id="hs-ship-date" placeholder="예) 10월 중순경"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>9. 출하(예정)도축장명</label><input id="hs-slaughterhouse" placeholder="예) 정우식품"></div>
+      <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:8px">
+        <label style="display:flex;align-items:center;gap:6px;font-weight:400">
+          <input type="checkbox" id="hs-reexam" style="width:auto"> 재검사
+        </label>
+      </div>
+    </div>
+    <div class="text-muted mb-16" style="font-size:11px">
+      6. 시료종류 및 수량 · 7. 검사항목 · 10. 기타사항은 매번 같은 내용이라 자동으로 채워 인쇄됩니다(수정 불가).
+    </div>
+    <hr class="divider">
+    <div class="form-row">
+      <div class="form-group"><label>신청일 *</label><input id="hs-applied-at" type="date" min="1900-01-01" max="2999-12-31" onchange="onHsAppliedAtChange()"></div>
+      <div class="form-group"><label>의뢰기관명</label><input id="hs-request-org"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-hen-shipment')">취소</button>
+      <button class="btn btn-primary" onclick="saveHenShipment()">저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- 모달: 일령별 계획 변경 (입추 상세의 일자별 표 → "변경") -->
 <!-- 프로그램 전체 편집 모달과 달리 한 일령만 고친다. 전체 편집은 500일치 표를 다시
      그리고 저장 시 입추 자동 등록까지 함께 도는 무거운 흐름이라, 현장에서 "오늘 약만
@@ -1487,29 +1575,30 @@
      async defer라 이 스크립트가 늦게 끝나도 페이지 로드를 막지 않는다 — 실제로
      쓰는 시점(사진 첨부 후 저장)엔 이미 다 로드돼 있다. -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="js/config.js?v=20260917b"></script>
-<script src="js/supabaseClient.js?v=20260917b"></script>
-<script src="js/auth.js?v=20260917b"></script>
-<script src="js/googleDrive.js?v=20260917b"></script>
-<script src="js/breedStandards.js?v=20260917b"></script>
-<script src="js/farms.js?v=20260917b"></script>
-<script src="js/sms.js?v=20260917b"></script>
-<script src="js/masterdata.js?v=20260917b"></script>
-<script src="js/rxProducts.js?v=20260917b"></script>
-<script src="js/drugSearch.js?v=20260917b"></script>
-<script src="js/programs.js?v=20260917b"></script>
-<script src="js/batches.js?v=20260917b"></script>
-<script src="js/medicationLog.js?v=20260917b"></script>
-<script src="js/prescriptions.js?v=20260917b"></script>
-<script src="js/preShipment.js?v=20260917b"></script>
-<script src="js/movePermit.js?v=20260917b"></script>
-<script src="js/clinicalAssessment.js?v=20260917b"></script>
-<script src="js/rodentControl.js?v=20260917b"></script>
-<script src="js/schedule.js?v=20260917b"></script>
-<script src="js/dashboard.js?v=20260917b"></script>
-<script src="js/reports.js?v=20260917b"></script>
-<script src="js/print.js?v=20260917b"></script>
-<script src="js/backup.js?v=20260917b"></script>
-<script src="js/app.js?v=20260917b"></script>
+<script src="js/config.js?v=20260917c"></script>
+<script src="js/supabaseClient.js?v=20260917c"></script>
+<script src="js/auth.js?v=20260917c"></script>
+<script src="js/googleDrive.js?v=20260917c"></script>
+<script src="js/breedStandards.js?v=20260917c"></script>
+<script src="js/farms.js?v=20260917c"></script>
+<script src="js/sms.js?v=20260917c"></script>
+<script src="js/masterdata.js?v=20260917c"></script>
+<script src="js/rxProducts.js?v=20260917c"></script>
+<script src="js/drugSearch.js?v=20260917c"></script>
+<script src="js/programs.js?v=20260917c"></script>
+<script src="js/batches.js?v=20260917c"></script>
+<script src="js/medicationLog.js?v=20260917c"></script>
+<script src="js/prescriptions.js?v=20260917c"></script>
+<script src="js/preShipment.js?v=20260917c"></script>
+<script src="js/movePermit.js?v=20260917c"></script>
+<script src="js/henShipment.js?v=20260917c"></script>
+<script src="js/clinicalAssessment.js?v=20260917c"></script>
+<script src="js/rodentControl.js?v=20260917c"></script>
+<script src="js/schedule.js?v=20260917c"></script>
+<script src="js/dashboard.js?v=20260917c"></script>
+<script src="js/reports.js?v=20260917c"></script>
+<script src="js/print.js?v=20260917c"></script>
+<script src="js/backup.js?v=20260917c"></script>
+<script src="js/app.js?v=20260917c"></script>
 </body>
 </html>

@@ -8,10 +8,10 @@
 
 const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 
-const STORE = { farms: [], drugs: [], vaccines: [], feeds: [], programs: [], batches: [], medicationLogs: [], rxProducts: [], prescriptions: [], clinicalAssessments: [], rodentAssessments: [], preShipments: [], movePermits: [] };
+const STORE = { farms: [], drugs: [], vaccines: [], feeds: [], programs: [], batches: [], medicationLogs: [], rxProducts: [], prescriptions: [], clinicalAssessments: [], rodentAssessments: [], preShipments: [], movePermits: [], henShipments: [] };
 
 // 현재 편집 중인 각 엔티티의 id. 여러 feature 파일이 공유하는 전역 상태라 여기서 한 번만 선언한다.
-const editingId = { farm: null, drug: null, vaccine: null, feed: null, program: null, batch: null, medicationLog: null, rxProduct: null, prescription: null, clinicalAssessment: null, rodentAssessment: null, preShipment: null, movePermit: null };
+const editingId = { farm: null, drug: null, vaccine: null, feed: null, program: null, batch: null, medicationLog: null, rxProduct: null, prescription: null, clinicalAssessment: null, rodentAssessment: null, preShipment: null, movePermit: null, henShipment: null };
 
 // 빈 입력칸("")을 0으로 저장하지 않기 위한 변환. 숫자 칸은 안 적으면 null이어야 한다
 // (0으로 들어가면 "사육수수 0마리"처럼 사실과 다른 값이 서식에 인쇄된다).
@@ -267,6 +267,33 @@ const TABLES = {
         species: r.species, breed: r.breed, ageLabel: r.age_label,
         carrierName: r.carrier_name, carrierPhone: r.carrier_phone,
         note: r.note, issuedByEmail: r.issued_by_email, createdAt: r.created_at,
+      };
+    },
+  },
+  henShipments: {
+    table: 'hen_shipments', orderBy: 'applied_at', ascending: false,
+    toRow(o) {
+      return {
+        doc_no: o.docNo || null,
+        farm_id: o.farmId || null, farm_name_snapshot: o.farmName,
+        owner_snapshot: o.owner || null, address_snapshot: o.address || null, phone_snapshot: o.phone || null,
+        ship_count: numOrNull(o.shipCount), ship_week: numOrNull(o.shipWeek),
+        ship_date: o.shipDate || null, slaughterhouse: o.slaughterhouse || null,
+        reexam: !!o.reexam,
+        applied_at: o.appliedAt, request_org: o.requestOrg || null,
+        created_by_email: o.createdByEmail || null,
+      };
+    },
+    fromRow(r) {
+      return {
+        id: r.id, docNo: r.doc_no,
+        farmId: r.farm_id, farmName: r.farm_name_snapshot,
+        owner: r.owner_snapshot, address: r.address_snapshot, phone: r.phone_snapshot,
+        shipCount: r.ship_count, shipWeek: r.ship_week,
+        shipDate: r.ship_date, slaughterhouse: r.slaughterhouse,
+        reexam: r.reexam,
+        appliedAt: r.applied_at, requestOrg: r.request_org,
+        createdByEmail: r.created_by_email, createdAt: r.created_at,
       };
     },
   },

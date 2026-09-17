@@ -497,6 +497,45 @@ create trigger trg_move_permits_updated_at before update on move_permits
   for each row execute function set_updated_at();
 
 -- ─────────────────────────────────────────────────────────────────────────
+-- 공수의 업무 3: 산란성계 출하대장 (AI노계출하.xlsx 「검사의뢰서」 시트 —
+-- 산란성계 농장 출하전 정밀검사 의뢰서)
+--
+-- 항목 1~10 중 6(시료종류 및 수량)·7(검사항목)·10(기타사항)은 매번 같은 문구라
+-- 입력칸 없이 js/henShipment.js에 고정 문구로 박아 두고 인쇄만 한다. 축종(항목1)도
+-- 이 서식 자체가 산란성계 전용이라 "산란계"로 고정, 컬럼을 두지 않는다.
+--
+-- 발급번호는 "yy-03-순차번호"(예: 26-03-31) 형식으로 이 앱이 채번한다(같은 연도
+-- 안에서 순차 증가 — move_permits처럼 시군 문서번호 체계를 그대로 받는 게 아니라
+-- 이 서식만의 자체 번호라 DB가 채번해도 된다).
+-- ─────────────────────────────────────────────────────────────────────────
+create table if not exists hen_shipments (
+  id uuid primary key default gen_random_uuid(),
+  doc_no text,
+  farm_id uuid references farms(id) on delete set null,
+  farm_name_snapshot text not null,
+  owner_snapshot text,
+  address_snapshot text,
+  phone_snapshot text,
+  ship_count int,
+  ship_week int,
+  ship_date text,
+  slaughterhouse text,
+  reexam boolean not null default false,
+  applied_at date not null default current_date,
+  request_org text,
+  created_by_email text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_hen_shipments_farm_id on hen_shipments(farm_id);
+create index if not exists idx_hen_shipments_applied_at on hen_shipments(applied_at);
+
+drop trigger if exists trg_hen_shipments_updated_at on hen_shipments;
+create trigger trg_hen_shipments_updated_at before update on hen_shipments
+  for each row execute function set_updated_at();
+
+-- ─────────────────────────────────────────────────────────────────────────
 -- 텔레그램 일령 알림에서 뺄 계군(program) 목록.
 --
 -- scripts/send_daily_age.py가 매일 알림을 보내기 전에, 같은 텔레그램 채팅방으로
@@ -628,7 +667,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['farms','drugs','vaccines','feeds','programs','batches','medication_logs','prescription_products','prescriptions','clinical_assessments','rodent_assessments','pre_shipment_inspections','move_permits']
+  foreach t in array array['farms','drugs','vaccines','feeds','programs','batches','medication_logs','prescription_products','prescriptions','clinical_assessments','rodent_assessments','pre_shipment_inspections','move_permits','hen_shipments']
   loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists authenticated_full_access on %I', t);
