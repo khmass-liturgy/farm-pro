@@ -190,30 +190,32 @@ function buildHenShipmentHtml(hs) {
   const n = v => (v == null || v === '' ? '' : Number(v).toLocaleString());
   return `
   <div class="print-page">
-    <div class="ps-title">산란성계 출하대장</div>
-    <div class="ps-docno">No. ${hs.docNo || ''}</div>
+    <div class="hs-frame">
+      <div class="ps-docno">No. ${hs.docNo || ''}</div>
+      <div class="ps-title">산란성계 출하대장</div>
 
-    <table class="hs-table">
-      <tr><td class="lbl">1. 축&#8195;&#8195;종 :</td><td>${HS_FIXED.species}</td></tr>
-      <tr><td class="lbl">2. 농장주 :</td><td>${hs.owner || ''} <span class="text-muted">${hs.phone || ''}</span></td></tr>
-      <tr><td class="lbl">3. 농장주소 :</td><td>${hs.address || ''}</td></tr>
-      <tr><td class="lbl">4. 도축장 출하 수수 :</td><td>${n(hs.shipCount)}${hs.shipCount != null ? ' 수' : ''}</td></tr>
-      <tr><td class="lbl">5. 출하주령 :</td><td>${hs.shipWeek != null ? hs.shipWeek + ' 주령' : ''}</td></tr>
-      <tr><td class="lbl">6. 시료종류 및 수량 :</td><td>${HS_FIXED.sampleSpec}</td></tr>
-      <tr><td class="lbl">7. 검사항목 :</td><td>${HS_FIXED.testItems}</td></tr>
-      <tr><td class="lbl">8. 출하(예정)일 :</td><td>${hs.shipDate || ''}</td></tr>
-      <tr><td class="lbl">9. 출하(예정)도축장명 :</td><td>${hs.slaughterhouse || ''}</td></tr>
-      <tr><td class="lbl">10. 기타사항 :</td><td>${HS_FIXED.etcNote}</td></tr>
-      <tr><td></td><td>${hs.reexam ? '■' : '□'} 재검사</td></tr>
-    </table>
+      <table class="hs-table">
+        <tr><td class="lbl">1. 축&#8195;&#8195;종 :</td><td>${HS_FIXED.species}</td></tr>
+        <tr><td class="lbl">2. 농장주 :</td><td>${hs.owner || ''} <span class="text-muted">${hs.phone || ''}</span></td></tr>
+        <tr><td class="lbl">3. 농장주소 :</td><td>${hs.address || ''}</td></tr>
+        <tr><td class="lbl">4. 도축장 출하 수수 :</td><td>${n(hs.shipCount)}${hs.shipCount != null ? ' 수' : ''}</td></tr>
+        <tr><td class="lbl">5. 출하주령 :</td><td>${hs.shipWeek != null ? hs.shipWeek + ' 주령' : ''}</td></tr>
+        <tr><td class="lbl">6. 시료종류 및 수량 :</td><td>${HS_FIXED.sampleSpec}</td></tr>
+        <tr><td class="lbl">7. 검사항목 :</td><td>${HS_FIXED.testItems}</td></tr>
+        <tr><td class="lbl">8. 출하(예정)일 :</td><td>${hs.shipDate || ''}</td></tr>
+        <tr><td class="lbl">9. 출하(예정)도축장명 :</td><td>${hs.slaughterhouse || ''}</td></tr>
+        <tr><td class="lbl">10. 기타사항 :</td><td>${HS_FIXED.etcNote}</td></tr>
+        <tr><td></td><td>${hs.reexam ? '■' : '□'} 재검사</td></tr>
+      </table>
 
-    <div class="ps-request">신청일 &#8195;${rxFormatDateKo(hs.appliedAt)}</div>
-    <div class="ps-request">의뢰기관명 &#8195;${hs.requestOrg || ''}</div>
+      <div class="ps-request">신청일 &#8195;${rxFormatDateKo(hs.appliedAt)}</div>
+      <div class="ps-request">의뢰기관명 &#8195;${hs.requestOrg || ''}</div>
 
-    <div class="hs-signer">
-      ${hs.owner || ''}
-      <span class="hs-signature-wrap"><img class="hs-signature" src="img/hs-signature.png" alt=""></span>
-      <span class="text-muted">(서명 또는 인)</span>
+      <div class="hs-signer">
+        ${hs.owner || ''}
+        <span class="hs-signature-wrap"><img class="hs-signature" src="img/hs-signature.png" alt=""></span>
+        <span class="text-muted">(서명 또는 인)</span>
+      </div>
     </div>
   </div>`;
 }
