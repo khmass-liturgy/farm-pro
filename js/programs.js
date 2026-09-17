@@ -187,7 +187,11 @@ function openProgramModal(id, source) {
   // 프로그램에 저장된 값이 있으면 그것을, 없으면 그 농장 계군에 입력된 품종을 쓴다.
   const farmType = prog?.farmId ? (load('farms').find(f => f.id === prog.farmId)?.type || '') : '';
   const fallback = prog?.farmId ? farmBreedDefault(prog.farmId) : null;
-  const species = prog?.species || fallback?.species || (speciesKeyOf(farmType) ? farmType : '');
+  // 농장의 축종은 f-type이 필수 항목이라 항상 5가지(육계/산란계/삼계/토종닭/기타) 중
+  // 하나다. speciesKeyOf로 육계/산란계만 걸러내면 나머지 세 축종은 농장 정보가 있어도
+  // 자동으로 안 채워지는 문제가 있었다 — 표준 매뉴얼(CONSULT_BREEDS)이 없을 뿐 축종
+  // 값 자체는 그대로 가져와도 된다.
+  const species = prog?.species || fallback?.species || farmType || '';
   const breed = prog?.species
     ? (prog.breed || '')
     : (fallback?.species === species ? (fallback.breed || '') : '');
@@ -404,7 +408,9 @@ function applyProgramBreedDefault() {
   if (!spEl || !brEl || spEl.value || brEl.value) return;
   const d = farmBreedDefault(document.getElementById('p-farm').value);
   const farmType = currentProgramFarmType();
-  const species = d?.species || (speciesKeyOf(farmType) ? farmType : '');
+  // farmType은 farms의 f-type(필수 항목)이라 항상 값이 있다 — speciesKeyOf로 걸러
+  // 육계/산란계만 통과시키면 삼계/토종닭/기타 농장은 정보가 있어도 채워지지 않는다.
+  const species = d?.species || farmType || '';
   if (!species) return;
   spEl.value = species;
   populateProgramBreedSelect(species, d?.species === species ? (d.breed || '') : '');
@@ -574,7 +580,9 @@ function populateProgramBreedSelect(species, selectedBreed) {
   const hint = document.getElementById('p-breed-hint');
   const speciesKey = speciesKeyOf(species);
   if (!speciesKey) {
-    sel.innerHTML = '<option value="">축종을 먼저 선택하세요</option>';
+    // species가 있는데 speciesKey가 없는 건 "축종 미선택"이 아니라 삼계/토종닭/기타처럼
+    // 표준 매뉴얼(CONSULT_BREEDS)이 아예 없는 축종이라는 뜻이다 — 안내 문구를 구분한다.
+    sel.innerHTML = `<option value="">${species ? '이 축종은 등록된 품종 표준자료가 없습니다' : '축종을 먼저 선택하세요'}</option>`;
     sel.disabled = true;
     hint.style.display = 'none';
     return;
