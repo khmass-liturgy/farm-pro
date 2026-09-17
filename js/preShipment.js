@@ -108,6 +108,13 @@ function renderPreShipments() {
   const liveIds = new Set(load('preShipments').map(p => p.id));
   psSelectedIds.forEach(id => { if (!liveIds.has(id)) psSelectedIds.delete(id); });
 
+  const printBtn = document.getElementById('ps-print-btn');
+  const editBtn = document.getElementById('ps-edit-btn');
+  const deleteBtn = document.getElementById('ps-delete-btn');
+  if (printBtn) printBtn.disabled = psSelectedIds.size === 0;
+  if (editBtn) editBtn.disabled = psSelectedIds.size !== 1;
+  if (deleteBtn) deleteBtn.disabled = psSelectedIds.size === 0;
+
   const tbody = document.getElementById('ps-tbody');
   const empty = document.getElementById('ps-empty');
   const checkAll = document.getElementById('ps-check-all');
@@ -129,12 +136,22 @@ function renderPreShipments() {
       <td>${(p.rows || []).length}동</td>
       <td style="font-size:11px">${psSampleSummary(p)}</td>
       <td>${p.shipDate || '-'}</td>
-      <td><div class="flex-gap">
-        <button class="btn btn-primary btn-sm" onclick="printPreShipment('${p.id}')">🖨️ 인쇄</button>
-        <button class="btn btn-outline btn-sm" onclick="openPreShipmentModal('${p.id}')">편집</button>
-        <button class="btn btn-danger btn-sm" onclick="deletePreShipment('${p.id}')">삭제</button>
-      </div></td>
     </tr>`).join('');
+}
+
+function editSelectedPreShipment() {
+  if (psSelectedIds.size !== 1) return;
+  openPreShipmentModal([...psSelectedIds][0]);
+}
+
+async function deleteSelectedPreShipments() {
+  if (!psSelectedIds.size) return;
+  if (!confirm(`선택한 출하전검사 ${psSelectedIds.size}건을 삭제하시겠습니까?`)) return;
+  try {
+    for (const id of psSelectedIds) await deleteRow('preShipments', id);
+  } catch (e) { alert('삭제 실패: ' + e.message); return; }
+  psSelectedIds.clear();
+  renderPreShipments();
 }
 
 // ─── 동별 시료채취 내역 줄 ─────────────────────────────────────────────────
@@ -339,12 +356,6 @@ async function savePreShipment() {
   if (isNew && confirm('출하전검사 서식을 저장했습니다. 지금 인쇄하시겠습니까?')) printPreShipment(saved.id);
 }
 
-async function deletePreShipment(id) {
-  if (!confirm('이 출하전검사 기록을 삭제하시겠습니까?')) return;
-  try { await deleteRow('preShipments', id); } catch (e) { alert('삭제 실패: ' + e.message); return; }
-  renderPreShipments();
-}
-
 // ─── A4 인쇄 (원본 「의뢰서식」 시트 배치를 그대로 옮김) ────────────────────
 // buildPreShipmentHtml()은 한 건의 .print-page 마크업만 만들고, 실제 출력은
 // printPreShipment()(한 건) / printSelectedPreShipments()(여러 건)가 맡는다.
@@ -447,7 +458,7 @@ function printPreShipment(id) {
   setTimeout(() => window.print(), 200);
 }
 
-// 목록 왼쪽 체크박스로 고른 여러 건을 한 번의 인쇄로 묶는다.
+// 목록 왼쪽 체크박스로 고른 여러 건을 인쇄·편집·삭제에 함께 쓴다(처방전 발급과 같은 패턴).
 let psSelectedIds = new Set();
 
 function togglePsSelectAll(checked) {
@@ -457,8 +468,7 @@ function togglePsSelectAll(checked) {
 }
 function togglePsSelect(id, checked) {
   if (checked) psSelectedIds.add(id); else psSelectedIds.delete(id);
-  const all = document.getElementById('ps-check-all');
-  if (all) all.checked = psSelectedIds.size > 0 && psSelectedIds.size === load('preShipments').length;
+  renderPreShipments();
 }
 
 function printSelectedPreShipments() {

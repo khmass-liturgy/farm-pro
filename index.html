@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>대한동물병원 업무시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260917a">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260917a">
-<link rel="icon" href="img/favicon.ico?v=20260917a">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260917a">
-<link rel="stylesheet" href="css/styles.css?v=20260917a">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260917b">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260917b">
+<link rel="icon" href="img/favicon.ico?v=20260917b">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260917b">
+<link rel="stylesheet" href="css/styles.css?v=20260917b">
 </head>
 <body>
 
@@ -347,15 +347,22 @@
       <div class="search-bar">
         <input class="search-input" id="ps-search" placeholder="🔍  농장명, 축주명 검색..." oninput="renderPreShipments()">
         <select id="ps-filter-farm" onchange="renderPreShipments()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);"></select>
-        <button class="btn btn-outline" onclick="printSelectedPreShipments()" title="왼쪽 체크박스로 고른 여러 건을 한 번에 인쇄합니다">🖨️ 선택 인쇄</button>
       </div>
       <div class="card">
+        <div class="card-header">
+          <div class="card-title">출하전검사 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 체크박스로 골라 인쇄·편집·삭제하세요(인쇄·삭제는 여러 건, 편집은 한 건)</span></div>
+          <div class="flex-gap">
+            <button class="btn btn-primary btn-sm" id="ps-print-btn" onclick="printSelectedPreShipments()" disabled>🖨️ 인쇄</button>
+            <button class="btn btn-outline btn-sm" id="ps-edit-btn" onclick="editSelectedPreShipment()" disabled>편집</button>
+            <button class="btn btn-danger btn-sm" id="ps-delete-btn" onclick="deleteSelectedPreShipments()" disabled>삭제</button>
+          </div>
+        </div>
         <div class="tbl-wrap">
           <table>
             <thead>
               <tr>
                 <th style="text-align:center"><input type="checkbox" id="ps-check-all" onchange="togglePsSelectAll(this.checked)" title="전체 선택"></th>
-                <th>시료채취일</th><th>농장</th><th>축종</th><th>사육규모</th><th>검사목적</th><th>채취동</th><th>시료 내역</th><th>출하예정일</th><th>관리</th>
+                <th>시료채취일</th><th>농장</th><th>축종</th><th>사육규모</th><th>검사목적</th><th>채취동</th><th>시료 내역</th><th>출하예정일</th>
               </tr>
             </thead>
             <tbody id="ps-tbody"></tbody>
@@ -377,15 +384,23 @@
       <div class="search-bar">
         <input class="search-input" id="mp-search" placeholder="🔍  농장명, 운송인, 차량번호, 출하처 검색..." oninput="renderMovePermits()">
         <select id="mp-filter-farm" onchange="renderMovePermits()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);"></select>
-        <button class="btn btn-outline" onclick="printSelectedMovePermits()" title="왼쪽 체크박스로 고른 여러 건을 한 번에 인쇄합니다">🖨️ 선택 인쇄</button>
       </div>
       <div class="card">
+        <div class="card-header">
+          <div class="card-title">이동승인서 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 체크박스로 골라 인쇄·삭제하세요(여러 건 가능), 복제·편집은 한 건만 고르세요</span></div>
+          <div class="flex-gap">
+            <button class="btn btn-primary btn-sm" id="mp-print-btn" onclick="printSelectedMovePermits()" disabled>🖨️ 인쇄</button>
+            <button class="btn btn-outline btn-sm" id="mp-dup-btn" onclick="duplicateSelectedMovePermit()" title="차량만 다른 승인서를 이어서 발급" disabled>📄 복제</button>
+            <button class="btn btn-outline btn-sm" id="mp-edit-btn" onclick="editSelectedMovePermit()" disabled>편집</button>
+            <button class="btn btn-danger btn-sm" id="mp-delete-btn" onclick="deleteSelectedMovePermits()" disabled>삭제</button>
+          </div>
+        </div>
         <div class="tbl-wrap">
           <table>
             <thead>
               <tr>
                 <th style="text-align:center"><input type="checkbox" id="mp-check-all" onchange="toggleMpSelectAll(this.checked)" title="전체 선택"></th>
-                <th>발급일</th><th>발급번호</th><th>서식</th><th>농장</th><th>축종</th><th>출하처</th><th>운송인 / 차량</th><th>반출일</th><th>관리</th>
+                <th>발급일</th><th>발급번호</th><th>서식</th><th>농장</th><th>축종</th><th>출하처</th><th>운송인 / 차량</th><th>반출일</th>
               </tr>
             </thead>
             <tbody id="mp-tbody"></tbody>
@@ -1472,29 +1487,29 @@
      async defer라 이 스크립트가 늦게 끝나도 페이지 로드를 막지 않는다 — 실제로
      쓰는 시점(사진 첨부 후 저장)엔 이미 다 로드돼 있다. -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="js/config.js?v=20260917a"></script>
-<script src="js/supabaseClient.js?v=20260917a"></script>
-<script src="js/auth.js?v=20260917a"></script>
-<script src="js/googleDrive.js?v=20260917a"></script>
-<script src="js/breedStandards.js?v=20260917a"></script>
-<script src="js/farms.js?v=20260917a"></script>
-<script src="js/sms.js?v=20260917a"></script>
-<script src="js/masterdata.js?v=20260917a"></script>
-<script src="js/rxProducts.js?v=20260917a"></script>
-<script src="js/drugSearch.js?v=20260917a"></script>
-<script src="js/programs.js?v=20260917a"></script>
-<script src="js/batches.js?v=20260917a"></script>
-<script src="js/medicationLog.js?v=20260917a"></script>
-<script src="js/prescriptions.js?v=20260917a"></script>
-<script src="js/preShipment.js?v=20260917a"></script>
-<script src="js/movePermit.js?v=20260917a"></script>
-<script src="js/clinicalAssessment.js?v=20260917a"></script>
-<script src="js/rodentControl.js?v=20260917a"></script>
-<script src="js/schedule.js?v=20260917a"></script>
-<script src="js/dashboard.js?v=20260917a"></script>
-<script src="js/reports.js?v=20260917a"></script>
-<script src="js/print.js?v=20260917a"></script>
-<script src="js/backup.js?v=20260917a"></script>
-<script src="js/app.js?v=20260917a"></script>
+<script src="js/config.js?v=20260917b"></script>
+<script src="js/supabaseClient.js?v=20260917b"></script>
+<script src="js/auth.js?v=20260917b"></script>
+<script src="js/googleDrive.js?v=20260917b"></script>
+<script src="js/breedStandards.js?v=20260917b"></script>
+<script src="js/farms.js?v=20260917b"></script>
+<script src="js/sms.js?v=20260917b"></script>
+<script src="js/masterdata.js?v=20260917b"></script>
+<script src="js/rxProducts.js?v=20260917b"></script>
+<script src="js/drugSearch.js?v=20260917b"></script>
+<script src="js/programs.js?v=20260917b"></script>
+<script src="js/batches.js?v=20260917b"></script>
+<script src="js/medicationLog.js?v=20260917b"></script>
+<script src="js/prescriptions.js?v=20260917b"></script>
+<script src="js/preShipment.js?v=20260917b"></script>
+<script src="js/movePermit.js?v=20260917b"></script>
+<script src="js/clinicalAssessment.js?v=20260917b"></script>
+<script src="js/rodentControl.js?v=20260917b"></script>
+<script src="js/schedule.js?v=20260917b"></script>
+<script src="js/dashboard.js?v=20260917b"></script>
+<script src="js/reports.js?v=20260917b"></script>
+<script src="js/print.js?v=20260917b"></script>
+<script src="js/backup.js?v=20260917b"></script>
+<script src="js/app.js?v=20260917b"></script>
 </body>
 </html>

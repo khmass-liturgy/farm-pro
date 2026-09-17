@@ -35,7 +35,8 @@ function mpDocNo(mp) {
   return `제 ${mp.docNoPrefix || ''} - ${mp.docNoSerial ?? ''} 호`;
 }
 
-// 목록 왼쪽 체크박스로 고른 여러 건을 한 번의 인쇄로 묶는다(출하전검사와 같은 패턴).
+// 목록 왼쪽 체크박스로 고른 여러 건을 인쇄·삭제에 함께 쓴다(처방전 발급과 같은 패턴).
+// 복제·편집은 한 건에만 뜻이 있어 정확히 하나 골랐을 때만 활성화한다.
 let mpSelectedIds = new Set();
 
 function toggleMpSelectAll(checked) {
@@ -45,8 +46,7 @@ function toggleMpSelectAll(checked) {
 }
 function toggleMpSelect(id, checked) {
   if (checked) mpSelectedIds.add(id); else mpSelectedIds.delete(id);
-  const all = document.getElementById('mp-check-all');
-  if (all) all.checked = mpSelectedIds.size > 0 && mpSelectedIds.size === load('movePermits').length;
+  renderMovePermits();
 }
 
 function renderMovePermits() {
@@ -59,6 +59,15 @@ function renderMovePermits() {
   );
   const liveIds = new Set(load('movePermits').map(m => m.id));
   mpSelectedIds.forEach(id => { if (!liveIds.has(id)) mpSelectedIds.delete(id); });
+
+  const printBtn = document.getElementById('mp-print-btn');
+  const dupBtn = document.getElementById('mp-dup-btn');
+  const editBtn = document.getElementById('mp-edit-btn');
+  const deleteBtn = document.getElementById('mp-delete-btn');
+  if (printBtn) printBtn.disabled = mpSelectedIds.size === 0;
+  if (dupBtn) dupBtn.disabled = mpSelectedIds.size !== 1;
+  if (editBtn) editBtn.disabled = mpSelectedIds.size !== 1;
+  if (deleteBtn) deleteBtn.disabled = mpSelectedIds.size === 0;
 
   const tbody = document.getElementById('mp-tbody');
   const empty = document.getElementById('mp-empty');
@@ -81,13 +90,27 @@ function renderMovePermits() {
       <td>${m.shipTo || '-'}</td>
       <td>${m.carrierName || '-'}<div style="font-size:11px;color:var(--text-secondary)">${m.vehicleNo || ''}</div></td>
       <td>${m.releaseDate || '-'}</td>
-      <td><div class="flex-gap">
-        <button class="btn btn-primary btn-sm" onclick="printMovePermit('${m.id}')">🖨️ 인쇄</button>
-        <button class="btn btn-outline btn-sm" onclick="duplicateMovePermit('${m.id}')" title="차량만 다른 승인서를 이어서 발급">📄 복제</button>
-        <button class="btn btn-outline btn-sm" onclick="openMovePermitModal('${m.id}')">편집</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteMovePermit('${m.id}')">삭제</button>
-      </div></td>
     </tr>`).join('');
+}
+
+function duplicateSelectedMovePermit() {
+  if (mpSelectedIds.size !== 1) return;
+  duplicateMovePermit([...mpSelectedIds][0]);
+}
+
+function editSelectedMovePermit() {
+  if (mpSelectedIds.size !== 1) return;
+  openMovePermitModal([...mpSelectedIds][0]);
+}
+
+async function deleteSelectedMovePermits() {
+  if (!mpSelectedIds.size) return;
+  if (!confirm(`선택한 이동승인서 ${mpSelectedIds.size}건을 삭제하시겠습니까?`)) return;
+  try {
+    for (const id of mpSelectedIds) await deleteRow('movePermits', id);
+  } catch (e) { alert('삭제 실패: ' + e.message); return; }
+  mpSelectedIds.clear();
+  renderMovePermits();
 }
 
 // ─── 입력/편집 ─────────────────────────────────────────────────────────────
@@ -272,12 +295,6 @@ async function saveMovePermit() {
   populateMpFarmFilter();
   renderMovePermits();
   if (isNew && confirm('이동승인서를 발급했습니다. 지금 인쇄하시겠습니까?')) printMovePermit(saved.id);
-}
-
-async function deleteMovePermit(id) {
-  if (!confirm('이 이동승인서를 삭제하시겠습니까?')) return;
-  try { await deleteRow('movePermits', id); } catch (e) { alert('삭제 실패: ' + e.message); return; }
-  renderMovePermits();
 }
 
 // ─── A4 인쇄 (원본 서식의 11칸 × 16줄 배치를 그대로 옮김) ───────────────────
