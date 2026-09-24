@@ -189,6 +189,19 @@ Supabase 대시보드 → Edge Functions → Secrets에서:
 
 farm-pro 앱에서 Ctrl+F5 → **💬 문자 발송** → 본인 번호로 테스트 발송.
 
+## 추가 경로: `GET /fetch-mafra` (pb 저장소용)
+
+pb(polcon.cc) 저장소의 GitHub Actions가 농식품부 「배합사료 생산실적」을 매일
+수집하는데, 농식품부(mafra.go.kr)는 해외 IP 접속을 막아 GitHub(미국)에서 직접
+받을 수 없다. 그래서 국내 리전인 이 서버가 대신 받아 그대로 돌려준다.
+
+- 인증: 문자 발송과 같은 `Authorization: Bearer <RELAY_SECRET>`
+- 허용 주소: `https://www.mafra.go.kr/bbs/home/789/` 의 목록(`artclList.do`)·글
+  (`{id}/artclView.do`)·첨부(`{id}/download.do`)만. 다른 호스트·경로·http·리다이렉트로
+  다른 호스트로 넘어가는 경우는 모두 거부(403/502)해서 열린 프록시가 되지 않는다.
+- 사용 예: `GET /fetch-mafra?url=https%3A%2F%2Fwww.mafra.go.kr%2Fbbs%2Fhome%2F789%2FartclList.do`
+- 문자 발송(`POST /send-sms`)과는 독립적이라, 이 경로가 실패해도 문자 발송에는 영향이 없다.
+
 ## 운영 중 참고
 
 - **코드 수정 후**: `/opt/sms-relay/server.js`를 고치고 `sudo systemctl restart sms-relay`
