@@ -34,7 +34,7 @@ async function restoreData(e) {
       // TABLES.prescriptions.toRow()가 내보내지 않으므로 upsert 페이로드에 포함되지 않는다.
       // 대신 새로 insert되는 처방전의 발급번호는 DB가 다시 채번하므로 백업 당시의
       // 번호와 달라질 수 있다(이미 같은 id가 있으면 update라 기존 번호를 유지).
-      for (const key of ['farms','drugs','vaccines','feeds','programs','batches','medicationLogs','rxProducts','prescriptions','clinicalAssessments','rodentAssessments','preShipments','movePermits','henShipments']) {
+      for (const key of ['farms','drugs','vaccines','feeds','programs','batches','medicationLogs','rxProducts','prescriptions','clinicalAssessments','rodentAssessments','preShipments','movePermits','henShipments','vetReportEntries','vetOfficeInfo']) {
         const rows = data[key];
         if (!rows || !rows.length) continue;
         const cfg = TABLES[key];

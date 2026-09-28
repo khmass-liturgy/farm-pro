@@ -9,6 +9,12 @@ const PAGE_TITLES = {
   preshipment: '출하전검사',
   movepermit: '이동승인서 발급',
   henshipment: '산란성계 출하대장',
+  'vet-entries': '일자별 근무내용',
+  'vet-workreport': '근무상황보고서',
+  'vet-invoice': '여비청구서/활동수당 청구서',
+  'vet-patrol': '예찰내역',
+  'vet-diary': '예찰일지',
+  'vet-trip': '출장일지',
   clinical: '계군 임상평가',
   rodent: '구서작업 컨설팅 평가',
   farms: '농장 등록/관리',
@@ -37,6 +43,7 @@ const PAGE_ACTIONS = {
   preshipment: `<button class="btn btn-primary" onclick="openPreShipmentModal()">+ 출하전검사 작성</button>`,
   movepermit: `<button class="btn btn-primary" onclick="openMovePermitModal()">+ 이동승인서 발급</button>`,
   henshipment: `<button class="btn btn-primary" onclick="openHenShipmentModal()">+ 출하대장 작성</button>`,
+  'vet-entries': `<button class="btn btn-outline" onclick="openVetOfficeInfoModal()">⚙️ 사무실 정보</button><button class="btn btn-primary" onclick="openVetEntryModal()">+ 방문 기록 추가</button>`,
   drugs: `<button class="btn btn-primary" onclick="openDrugModal()">+ 약품 추가</button>`,
   'rx-products': `<button class="btn btn-primary" onclick="openRxProductModal()">+ 제품 추가</button>`,
   vaccines: `<button class="btn btn-primary" onclick="openVaccineModal()">+ 백신 추가</button>`,
@@ -48,7 +55,7 @@ let currentPage = 'dashboard';
 // ─── 사이드바 접기/펼치기 ────────────────────────────────────────────────
 // 가금컨설팅·데이터·시스템은 매일 들어가는 곳이 아니라 기본으로 접어둔다.
 // 펼침 상태는 브라우저에 남겨 다음 방문에도 그대로 유지한다.
-const COLLAPSIBLE_SECTIONS = ['consult', 'data', 'system'];
+const COLLAPSIBLE_SECTIONS = ['consult', 'vetreport', 'data', 'system'];
 const SIDEBAR_STATE_KEY = 'sidebar_open_sections';
 
 function loadOpenSections() {
@@ -125,6 +132,12 @@ function showPage(name) {
   if (name === 'preshipment') { populatePsFarmFilter(); renderPreShipments(); }
   if (name === 'movepermit') { populateMpFarmFilter(); renderMovePermits(); }
   if (name === 'henshipment') { populateHsFarmFilter(); renderHenShipments(); }
+  if (name === 'vet-entries') renderVetEntries();
+  if (name === 'vet-workreport') renderVetWorkReportSummary();
+  if (name === 'vet-invoice') renderVetInvoiceSummary();
+  if (name === 'vet-patrol') renderVetPatrolSummary();
+  if (name === 'vet-diary') renderVetDiaryList();
+  if (name === 'vet-trip') renderVetTripSummary();
   if (name === 'schedule') populateScheduleSelects();
   if (name === 'reports') renderReports();
   if (name === 'drugs') renderDrugs();

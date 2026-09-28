@@ -8,10 +8,10 @@
 
 const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 
-const STORE = { farms: [], drugs: [], vaccines: [], feeds: [], programs: [], batches: [], medicationLogs: [], rxProducts: [], prescriptions: [], clinicalAssessments: [], rodentAssessments: [], preShipments: [], movePermits: [], henShipments: [] };
+const STORE = { farms: [], drugs: [], vaccines: [], feeds: [], programs: [], batches: [], medicationLogs: [], rxProducts: [], prescriptions: [], clinicalAssessments: [], rodentAssessments: [], preShipments: [], movePermits: [], henShipments: [], vetReportEntries: [], vetOfficeInfo: [] };
 
 // 현재 편집 중인 각 엔티티의 id. 여러 feature 파일이 공유하는 전역 상태라 여기서 한 번만 선언한다.
-const editingId = { farm: null, drug: null, vaccine: null, feed: null, program: null, batch: null, medicationLog: null, rxProduct: null, prescription: null, clinicalAssessment: null, rodentAssessment: null, preShipment: null, movePermit: null, henShipment: null };
+const editingId = { farm: null, drug: null, vaccine: null, feed: null, program: null, batch: null, medicationLog: null, rxProduct: null, prescription: null, clinicalAssessment: null, rodentAssessment: null, preShipment: null, movePermit: null, henShipment: null, vetReportEntry: null };
 
 // 빈 입력칸("")을 0으로 저장하지 않기 위한 변환. 숫자 칸은 안 적으면 null이어야 한다
 // (0으로 들어가면 "사육수수 0마리"처럼 사실과 다른 값이 서식에 인쇄된다).
@@ -324,6 +324,54 @@ const TABLES = {
         si: Number(r.si), ci: Number(r.ci), di: Number(r.di), grade: r.grade,
         urgentFlags: r.urgent_flags || [],
         notes: r.notes, assessedByEmail: r.assessed_by_email, createdAt: r.created_at,
+      };
+    },
+  },
+  vetReportEntries: {
+    table: 'vet_report_entries', orderBy: 'visit_date', ascending: true,
+    toRow(o) {
+      return {
+        visit_date: o.visitDate,
+        farm_id: o.farmId || null, farm_name_snapshot: o.farmName || null,
+        owner_snapshot: o.owner || null, address_snapshot: o.address || null,
+        species_snapshot: o.species || null, scale_snapshot: numOrNull(o.scale),
+        content: o.content || '',
+        created_by_email: o.createdByEmail || null,
+      };
+    },
+    fromRow(r) {
+      return {
+        id: r.id, visitDate: r.visit_date,
+        farmId: r.farm_id, farmName: r.farm_name_snapshot,
+        owner: r.owner_snapshot, address: r.address_snapshot,
+        species: r.species_snapshot, scale: r.scale_snapshot,
+        content: r.content,
+        createdByEmail: r.created_by_email, createdAt: r.created_at,
+      };
+    },
+  },
+  // 단일 행(id=true)짜리 설정표라 orderBy는 의미가 없지만 load()/refreshAllStores()가
+  // 공통으로 거치는 select 경로를 그대로 타야 해서 다른 테이블과 같은 모양을 갖춘다.
+  vetOfficeInfo: {
+    table: 'vet_office_info', orderBy: 'updated_at', ascending: false,
+    toRow(o) {
+      return {
+        id: true,
+        clinic_name: o.clinicName || null, vet_name: o.vetName || null, license_no: o.licenseNo || null,
+        address: o.address || null, resident_no: o.residentNo || null,
+        bank_name: o.bankName || null, bank_account: o.bankAccount || null,
+        travel_fee_per_visit: numOrNull(o.travelFeePerVisit) ?? 20000,
+        monthly_activity_allowance: numOrNull(o.monthlyActivityAllowance),
+      };
+    },
+    fromRow(r) {
+      return {
+        id: r.id,
+        clinicName: r.clinic_name, vetName: r.vet_name, licenseNo: r.license_no,
+        address: r.address, residentNo: r.resident_no,
+        bankName: r.bank_name, bankAccount: r.bank_account,
+        travelFeePerVisit: r.travel_fee_per_visit, monthlyActivityAllowance: r.monthly_activity_allowance,
+        updatedAt: r.updated_at,
       };
     },
   },

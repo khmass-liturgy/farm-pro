@@ -577,6 +577,58 @@ create table if not exists telegram_notify_exclusions (
 );
 alter table telegram_notify_exclusions enable row level security;
 
+-- ─────────────────────────────────────────────────────────────────────────
+-- 공수의 보고서 (여비청구서/활동수당·근무상황보고서·예찰내역·예찰일지·출장일지·
+-- 일자별 근무내용)
+--
+-- vet_report_entries — "입력대장"의 자리를 대신하는 방문 기록 한 줄 = 하루 한 건의
+-- 농장 방문. 원본 엑셀은 "시작일 + 1~30 일련번호"로 날짜를 계산했지만 여기서는
+-- 방문일을 직접 날짜로 받는다(일련번호가 밀리면 날짜가 다 틀어지는 문제가 없다).
+-- farm_id로 농장을 고르면 주소·축종·사육규모는 farms 테이블에서 그대로 가져오므로
+-- 입력칸이 없다 — 다만 그 값이 나중에 농장 정보가 바뀌어도 그 시점 그대로 보이도록
+-- (다른 공수의 서식들과 같은 이유로) snapshot 컬럼에 같이 남겨둔다.
+--
+-- vet_office_info — 청구서에 들어가는 공수의 개인정보(주민등록번호·계좌번호 포함).
+-- 이 저장소는 퍼블릭이라 처방전의 RX_CLINIC처럼 js 소스에 박아두면 그대로 공개
+-- 배포되므로, 로그인한 사용자만 읽을 수 있는 이 표 하나(단일 행, id=true)에만 둔다.
+-- ─────────────────────────────────────────────────────────────────────────
+create table if not exists vet_report_entries (
+  id uuid primary key default gen_random_uuid(),
+  visit_date date not null,
+  farm_id uuid references farms(id) on delete set null,
+  farm_name_snapshot text,
+  owner_snapshot text,
+  address_snapshot text,
+  species_snapshot text,
+  scale_snapshot int,
+  content text not null default '',
+  created_by_email text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_vet_report_entries_visit_date on vet_report_entries(visit_date);
+create index if not exists idx_vet_report_entries_farm_id on vet_report_entries(farm_id);
+
+drop trigger if exists trg_vet_report_entries_updated_at on vet_report_entries;
+create trigger trg_vet_report_entries_updated_at before update on vet_report_entries
+  for each row execute function set_updated_at();
+
+create table if not exists vet_office_info (
+  id boolean primary key default true,
+  clinic_name text, vet_name text, license_no text,
+  address text, resident_no text,
+  bank_name text, bank_account text,
+  travel_fee_per_visit int not null default 20000,
+  monthly_activity_allowance int,
+  updated_at timestamptz not null default now(),
+  constraint vet_office_info_singleton check (id)
+);
+
+drop trigger if exists trg_vet_office_info_updated_at on vet_office_info;
+create trigger trg_vet_office_info_updated_at before update on vet_office_info
+  for each row execute function set_updated_at();
+
 -- 처방전용 제품 마스터 초기 데이터 (이미 같은 이름의 제품이 있으면 건너뜀)
 insert into prescription_products (name, ingredient, withdrawal_days, purpose, dose_amount, category, usage_method)
 select v.name, v.ingredient, v.withdrawal_days, v.purpose, v.dose_amount, v.category, v.usage_method
@@ -667,7 +719,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['farms','drugs','vaccines','feeds','programs','batches','medication_logs','prescription_products','prescriptions','clinical_assessments','rodent_assessments','pre_shipment_inspections','move_permits','hen_shipments']
+  foreach t in array array['farms','drugs','vaccines','feeds','programs','batches','medication_logs','prescription_products','prescriptions','clinical_assessments','rodent_assessments','pre_shipment_inspections','move_permits','hen_shipments','vet_report_entries','vet_office_info']
   loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists authenticated_full_access on %I', t);

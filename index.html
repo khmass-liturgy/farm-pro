@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>대한동물병원 업무시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260918a">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260918a">
-<link rel="icon" href="img/favicon.ico?v=20260918a">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260918a">
-<link rel="stylesheet" href="css/styles.css?v=20260918a">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20260928a">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20260928a">
+<link rel="icon" href="img/favicon.ico?v=20260928a">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260928a">
+<link rel="stylesheet" href="css/styles.css?v=20260928a">
 </head>
 <body>
 
@@ -66,6 +66,29 @@
     </div>
     <div class="sidebar-item" onclick="showPage('henshipment')">
       <span class="icon">🥚</span> 산란성계 출하대장
+    </div>
+    <button class="sidebar-section-label toggle" onclick="toggleSidebarSection('vetreport')" aria-expanded="false" aria-controls="sidebar-items-vetreport">
+      <span class="chevron" id="sidebar-chevron-vetreport">▸</span> 공수의 보고서
+    </button>
+    <div class="sidebar-section-items" id="sidebar-items-vetreport">
+      <div class="sidebar-item" onclick="showPage('vet-entries')">
+        <span class="icon">📅</span> 일자별 근무내용
+      </div>
+      <div class="sidebar-item" onclick="showPage('vet-workreport')">
+        <span class="icon">📋</span> 근무상황보고서
+      </div>
+      <div class="sidebar-item" onclick="showPage('vet-invoice')">
+        <span class="icon">💰</span> 여비청구서/활동수당 청구서
+      </div>
+      <div class="sidebar-item" onclick="showPage('vet-patrol')">
+        <span class="icon">🩺</span> 예찰내역
+      </div>
+      <div class="sidebar-item" onclick="showPage('vet-diary')">
+        <span class="icon">📔</span> 예찰일지
+      </div>
+      <div class="sidebar-item" onclick="showPage('vet-trip')">
+        <span class="icon">🚗</span> 출장일지
+      </div>
     </div>
   </div>
   <div class="sidebar-section">
@@ -455,6 +478,132 @@
         AI노계출하.xlsx의 「검사의뢰서」와 같은 항목으로 입력하고, 인쇄하면 같은 배치의 산란성계 농장 출하전 정밀검사 의뢰서가 나옵니다.
         발급번호는 "연도-03-순번"으로 자동 채번되며, 농장을 고르면 축주명·주소·연락처가 자동으로 채워집니다.
       </p>
+    </div>
+
+    <!-- 공수의 보고서: 일자별 근무내용 (= 입력대장) -->
+    <div id="page-vet-entries" class="page">
+      <div class="search-bar">
+        <input type="month" id="vetentry-month" onchange="renderVetEntries()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+        <input class="search-input" id="vetentry-search" placeholder="🔍  농장명, 농장주 검색..." oninput="renderVetEntries()">
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">일자별 근무내용 <span class="text-muted" style="font-weight:400;font-size:12px">— 여기서 등록한 방문 기록이 근무상황보고서·청구서·예찰내역·예찰일지·출장일지에 모두 쓰입니다</span></div>
+          <div class="flex-gap">
+            <button class="btn btn-outline btn-sm" id="vetentry-edit-btn" onclick="editSelectedVetEntry()" disabled>편집</button>
+            <button class="btn btn-danger btn-sm" id="vetentry-delete-btn" onclick="deleteSelectedVetEntries()" disabled>삭제</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align:center"><input type="checkbox" id="vetentry-check-all" onchange="toggleVetEntrySelectAll(this.checked)" title="전체 선택"></th>
+                <th>방문일</th><th>농장</th><th>축종</th><th>사육규모</th><th>내용</th>
+              </tr>
+            </thead>
+            <tbody id="vetentry-tbody"></tbody>
+          </table>
+        </div>
+        <div id="vetentry-empty" class="empty-state" style="display:none">
+          <div class="icon-big">📅</div>
+          <p>등록된 방문 기록이 없습니다. "+ 방문 기록 추가"로 기록하세요.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 공수의 보고서: 근무상황보고서 -->
+    <div id="page-vet-workreport" class="page">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">근무상황보고서</div>
+          <div class="flex-gap">
+            <input type="month" id="vetwork-month" onchange="renderVetWorkReportSummary()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+            <button class="btn btn-primary btn-sm" onclick="printVetWorkReport()">🖨️ 인쇄</button>
+          </div>
+        </div>
+        <p class="text-muted" id="vetwork-summary"></p>
+        <p class="text-muted mb-16">4. 기타실적 — 매달 조금씩 달라지는 항목만 아래에 적으면 인쇄에 그대로 들어갑니다(저장되지 않고, 인쇄할 때만 반영됩니다).</p>
+        <div class="form-group"><label>출하이동승인서 발급</label><input id="vetwork-etc-0" placeholder="예) 매주 목요일 소래축산 관련 농장 이동승인서 발급"></div>
+        <div class="form-group"><label>기립불능우확인서 발급</label><input id="vetwork-etc-1"></div>
+        <div class="form-group"><label>AI 시료채취 및 의뢰</label><input id="vetwork-etc-2" placeholder="예) AI정기검사, 육계 이동승인서 및 샘플채취"></div>
+        <div class="form-group"><label>산란성계 살충제검사 샘플링 및 검사의뢰</label><input id="vetwork-etc-3"></div>
+        <div class="form-group"><label>역학관련</label><input id="vetwork-etc-4"></div>
+      </div>
+    </div>
+
+    <!-- 공수의 보고서: 여비청구서/활동수당 청구서 -->
+    <div id="page-vet-invoice" class="page">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">여비청구서 / 활동수당 청구서</div>
+          <div class="flex-gap">
+            <input type="month" id="vetinvoice-month" onchange="renderVetInvoiceSummary()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+            <button class="btn btn-outline btn-sm" onclick="printVetInvoice('travel')">🖨️ 여비 청구서</button>
+            <button class="btn btn-outline btn-sm" onclick="printVetInvoice('activity')">🖨️ 활동수당 청구서</button>
+          </div>
+        </div>
+        <p class="text-muted" id="vetinvoice-summary"></p>
+        <p class="text-muted mt-16">여비는 그달 방문 건수 × 건당 여비로 자동 계산됩니다. 금액·계좌·주민등록번호 등은 상단 "⚙️ 사무실 정보"에서 관리합니다.</p>
+      </div>
+    </div>
+
+    <!-- 공수의 보고서: 예찰내역 -->
+    <div id="page-vet-patrol" class="page">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">예찰내역</div>
+          <div class="flex-gap">
+            <input type="month" id="vetpatrol-month" onchange="renderVetPatrolSummary()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+            <button class="btn btn-primary btn-sm" onclick="printVetPatrol()">🖨️ 인쇄</button>
+          </div>
+        </div>
+        <p class="text-muted" id="vetpatrol-summary"></p>
+      </div>
+    </div>
+
+    <!-- 공수의 보고서: 예찰일지 -->
+    <div id="page-vet-diary" class="page">
+      <div class="search-bar">
+        <input type="month" id="vetdiary-month" onchange="renderVetDiaryList()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">예찰일지 <span class="text-muted" style="font-weight:400;font-size:12px">— 체크박스로 골라 한 번에 인쇄하세요(방문 건마다 한 쪽)</span></div>
+          <div class="flex-gap">
+            <button class="btn btn-primary btn-sm" id="vetdiary-print-btn" onclick="printSelectedVetDiary()" disabled>🖨️ 인쇄</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align:center"><input type="checkbox" id="vetdiary-check-all" onchange="toggleVetDiarySelectAll(this.checked)" title="전체 선택"></th>
+                <th>방문일</th><th>농장</th><th>내용</th>
+              </tr>
+            </thead>
+            <tbody id="vetdiary-tbody"></tbody>
+          </table>
+        </div>
+        <div id="vetdiary-empty" class="empty-state" style="display:none">
+          <div class="icon-big">📔</div>
+          <p>선택한 달에 방문 기록이 없습니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 공수의 보고서: 출장일지 -->
+    <div id="page-vet-trip" class="page">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">출장일지</div>
+          <div class="flex-gap">
+            <input type="month" id="vettrip-month" onchange="renderVetTripSummary()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+            <button class="btn btn-primary btn-sm" onclick="printVetTrip()">🖨️ 인쇄</button>
+          </div>
+        </div>
+        <p class="text-muted" id="vettrip-summary"></p>
+      </div>
     </div>
 
     <!-- 처방전 발급 -->
@@ -1446,6 +1595,60 @@
   </div>
 </div>
 
+<!-- 모달: 공수의 보고서 — 방문 기록(일자별 근무내용) 추가/편집 -->
+<div class="modal-bg" id="modal-vet-entry">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-vet-entry-title">방문 기록 추가</div>
+      <button class="modal-close" onclick="closeModal('modal-vet-entry')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>방문일 *</label><input id="vetentry-date" type="date" min="1900-01-01" max="2999-12-31"></div>
+      <div class="form-group"><label>농장 *</label>
+        <select id="vetentry-farm" onchange="onVetEntryFarmChange()"><option value="">농장 선택</option></select>
+      </div>
+    </div>
+    <div class="text-muted mb-16" id="vetentry-farm-info">농장을 선택하면 주소·축종·사육규모가 자동으로 채워집니다.</div>
+    <div class="form-group"><label>예찰내용/결과</label><textarea id="vetentry-content" rows="2" placeholder="예) AI진단키트 검사 -음성"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-vet-entry')">취소</button>
+      <button class="btn btn-primary" onclick="saveVetEntry()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 모달: 공수의 보고서 — 사무실 정보(민감정보, DB에만 저장) -->
+<div class="modal-bg" id="modal-vet-office-info">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">사무실 정보</div>
+      <button class="modal-close" onclick="closeModal('modal-vet-office-info')">✕</button>
+    </div>
+    <p class="text-muted mb-16">여비청구서·근무상황보고서·출장일지에 쓰이는 정보입니다. 로그인한 사용자만 볼 수 있게 데이터베이스에만 저장되며, 이 소스코드에는 들어가지 않습니다.</p>
+    <div class="form-row">
+      <div class="form-group"><label>동물병원명</label><input id="voi-clinic-name"></div>
+      <div class="form-group"><label>성명</label><input id="voi-vet-name"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>면허번호</label><input id="voi-license-no"></div>
+      <div class="form-group"><label>담당지역/주소</label><input id="voi-address"></div>
+    </div>
+    <div class="form-group"><label>주민등록번호</label><input id="voi-resident-no" placeholder="000000-0000000"></div>
+    <div class="form-row">
+      <div class="form-group"><label>은행명</label><input id="voi-bank-name"></div>
+      <div class="form-group"><label>계좌번호</label><input id="voi-bank-account"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>건당 여비(원)</label><input id="voi-travel-fee" type="number" min="0" placeholder="20000"></div>
+      <div class="form-group"><label>월 활동수당(원)</label><input id="voi-activity-allowance" type="number" min="0"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-vet-office-info')">취소</button>
+      <button class="btn btn-primary" onclick="saveVetOfficeInfo()">저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- 모달: 일령별 계획 변경 (입추 상세의 일자별 표 → "변경") -->
 <!-- 프로그램 전체 편집 모달과 달리 한 일령만 고친다. 전체 편집은 500일치 표를 다시
      그리고 저장 시 입추 자동 등록까지 함께 도는 무거운 흐름이라, 현장에서 "오늘 약만
@@ -1575,30 +1778,31 @@
      async defer라 이 스크립트가 늦게 끝나도 페이지 로드를 막지 않는다 — 실제로
      쓰는 시점(사진 첨부 후 저장)엔 이미 다 로드돼 있다. -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="js/config.js?v=20260918a"></script>
-<script src="js/supabaseClient.js?v=20260918a"></script>
-<script src="js/auth.js?v=20260918a"></script>
-<script src="js/googleDrive.js?v=20260918a"></script>
-<script src="js/breedStandards.js?v=20260918a"></script>
-<script src="js/farms.js?v=20260918a"></script>
-<script src="js/sms.js?v=20260918a"></script>
-<script src="js/masterdata.js?v=20260918a"></script>
-<script src="js/rxProducts.js?v=20260918a"></script>
-<script src="js/drugSearch.js?v=20260918a"></script>
-<script src="js/programs.js?v=20260918a"></script>
-<script src="js/batches.js?v=20260918a"></script>
-<script src="js/medicationLog.js?v=20260918a"></script>
-<script src="js/prescriptions.js?v=20260918a"></script>
-<script src="js/preShipment.js?v=20260918a"></script>
-<script src="js/movePermit.js?v=20260918a"></script>
-<script src="js/henShipment.js?v=20260918a"></script>
-<script src="js/clinicalAssessment.js?v=20260918a"></script>
-<script src="js/rodentControl.js?v=20260918a"></script>
-<script src="js/schedule.js?v=20260918a"></script>
-<script src="js/dashboard.js?v=20260918a"></script>
-<script src="js/reports.js?v=20260918a"></script>
-<script src="js/print.js?v=20260918a"></script>
-<script src="js/backup.js?v=20260918a"></script>
-<script src="js/app.js?v=20260918a"></script>
+<script src="js/config.js?v=20260928a"></script>
+<script src="js/supabaseClient.js?v=20260928a"></script>
+<script src="js/auth.js?v=20260928a"></script>
+<script src="js/googleDrive.js?v=20260928a"></script>
+<script src="js/breedStandards.js?v=20260928a"></script>
+<script src="js/farms.js?v=20260928a"></script>
+<script src="js/sms.js?v=20260928a"></script>
+<script src="js/masterdata.js?v=20260928a"></script>
+<script src="js/rxProducts.js?v=20260928a"></script>
+<script src="js/drugSearch.js?v=20260928a"></script>
+<script src="js/programs.js?v=20260928a"></script>
+<script src="js/batches.js?v=20260928a"></script>
+<script src="js/medicationLog.js?v=20260928a"></script>
+<script src="js/prescriptions.js?v=20260928a"></script>
+<script src="js/preShipment.js?v=20260928a"></script>
+<script src="js/movePermit.js?v=20260928a"></script>
+<script src="js/henShipment.js?v=20260928a"></script>
+<script src="js/vetReport.js?v=20260928a"></script>
+<script src="js/clinicalAssessment.js?v=20260928a"></script>
+<script src="js/rodentControl.js?v=20260928a"></script>
+<script src="js/schedule.js?v=20260928a"></script>
+<script src="js/dashboard.js?v=20260928a"></script>
+<script src="js/reports.js?v=20260928a"></script>
+<script src="js/print.js?v=20260928a"></script>
+<script src="js/backup.js?v=20260928a"></script>
+<script src="js/app.js?v=20260928a"></script>
 </body>
 </html>
