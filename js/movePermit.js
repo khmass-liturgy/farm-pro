@@ -62,6 +62,10 @@ function renderMovePermits() {
 
   const printBtn = document.getElementById('mp-print-btn');
   const dupBtn = document.getElementById('mp-dup-btn');
+  const pdfBtn = document.getElementById('mp-pdf-btn');
+  const emailBtn = document.getElementById('mp-email-btn');
+  if (pdfBtn) pdfBtn.disabled = mpSelectedIds.size === 0;
+  if (emailBtn) emailBtn.disabled = mpSelectedIds.size === 0;
   const editBtn = document.getElementById('mp-edit-btn');
   const deleteBtn = document.getElementById('mp-delete-btn');
   if (printBtn) printBtn.disabled = mpSelectedIds.size === 0;
