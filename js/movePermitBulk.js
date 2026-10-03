@@ -23,6 +23,7 @@ const MP_BULK_ALIASES = {
   shipCount: ['출하수수', '사육두수', '수수'],
   species: ['축종'],
   breed: ['품종'],
+  ageLabel: ['출하일령', '일령', '주령'],
   shipTo: ['출하처'],
   note: ['비고'],
   samplingDate: ['시료채취일'],
@@ -102,6 +103,9 @@ function mpParseRoster(rows, defaultFarm) {
 
     const species = mpClean(get('species')) || farm?.type || '';
     const farmName = sheetFarmName || farm?.name || '';
+    // 숫자만 적었으면 산란계·종계는 주령, 그 외(육계 등)는 일령으로 붙인다.
+    const ageRaw = mpClean(get('ageLabel'));
+    const ageLabel = /^\d+(\.\d+)?$/.test(ageRaw) ? `${ageRaw}${/산란|종계/.test(species) ? '주령' : '일령'}` : ageRaw;
     const isBreeder = /종계/.test(species) || /종계장/.test(farmName);
     const issueDate = mpBulkDate(get('issueDate'));
     const releaseDate = mpBulkDate(get('releaseDate'), issueDate || mpBulkDate(get('samplingDate'))) || issueDate;
@@ -123,7 +127,7 @@ function mpParseRoster(rows, defaultFarm) {
       samplingDate: mpBulkDate(get('samplingDate'), issueDate) || (!isBreeder && releaseDate ? mpShiftDate(releaseDate, -2) : null),
       testResult: '음성', test16w: false, test36w: false, test56w: false, mgVaccine: '',
       shipTo: mpClean(get('shipTo')), releaseDate,
-      vehicleNo, species, breed: mpClean(get('breed')) || '', ageLabel: '',
+      vehicleNo, species, breed: mpClean(get('breed')) || '', ageLabel,
       carrierName, carrierPhone: isBreeder && phoneLike ? noteRaw : '',
       note: isBreeder && phoneLike ? '' : noteRaw,
     };
@@ -170,15 +174,24 @@ async function onMpBulkFile(e) {
   sel.value = usable[usable.length - 1];
   document.getElementById('mpbulk-file-name').textContent = file.name;
 
-  const prefixEl = document.getElementById('mpbulk-prefix');
-  prefixEl.value = mpLatest()?.docNoPrefix || '';
-  onMpBulkPrefixChange();
   loadMpBulkSheet();
   openModal('modal-mp-bulk');
 }
 
-function onMpBulkPrefixChange() {
-  document.getElementById('mpbulk-serial').value = mpNextSerial(document.getElementById('mpbulk-prefix').value.trim());
+// 발급번호는 "발급일(YYMMDD)-일련번호"(예: 261003-1)로 자동 부여한다. 같은 날짜로 이미 발급한
+// 번호가 있으면 그 다음부터 이어 붙이고, 이번 명단 안에서는 줄 순서대로 매긴다.
+function mpDocPrefixOf(dateStr) { return dateStr.replace(/-/g, '').slice(2); }
+
+function mpBulkDocNos() {
+  const next = {};
+  const out = {};
+  mpBulkRows.forEach((r, i) => {
+    if (!r.include) return;
+    const prefix = mpDocPrefixOf(r.draft.issueDate);
+    if (next[prefix] == null) next[prefix] = mpNextSerial(prefix);
+    out[i] = { prefix, serial: next[prefix]++ };
+  });
+  return out;
 }
 
 function loadMpBulkSheet() {
@@ -203,15 +216,18 @@ function renderMpBulkPreview() {
   btn.disabled = n === 0;
   btn.textContent = n ? `${n}건 일괄 발급` : '일괄 발급';
   document.getElementById('mpbulk-check-all').checked = mpBulkRows.length > 0 && mpBulkRows.filter(r => !r.invalid).every(r => r.include);
+  const nos = mpBulkDocNos();
   document.getElementById('mpbulk-tbody').innerHTML = mpBulkRows.map((r, i) => {
     const d = r.draft;
     return `<tr${r.invalid ? ' style="opacity:.5"' : ''}>
       <td style="text-align:center"><input type="checkbox" ${r.include ? 'checked' : ''} ${r.invalid ? 'disabled' : ''} onchange="toggleMpBulkRow(${i}, this.checked)"></td>
       <td>${r.sheetRow}</td>
+      <td>${nos[i] ? `${nos[i].prefix}-${nos[i].serial}` : '-'}</td>
       <td>${d.issueDate || '-'}</td>
       <td><strong>${d.farmName || '-'}</strong><div style="font-size:11px;color:var(--text-secondary)">${d.owner || ''}</div></td>
       <td>${d.carrierName || '-'}<div style="font-size:11px;color:var(--text-secondary)">${d.vehicleNo || ''}</div></td>
       <td>${d.headCount != null ? Number(d.headCount).toLocaleString() : '-'}</td>
+      <td>${d.species || '-'}${d.ageLabel ? `<div style="font-size:11px;color:var(--text-secondary)">${d.ageLabel}</div>` : ''}</td>
       <td>${d.formType === 'breeder' ? '종계장' : '일반'}</td>
       <td style="font-size:11px;color:${r.invalid ? 'var(--red)' : 'var(--text-secondary)'}">${r.issues.join(' · ') || '정상'}</td>
     </tr>`;
@@ -221,10 +237,9 @@ function renderMpBulkPreview() {
 async function issueMpBulk() {
   const rows = mpBulkRows.filter(r => r.include);
   if (!rows.length) return;
-  const prefix = document.getElementById('mpbulk-prefix').value.trim();
-  let serial = Number(document.getElementById('mpbulk-serial').value);
-  if (prefix && (!Number.isInteger(serial) || serial < 1)) { alert('시작 일련번호를 1 이상의 숫자로 입력해주세요.'); return; }
-  if (!confirm(`이동승인서 ${rows.length}건을 발급합니다.${prefix ? `\n발급번호: 제 ${prefix} - ${serial} 호 부터 ${serial + rows.length - 1} 호까지` : '\n(발급번호 앞자리가 비어 있어 번호 없이 발급합니다)'}\n\n계속하시겠습니까?`)) return;
+  const nos = mpBulkDocNos();
+  const first = nos[mpBulkRows.indexOf(rows[0])], last = nos[mpBulkRows.indexOf(rows[rows.length - 1])];
+  if (!confirm(`이동승인서 ${rows.length}건을 발급합니다.\n발급번호: ${first.prefix}-${first.serial} ~ ${last.prefix}-${last.serial}\n\n계속하시겠습니까?`)) return;
 
   const btn = document.getElementById('mpbulk-issue-btn');
   const email = await currentUserEmail();
@@ -233,7 +248,8 @@ async function issueMpBulk() {
   try {
     for (let i = 0; i < rows.length; i++) {
       btn.textContent = `발급 중... ${i + 1}/${rows.length}`;
-      const data = { ...rows[i].draft, docNoPrefix: prefix || null, docNoSerial: prefix ? serial++ : null, issuedByEmail: email };
+      const no = nos[mpBulkRows.indexOf(rows[i])];
+      const data = { ...rows[i].draft, docNoPrefix: no.prefix, docNoSerial: no.serial, issuedByEmail: email };
       const saved = await insertRow('movePermits', data);
       issuedIds.push(saved.id);
     }
@@ -460,11 +476,11 @@ async function sendMpEmail() {
 
 // ─── 양식 다운로드 ──────────────────────────────────────────────────────────
 function downloadMpTemplate() {
-  const header = ['번호', '운송인성명', '운송차량번호', '반출일', '시료채취일', '품종', '발급일'];
-  const aoa = [['이동승인서 발급'], header, ...Array.from({ length: 10 }, (_, i) => [i + 1, '', '', '', '', '', ''])];
+  const header = ['번호', '운송인성명', '운송차량번호', '반출일', '시료채취일', '축종', '품종', '출하일령', '발급일'];
+  const aoa = [['이동승인서 발급'], header, ...Array.from({ length: 10 }, (_, i) => [i + 1, '', '', '', '', '', '', '', ''])];
   const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
-  ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
+  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }];
+  ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 12 }];
   const guide = XLSX.utils.aoa_to_sheet([
     ['이동승인서 일괄 발급 양식 작성 방법'],
     [''],
@@ -473,7 +489,10 @@ function downloadMpTemplate() {
     ['· 운송인성명, 운송차량번호: 승인서에 그대로 인쇄됩니다.'],
     ['· 반출일: 10-4 또는 2026-10-04 형식. 연도를 안 적으면 발급일에 가장 가까운 해로 봅니다.'],
     ['· 시료채취일, 발급일: 2026-10-02 형식. 시료채취일을 비우면 반출일 2일 전으로 채웁니다.'],
+    ['· 축종: 예) 산란계, 육계. 비우면 농장 등록 정보의 축종을 씁니다.'],
     ['· 품종: 예) 하이라인.'],
+    ['· 출하일령: 예) 95주령, 35일령. 숫자만 적으면 산란계·종계는 "주령", 그 외는 "일령"으로 붙입니다.'],
+    ['· 발급번호는 적지 않습니다. 발급일 기준으로 "YYMMDD-번호"(예: 261003-1)가 자동으로 붙습니다.'],
     ['· 번호 열은 참고용이며, 운송인·차량번호가 모두 비어 있는 줄은 건너뜁니다.'],
   ]);
   guide['!cols'] = [{ wch: 110 }];

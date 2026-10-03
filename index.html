@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>대한동물병원 업무시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20261003b">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20261003b">
-<link rel="icon" href="img/favicon.ico?v=20261003b">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20261003b">
-<link rel="stylesheet" href="css/styles.css?v=20261003b">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20261003c">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20261003c">
+<link rel="icon" href="img/favicon.ico?v=20261003c">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20261003c">
+<link rel="stylesheet" href="css/styles.css?v=20261003c">
 </head>
 <body>
 
@@ -1611,17 +1611,14 @@
     <div class="form-group"><label>농장 * <span class="text-muted">(명단에 농장주 열이 없으면 모든 줄에 이 농장을 적용합니다)</span></label>
       <select id="mpbulk-farm" onchange="loadMpBulkSheet()"><option value="">농장 선택</option></select>
     </div>
-    <div class="form-row-3">
-      <div class="form-group"><label>시트</label><select id="mpbulk-sheet" onchange="loadMpBulkSheet()"></select></div>
-      <div class="form-group"><label>발급번호 앞자리 <span class="text-muted">(예: 26-3)</span></label><input id="mpbulk-prefix" oninput="onMpBulkPrefixChange()" placeholder="26-3"></div>
-      <div class="form-group"><label>시작 일련번호</label><input id="mpbulk-serial" type="number" min="1"></div>
-    </div>
+    <div class="form-group"><label>시트</label><select id="mpbulk-sheet" onchange="loadMpBulkSheet()"></select></div>
+    <p class="text-muted mb-16">발급번호는 발급일 기준 "YYMMDD-번호"(예: 261003-1)로 자동 부여됩니다.</p>
     <div class="text-muted mb-16" id="mpbulk-count"></div>
     <div class="tbl-wrap" style="max-height:48vh; overflow:auto;">
       <table>
         <thead><tr>
           <th style="text-align:center"><input type="checkbox" id="mpbulk-check-all" onchange="toggleMpBulkAll(this.checked)" title="전체 선택"></th>
-          <th>줄</th><th>발급일</th><th>농장</th><th>운송인/차량</th><th>출하수수</th><th>서식</th><th>확인</th>
+          <th>줄</th><th>발급번호</th><th>발급일</th><th>농장</th><th>운송인/차량</th><th>출하수수</th><th>축종/일령</th><th>서식</th><th>확인</th>
         </tr></thead>
         <tbody id="mpbulk-tbody"></tbody>
       </table>
@@ -1836,32 +1833,32 @@
      async defer라 이 스크립트가 늦게 끝나도 페이지 로드를 막지 않는다 — 실제로
      쓰는 시점(사진 첨부 후 저장)엔 이미 다 로드돼 있다. -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="js/config.js?v=20261003b"></script>
-<script src="js/supabaseClient.js?v=20261003b"></script>
-<script src="js/auth.js?v=20261003b"></script>
-<script src="js/googleDrive.js?v=20261003b"></script>
-<script src="js/breedStandards.js?v=20261003b"></script>
-<script src="js/farms.js?v=20261003b"></script>
-<script src="js/sms.js?v=20261003b"></script>
-<script src="js/masterdata.js?v=20261003b"></script>
-<script src="js/rxProducts.js?v=20261003b"></script>
-<script src="js/drugSearch.js?v=20261003b"></script>
-<script src="js/programs.js?v=20261003b"></script>
-<script src="js/batches.js?v=20261003b"></script>
-<script src="js/medicationLog.js?v=20261003b"></script>
-<script src="js/prescriptions.js?v=20261003b"></script>
-<script src="js/preShipment.js?v=20261003b"></script>
-<script src="js/movePermit.js?v=20261003b"></script>
-<script src="js/movePermitBulk.js?v=20261003b"></script>
-<script src="js/henShipment.js?v=20261003b"></script>
-<script src="js/vetReport.js?v=20261003b"></script>
-<script src="js/clinicalAssessment.js?v=20261003b"></script>
-<script src="js/rodentControl.js?v=20261003b"></script>
-<script src="js/schedule.js?v=20261003b"></script>
-<script src="js/dashboard.js?v=20261003b"></script>
-<script src="js/reports.js?v=20261003b"></script>
-<script src="js/print.js?v=20261003b"></script>
-<script src="js/backup.js?v=20261003b"></script>
-<script src="js/app.js?v=20261003b"></script>
+<script src="js/config.js?v=20261003c"></script>
+<script src="js/supabaseClient.js?v=20261003c"></script>
+<script src="js/auth.js?v=20261003c"></script>
+<script src="js/googleDrive.js?v=20261003c"></script>
+<script src="js/breedStandards.js?v=20261003c"></script>
+<script src="js/farms.js?v=20261003c"></script>
+<script src="js/sms.js?v=20261003c"></script>
+<script src="js/masterdata.js?v=20261003c"></script>
+<script src="js/rxProducts.js?v=20261003c"></script>
+<script src="js/drugSearch.js?v=20261003c"></script>
+<script src="js/programs.js?v=20261003c"></script>
+<script src="js/batches.js?v=20261003c"></script>
+<script src="js/medicationLog.js?v=20261003c"></script>
+<script src="js/prescriptions.js?v=20261003c"></script>
+<script src="js/preShipment.js?v=20261003c"></script>
+<script src="js/movePermit.js?v=20261003c"></script>
+<script src="js/movePermitBulk.js?v=20261003c"></script>
+<script src="js/henShipment.js?v=20261003c"></script>
+<script src="js/vetReport.js?v=20261003c"></script>
+<script src="js/clinicalAssessment.js?v=20261003c"></script>
+<script src="js/rodentControl.js?v=20261003c"></script>
+<script src="js/schedule.js?v=20261003c"></script>
+<script src="js/dashboard.js?v=20261003c"></script>
+<script src="js/reports.js?v=20261003c"></script>
+<script src="js/print.js?v=20261003c"></script>
+<script src="js/backup.js?v=20261003c"></script>
+<script src="js/app.js?v=20261003c"></script>
 </body>
 </html>
