@@ -37,7 +37,7 @@ function computeDueSoonAlerts(horizonDays = DUE_SOON_HORIZON_DAYS, startOffset =
   return alerts;
 }
 
-// 활성 입추 배치 중, 오늘부터 horizonDays일 이내에 투약/백신 계획이 있는 항목 전체
+// 활성 입추 배치 중, 오늘을 포함해 horizonDays일간(2면 오늘·내일) 투약/백신 계획이 있는 항목 전체
 // (기록 여부 상관없이) — "다가오는 일정" 목록용. computeDueSoonAlerts는 미기록 건만
 // 골라 경고 문구로 보여주는 반면, 이건 며칠치 계획을 날짜순으로 그대로 보여준다.
 const UPCOMING_SCHEDULE_HORIZON_DAYS = 2;
@@ -53,7 +53,7 @@ function computeUpcomingSchedule(horizonDays = UPCOMING_SCHEDULE_HORIZON_DAYS) {
     if (!prog) return;
     const dayAge = computeDayAge(b.placementDate);
     const farm = farms.find(f => f.id === b.farmId);
-    for (let offset = 0; offset <= horizonDays; offset++) {
+    for (let offset = 0; offset < horizonDays; offset++) {
       const day = dayAge + offset;
       if (day < 1 || day > prog.duration) continue;
       const d = prog.days.find(x => x.day === day);
