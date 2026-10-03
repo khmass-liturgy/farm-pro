@@ -180,7 +180,6 @@ async function onMpBulkFile(e) {
 
 // 발급번호는 "발급일(YYMMDD)-일련번호"(예: 261003-1)로 자동 부여한다. 같은 날짜로 이미 발급한
 // 번호가 있으면 그 다음부터 이어 붙이고, 이번 명단 안에서는 줄 순서대로 매긴다.
-function mpDocPrefixOf(dateStr) { return dateStr.replace(/-/g, '').slice(2); }
 
 function mpBulkDocNos() {
   const next = {};

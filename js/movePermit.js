@@ -161,8 +161,11 @@ function onMpFarmChange(force) {
   }
 }
 
-// 다음 발급번호 제안 — 같은 앞자리(26-3 등)로 발급한 것 중 가장 큰 일련번호 + 1.
-// 시군에서 내려온 번호 체계라 앱이 채번하지는 않고 제안만 한다.
+// 발급번호는 "발급일(YYMMDD)-일련번호"(예: 261003-1)로 자동 부여한다(건별·일괄 발급 공통).
+// 앞자리는 발급일에서 만들고, 일련번호는 같은 앞자리로 이미 발급한 것 중 가장 큰 번호 + 1이다.
+// 칸은 그대로 열어 두어 필요하면 직접 고칠 수 있다.
+function mpDocPrefixOf(dateStr) { return (dateStr || '').replace(/-/g, '').slice(2); }
+
 function mpNextSerial(prefix) {
   const used = load('movePermits')
     .filter(m => (m.docNoPrefix || '') === prefix && m.docNoSerial != null)
@@ -170,16 +173,24 @@ function mpNextSerial(prefix) {
   return used.length ? Math.max(...used) + 1 : 1;
 }
 
-function mpLatest() {
-  return load('movePermits').slice().sort((a, b) =>
-    (b.issueDate || '').localeCompare(a.issueDate || '') || (b.docNoSerial ?? 0) - (a.docNoSerial ?? 0))[0] || null;
-}
-
 function onMpPrefixInput() {
+  document.getElementById('mp-doc-prefix').dataset.manualEdit = '1';
   const serialEl = document.getElementById('mp-doc-serial');
   // 편집 중이거나 사용자가 번호를 직접 적어둔 상태면 건드리지 않는다.
   if (editingId.movePermit || serialEl.dataset.manualEdit === '1') return;
   serialEl.value = mpNextSerial(document.getElementById('mp-doc-prefix').value.trim());
+}
+
+// 발급일을 바꾸면 그 날짜 기준으로 번호를 다시 부여한다. 편집 중이거나 사용자가 번호를
+// 직접 고쳐 둔 상태면 건드리지 않는다.
+function onMpIssueDateChange() {
+  const prefixEl = document.getElementById('mp-doc-prefix');
+  const serialEl = document.getElementById('mp-doc-serial');
+  if (editingId.movePermit || prefixEl.dataset.manualEdit === '1' || serialEl.dataset.manualEdit === '1') return;
+  const date = document.getElementById('mp-issue-date').value;
+  if (!date) return;
+  prefixEl.value = mpDocPrefixOf(date);
+  serialEl.value = mpNextSerial(prefixEl.value);
 }
 
 function renderMpClinicalSigns(selected) {
@@ -205,17 +216,19 @@ function openMovePermitModal(id, source) {
   document.getElementById('mp-dup-hint').style.display = isDup ? '' : 'none';
 
   const today = new Date().toISOString().slice(0, 10);
-  const last = mpLatest();
-  const prefix = mp?.docNoPrefix ?? (last?.docNoPrefix || '');
+  const issueDate = mp?.issueDate || today;
+  // 편집은 그 건의 번호를 그대로, 새 발급·복제는 발급일 기준으로 자동 부여한다.
+  const prefix = id ? (mp?.docNoPrefix ?? '') : mpDocPrefixOf(issueDate);
 
   document.getElementById('mp-form-type').innerHTML = Object.entries(MP_FORM_TYPES).map(([k, v]) =>
     `<option value="${k}"${(mp?.formType || 'general') === k ? ' selected' : ''}>${v}</option>`).join('');
-  document.getElementById('mp-doc-prefix').value = prefix;
+  const prefixEl = document.getElementById('mp-doc-prefix');
+  prefixEl.value = prefix;
+  delete prefixEl.dataset.manualEdit;
   const serialEl = document.getElementById('mp-doc-serial');
-  // 편집은 그 건의 번호를 그대로, 새 발급·복제는 다음 번호를 제안한다.
   serialEl.value = id ? (mp?.docNoSerial ?? '') : mpNextSerial(prefix);
   delete serialEl.dataset.manualEdit;
-  document.getElementById('mp-issue-date').value = mp?.issueDate || today;
+  document.getElementById('mp-issue-date').value = issueDate;
 
   populateFarmSelect('mp-farm', mp?.farmId || '');
   document.getElementById('mp-owner').value = mp?.owner || '';
