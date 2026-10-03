@@ -1,7 +1,8 @@
 // ─── 이동승인서: 엑셀 명단 일괄 발급 · PDF 저장 · 이메일 발송 ──────────────────
-// 명단 형식은 「2026_이동승인서 발급대장.xlsx」의 월별 시트(예: 20260３, 202601)와 같다.
-// 한 줄 = 승인서 한 장(차량 한 대). 열 이름(머리글)으로 찾기 때문에 열 순서가 달라도
-// 되고, 아래 MP_BULK_ALIASES에 있는 이름이면 인식한다.
+// 기준 양식은 "양식 다운로드"로 받는 엑셀(번호·운송인성명·운송차량번호·반출일·시료채취일·
+// 품종·발급일)이다. 한 줄 = 승인서 한 장(차량 한 대)이고, 농장은 줄마다 적지 않고 업로드할
+// 때 한 번 고른다. 발급대장 월별 시트(농장주·농장명 열이 있는 형식)도 그대로 읽는다.
+// 열 이름(머리글)으로 찾기 때문에 열 순서가 달라도 되고, 아래 MP_BULK_ALIASES의 이름이면 인식한다.
 //
 // PDF는 인쇄 서식(buildMovePermitHtml)을 화면 밖에서 그린 뒤 이미지로 캡처해 A4 한 쪽씩
 // 넣는다(글자 선택은 안 되지만 인쇄본과 똑같은 모양). 라이브러리는 처음 쓸 때만 불러온다.
@@ -11,7 +12,7 @@
 // "Gmail API 사용 설정"과 "gmail.send 범위"만 추가하면 된다.
 
 const MP_BULK_ALIASES = {
-  issueDate: ['발급날자', '발급일', '발급날짜', '날자', '날짜'],
+  issueDate: ['발급일', '발급날자', '발급날짜', '날자', '날짜'],
   owner: ['농장주', '대표자', '축주명', '축주'],
   address: ['주소'],
   carrierName: ['이름', '운송인', '운송인성명', '성명'],
@@ -34,8 +35,18 @@ const mpClean = v => {
   return s === '-' ? '' : s;
 };
 
-function mpBulkDate(v) {
+// hint: 연도가 없는 "10-4" 같은 값의 연도를 정할 기준 날짜(발급일). 기준일에 가장 가까운 해를 고른다.
+function mpBulkDate(v, hint) {
   if (v == null || v === '' || v === '-') return null;
+  if (typeof v === 'string' && hint) {
+    const md = v.trim().match(/^(\d{1,2})[-./](\d{1,2})$/);
+    if (md) {
+      const base = new Date(hint + 'T12:00:00');
+      const best = [-1, 0, 1].map(d => new Date(base.getFullYear() + d, Number(md[1]) - 1, Number(md[2]), 12))
+        .sort((a, b) => Math.abs(a - base) - Math.abs(b - base))[0];
+      return `${best.getFullYear()}-${String(best.getMonth() + 1).padStart(2, '0')}-${String(best.getDate()).padStart(2, '0')}`;
+    }
+  }
   if (v instanceof Date && !isNaN(v)) {
     // SheetJS의 날짜는 시간대 때문에 몇 시간 어긋날 수 있어 정오로 밀어 날짜가 바뀌지 않게 한다.
     const d = new Date(v.getTime() + 12 * 3600 * 1000);
@@ -58,7 +69,7 @@ function mpFindHeader(rows) {
       const i = cells.findIndex(c => names.includes(c));
       if (i >= 0) col[key] = i;
     }
-    if (col.owner != null && col.vehicleNo != null) return { row: r, col };
+    if (col.vehicleNo != null && (col.owner != null || col.carrierName != null)) return { row: r, col };
   }
   return null;
 }
@@ -68,7 +79,8 @@ function mpSheetRows(wb, sheetName) {
 }
 
 // 시트 하나를 승인서 초안 목록으로 바꾼다. 농장 매칭·중복 검사까지 여기서 한다.
-function mpParseRoster(rows) {
+// defaultFarm: 명단에 농장주 열이 없을 때(기준 양식) 모든 줄에 적용할 농장.
+function mpParseRoster(rows, defaultFarm) {
   const head = mpFindHeader(rows);
   if (!head) return null;
   const farms = load('farms');
@@ -84,13 +96,15 @@ function mpParseRoster(rows) {
     const sheetFarmName = mpClean(get('farmName'));
 
     const owned = farms.filter(f => owner && f.owner === owner);
-    const farm = (sheetFarmName && owned.find(f => f.name === sheetFarmName)) || (owned.length === 1 ? owned[0] : null);
+    const farm = owner
+      ? ((sheetFarmName && owned.find(f => f.name === sheetFarmName)) || (owned.length === 1 ? owned[0] : null))
+      : (defaultFarm || null);
 
     const species = mpClean(get('species')) || farm?.type || '';
     const farmName = sheetFarmName || farm?.name || '';
     const isBreeder = /종계/.test(species) || /종계장/.test(farmName);
     const issueDate = mpBulkDate(get('issueDate'));
-    const releaseDate = mpBulkDate(get('releaseDate')) || issueDate;
+    const releaseDate = mpBulkDate(get('releaseDate'), issueDate || mpBulkDate(get('samplingDate'))) || issueDate;
     const shipCount = get('shipCount') == null || mpClean(get('shipCount')) === '' ? null : Number(String(get('shipCount')).replace(/,/g, ''));
     const noteRaw = mpClean(get('note'));
     const birthRaw = mpClean(get('ownerBirth')).replace(/-/g, '');
@@ -106,7 +120,7 @@ function mpParseRoster(rows) {
       headCount: shipCount != null && !isNaN(shipCount) ? shipCount : (farm?.count ?? null),
       shipCount: isBreeder && shipCount != null && !isNaN(shipCount) ? shipCount : null,
       clinicalSigns: [], deadCount: null, layingRate: null, clinicalResult: '정상',
-      samplingDate: mpBulkDate(get('samplingDate')) || (!isBreeder && releaseDate ? mpShiftDate(releaseDate, -2) : null),
+      samplingDate: mpBulkDate(get('samplingDate'), issueDate) || (!isBreeder && releaseDate ? mpShiftDate(releaseDate, -2) : null),
       testResult: '음성', test16w: false, test36w: false, test56w: false, mgVaccine: '',
       shipTo: mpClean(get('shipTo')), releaseDate,
       vehicleNo, species, breed: mpClean(get('breed')) || '', ageLabel: '',
@@ -116,7 +130,7 @@ function mpParseRoster(rows) {
 
     const issues = [];
     if (!draft.issueDate) issues.push('발급일 없음');
-    if (!draft.farmName) issues.push('농장명 없음');
+    if (!draft.farmName) issues.push(owner ? '농장명 없음' : '농장을 선택하세요');
     const invalid = issues.length > 0;
     if (!invalid && !farm) issues.push('농장 목록에 없음(명단 정보로 발급)');
     if (!vehicleNo) issues.push('차량번호 없음');
@@ -146,9 +160,10 @@ async function onMpBulkFile(e) {
   } catch (err) { alert('엑셀 파일을 읽지 못했습니다: ' + err.message); return; }
   const usable = mpBulkWb.SheetNames.filter(n => mpFindHeader(mpSheetRows(mpBulkWb, n)));
   if (!usable.length) {
-    alert('명단을 찾지 못했습니다.\n머리글 행에 "농장주"와 "차량번호" 열이 있는 시트가 필요합니다(예: 이동승인서 발급대장의 월별 시트).');
+    alert('명단을 찾지 못했습니다.\n머리글 행에 "운송인성명"과 "운송차량번호" 열이 있는 시트가 필요합니다. "양식 다운로드"로 받은 엑셀 양식을 사용해주세요.');
     return;
   }
+  populateFarmSelect('mpbulk-farm', '');
   const sel = document.getElementById('mpbulk-sheet');
   // 발급대장처럼 시트가 여러 개인 파일은 마지막 시트가 가장 최근 달인 경우가 많다.
   sel.innerHTML = usable.map(n => `<option value="${n}">${n}</option>`).join('');
@@ -168,7 +183,8 @@ function onMpBulkPrefixChange() {
 
 function loadMpBulkSheet() {
   const name = document.getElementById('mpbulk-sheet').value;
-  mpBulkRows = mpParseRoster(mpSheetRows(mpBulkWb, name)) || [];
+  const farm = load('farms').find(f => f.id === document.getElementById('mpbulk-farm').value) || null;
+  mpBulkRows = mpParseRoster(mpSheetRows(mpBulkWb, name), farm) || [];
   renderMpBulkPreview();
 }
 
@@ -440,4 +456,29 @@ async function sendMpEmail() {
     alert('이메일 발송 실패: ' + e.message);
     btn.disabled = false;
   }
+}
+
+// ─── 양식 다운로드 ──────────────────────────────────────────────────────────
+function downloadMpTemplate() {
+  const header = ['번호', '운송인성명', '운송차량번호', '반출일', '시료채취일', '품종', '발급일'];
+  const aoa = [['이동승인서 발급'], header, ...Array.from({ length: 10 }, (_, i) => [i + 1, '', '', '', '', '', ''])];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
+  ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 12 }];
+  const guide = XLSX.utils.aoa_to_sheet([
+    ['이동승인서 일괄 발급 양식 작성 방법'],
+    [''],
+    ['· 한 줄이 승인서 한 장(차량 한 대)입니다. 첫 시트의 2번째 줄(머리글)은 지우거나 바꾸지 마세요.'],
+    ['· 농장은 파일에 적지 않습니다. 업로드할 때 화면에서 한 번 선택합니다(농장 정보·사육두수·축종은 농장 등록 정보를 씁니다).'],
+    ['· 운송인성명, 운송차량번호: 승인서에 그대로 인쇄됩니다.'],
+    ['· 반출일: 10-4 또는 2026-10-04 형식. 연도를 안 적으면 발급일에 가장 가까운 해로 봅니다.'],
+    ['· 시료채취일, 발급일: 2026-10-02 형식. 시료채취일을 비우면 반출일 2일 전으로 채웁니다.'],
+    ['· 품종: 예) 하이라인.'],
+    ['· 번호 열은 참고용이며, 운송인·차량번호가 모두 비어 있는 줄은 건너뜁니다.'],
+  ]);
+  guide['!cols'] = [{ wch: 110 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '이동승인서 발급');
+  XLSX.utils.book_append_sheet(wb, guide, '작성방법');
+  XLSX.writeFile(wb, '이동승인서_일괄발급_양식.xlsx');
 }

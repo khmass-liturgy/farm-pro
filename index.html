@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>대한동물병원 업무시스템</title>
-<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20261003a">
-<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20261003a">
-<link rel="icon" href="img/favicon.ico?v=20261003a">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20261003a">
-<link rel="stylesheet" href="css/styles.css?v=20261003a">
+<link rel="icon" type="image/svg+xml" href="img/favicon.svg?v=20261003b">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20261003b">
+<link rel="icon" href="img/favicon.ico?v=20261003b">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20261003b">
+<link rel="stylesheet" href="css/styles.css?v=20261003b">
 </head>
 <body>
 
@@ -415,7 +415,8 @@
         <div class="card-header">
           <div class="card-title">이동승인서 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 체크박스로 골라 인쇄·삭제하세요(여러 건 가능), 복제·편집은 한 건만 고르세요</span></div>
           <div class="flex-gap">
-            <button class="btn btn-outline btn-sm" id="mp-bulk-btn" onclick="document.getElementById('mp-bulk-file').click()" title="발급대장 형식의 엑셀 명단을 올려 한꺼번에 발급">📥 엑셀 일괄 발급</button>
+            <button class="btn btn-outline btn-sm" onclick="downloadMpTemplate()" title="일괄 발급용 엑셀 양식 내려받기">📋 양식 다운로드</button>
+            <button class="btn btn-outline btn-sm" id="mp-bulk-btn" onclick="document.getElementById('mp-bulk-file').click()" title="양식에 맞춘 엑셀 명단을 올려 한꺼번에 발급">📥 엑셀 일괄 발급</button>
             <input type="file" id="mp-bulk-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="onMpBulkFile(event)">
             <button class="btn btn-primary btn-sm" id="mp-print-btn" onclick="printSelectedMovePermits()" disabled>🖨️ 인쇄</button>
             <button class="btn btn-outline btn-sm" id="mp-pdf-btn" onclick="downloadSelectedMovePermitsPdf()" title="체크한 승인서를 한 개의 PDF로 저장" disabled>📄 PDF 저장</button>
@@ -1606,7 +1607,10 @@
       <div class="modal-title">이동승인서 일괄 발급 — 엑셀 명단 미리보기</div>
       <button class="modal-close" onclick="closeModal('modal-mp-bulk')">✕</button>
     </div>
-    <p class="text-muted mb-16">파일: <strong id="mpbulk-file-name"></strong> · 머리글 행에 농장주·차량번호가 있는 시트를 명단으로 읽습니다. 발급 전에 아래 내용을 확인하고, 빼고 싶은 줄은 체크를 해제하세요.</p>
+    <p class="text-muted mb-16">파일: <strong id="mpbulk-file-name"></strong> · 발급 전에 아래 내용을 확인하고, 빼고 싶은 줄은 체크를 해제하세요. <a href="#" onclick="downloadMpTemplate(); return false;">양식 다운로드</a></p>
+    <div class="form-group"><label>농장 * <span class="text-muted">(명단에 농장주 열이 없으면 모든 줄에 이 농장을 적용합니다)</span></label>
+      <select id="mpbulk-farm" onchange="loadMpBulkSheet()"><option value="">농장 선택</option></select>
+    </div>
     <div class="form-row-3">
       <div class="form-group"><label>시트</label><select id="mpbulk-sheet" onchange="loadMpBulkSheet()"></select></div>
       <div class="form-group"><label>발급번호 앞자리 <span class="text-muted">(예: 26-3)</span></label><input id="mpbulk-prefix" oninput="onMpBulkPrefixChange()" placeholder="26-3"></div>
@@ -1832,32 +1836,32 @@
      async defer라 이 스크립트가 늦게 끝나도 페이지 로드를 막지 않는다 — 실제로
      쓰는 시점(사진 첨부 후 저장)엔 이미 다 로드돼 있다. -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="js/config.js?v=20261003a"></script>
-<script src="js/supabaseClient.js?v=20261003a"></script>
-<script src="js/auth.js?v=20261003a"></script>
-<script src="js/googleDrive.js?v=20261003a"></script>
-<script src="js/breedStandards.js?v=20261003a"></script>
-<script src="js/farms.js?v=20261003a"></script>
-<script src="js/sms.js?v=20261003a"></script>
-<script src="js/masterdata.js?v=20261003a"></script>
-<script src="js/rxProducts.js?v=20261003a"></script>
-<script src="js/drugSearch.js?v=20261003a"></script>
-<script src="js/programs.js?v=20261003a"></script>
-<script src="js/batches.js?v=20261003a"></script>
-<script src="js/medicationLog.js?v=20261003a"></script>
-<script src="js/prescriptions.js?v=20261003a"></script>
-<script src="js/preShipment.js?v=20261003a"></script>
-<script src="js/movePermit.js?v=20261003a"></script>
-<script src="js/movePermitBulk.js?v=20261003a"></script>
-<script src="js/henShipment.js?v=20261003a"></script>
-<script src="js/vetReport.js?v=20261003a"></script>
-<script src="js/clinicalAssessment.js?v=20261003a"></script>
-<script src="js/rodentControl.js?v=20261003a"></script>
-<script src="js/schedule.js?v=20261003a"></script>
-<script src="js/dashboard.js?v=20261003a"></script>
-<script src="js/reports.js?v=20261003a"></script>
-<script src="js/print.js?v=20261003a"></script>
-<script src="js/backup.js?v=20261003a"></script>
-<script src="js/app.js?v=20261003a"></script>
+<script src="js/config.js?v=20261003b"></script>
+<script src="js/supabaseClient.js?v=20261003b"></script>
+<script src="js/auth.js?v=20261003b"></script>
+<script src="js/googleDrive.js?v=20261003b"></script>
+<script src="js/breedStandards.js?v=20261003b"></script>
+<script src="js/farms.js?v=20261003b"></script>
+<script src="js/sms.js?v=20261003b"></script>
+<script src="js/masterdata.js?v=20261003b"></script>
+<script src="js/rxProducts.js?v=20261003b"></script>
+<script src="js/drugSearch.js?v=20261003b"></script>
+<script src="js/programs.js?v=20261003b"></script>
+<script src="js/batches.js?v=20261003b"></script>
+<script src="js/medicationLog.js?v=20261003b"></script>
+<script src="js/prescriptions.js?v=20261003b"></script>
+<script src="js/preShipment.js?v=20261003b"></script>
+<script src="js/movePermit.js?v=20261003b"></script>
+<script src="js/movePermitBulk.js?v=20261003b"></script>
+<script src="js/henShipment.js?v=20261003b"></script>
+<script src="js/vetReport.js?v=20261003b"></script>
+<script src="js/clinicalAssessment.js?v=20261003b"></script>
+<script src="js/rodentControl.js?v=20261003b"></script>
+<script src="js/schedule.js?v=20261003b"></script>
+<script src="js/dashboard.js?v=20261003b"></script>
+<script src="js/reports.js?v=20261003b"></script>
+<script src="js/print.js?v=20261003b"></script>
+<script src="js/backup.js?v=20261003b"></script>
+<script src="js/app.js?v=20261003b"></script>
 </body>
 </html>
