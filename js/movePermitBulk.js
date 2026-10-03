@@ -227,6 +227,7 @@ function renderMpBulkPreview() {
       <td>${d.carrierName || '-'}<div style="font-size:11px;color:var(--text-secondary)">${d.vehicleNo || ''}</div></td>
       <td>${d.headCount != null ? Number(d.headCount).toLocaleString() : '-'}</td>
       <td>${d.species || '-'}${d.ageLabel ? `<div style="font-size:11px;color:var(--text-secondary)">${d.ageLabel}</div>` : ''}</td>
+      <td>${d.shipTo || '-'}</td>
       <td>${d.formType === 'breeder' ? '종계장' : '일반'}</td>
       <td style="font-size:11px;color:${r.invalid ? 'var(--red)' : 'var(--text-secondary)'}">${r.issues.join(' · ') || '정상'}</td>
     </tr>`;
@@ -475,11 +476,11 @@ async function sendMpEmail() {
 
 // ─── 양식 다운로드 ──────────────────────────────────────────────────────────
 function downloadMpTemplate() {
-  const header = ['번호', '운송인성명', '운송차량번호', '반출일', '시료채취일', '축종', '품종', '출하일령', '발급일'];
-  const aoa = [['이동승인서 발급'], header, ...Array.from({ length: 10 }, (_, i) => [i + 1, '', '', '', '', '', '', '', ''])];
+  const header = ['번호', '운송인성명', '운송차량번호', '반출일', '시료채취일', '축종', '품종', '출하일령', '발급일', '출하처'];
+  const aoa = [['이동승인서 발급'], header, ...Array.from({ length: 10 }, (_, i) => [i + 1, '', '', '', '', '', '', '', '', ''])];
   const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } }];
-  ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 12 }];
+  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } }];
+  ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 14 }];
   const guide = XLSX.utils.aoa_to_sheet([
     ['이동승인서 일괄 발급 양식 작성 방법'],
     [''],
@@ -491,6 +492,7 @@ function downloadMpTemplate() {
     ['· 축종: 예) 산란계, 육계. 비우면 농장 등록 정보의 축종을 씁니다.'],
     ['· 품종: 예) 하이라인.'],
     ['· 출하일령: 예) 95주령, 35일령. 숫자만 적으면 산란계·종계는 "주령", 그 외는 "일령"으로 붙입니다.'],
+    ['· 출하처: 예) 한려식품. 승인서의 출하처 칸에 인쇄됩니다.'],
     ['· 발급번호는 적지 않습니다. 발급일 기준으로 "YYMMDD-번호"(예: 261003-1)가 자동으로 붙습니다.'],
     ['· 번호 열은 참고용이며, 운송인·차량번호가 모두 비어 있는 줄은 건너뜁니다.'],
   ]);
