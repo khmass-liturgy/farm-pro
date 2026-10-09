@@ -284,6 +284,12 @@ function renderDsearchResult() {
     ? `유사 검색 결과 ${dsearchRows.length}건 · 제품명 클릭시 공식 상세정보(새창)`
     : `QIA 공식 데이터 · 총 ${dsearchTotal.toLocaleString()}건 중 ${dsearchRows.length}건 표시 · 제품명 클릭시 공식 상세정보(새창)`;
 
+  // 결과를 통째로 다시 그리면 높이가 순간적으로 줄어 .content 스크롤이 맨 위로 튀고
+  // 표의 좌우 스크롤도 초기화된다("더 보기" 후 스크롤이 먹통처럼 보임). 위치를 보존한다.
+  const content = document.getElementById('content');
+  const prevTop = content ? content.scrollTop : 0;
+  const prevLeft = result.querySelector('.tbl-wrap')?.scrollLeft || 0;
+
   result.innerHTML = `
     ${fuzzyBanner}
     <p class="text-muted mb-16">${infoLine}</p>
@@ -294,4 +300,8 @@ function renderDsearchResult() {
       </table></div>
       ${moreBtn}
     </div>`;
+
+  if (content) content.scrollTop = prevTop;
+  const wrap = result.querySelector('.tbl-wrap');
+  if (wrap) wrap.scrollLeft = prevLeft;
 }
