@@ -144,6 +144,7 @@ function showPage(name) {
   if (name === 'rx-products') renderRxProducts();
   if (name === 'vaccines') renderVaccines();
   if (name === 'feeds') renderFeeds();
+  if (name === 'drugsearch') renderDsearch();
   if (PB_TABS[name]) showPbTab(PB_TABS[name]);
 }
 
