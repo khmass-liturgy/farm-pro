@@ -6,6 +6,7 @@ let dsearchMode = 'name';
 let dsearchQuery = '', dsearchKind = '', dsearchPage = 1, dsearchTotal = 0;
 let dsearchRows = [];
 let dsearchFuzzy = false;
+let dsearchLoaded = 0; // 수출용 제외 전 QIA에서 받아온 건수 ("더 보기" 판단용)
 
 function setDsearchMode(mode) {
   dsearchMode = mode;
@@ -22,7 +23,7 @@ function parseQiaHtml(html) {
     const spans = td.querySelectorAll('span');
     return spans.length >= 2 ? spans[1].textContent.trim() : td.textContent.trim();
   };
-  const rows = [...doc.querySelectorAll('table tbody tr')].map(tr => {
+  const all = [...doc.querySelectorAll('table tbody tr')].map(tr => {
     const tds = [...tr.querySelectorAll('td')];
     if (tds.length < 13) return null;
     const link = tds[1].querySelector('a');
@@ -37,9 +38,11 @@ function parseQiaHtml(html) {
       제조수입: getVal(tds[11]),
     };
   }).filter(Boolean);
+  // 수출용 제품은 국내 농장 투약과 무관하므로 결과에서 뺀다(제품명/구분/제조수입 어디에 표기돼도 제외).
+  const rows = all.filter(r => !/수출/.test([r.제품명, r.품목구분, r.제조수입, r.제품영문명].join(' ')));
   const m = doc.body.textContent.match(/총\s*([\d,]+)\s*건/);
   const total = m ? +m[1].replace(/,/g, '') : rows.length;
-  return { rows, total };
+  return { rows, total, rawCount: all.length };
 }
 
 async function fetchQiaSearch(term, page) {
@@ -159,8 +162,9 @@ async function searchDrugQia() {
   dsearchFuzzy = false;
   result.innerHTML = '<div class="empty-state"><p>검색 중...</p></div>';
   try {
-    const { rows, total } = await fetchQiaPage(1);
-    if (rows.length) {
+    const { rows, total, rawCount } = await fetchQiaPage(1);
+    dsearchLoaded = rawCount;
+    if (rows.length || rawCount) {
       dsearchRows = rows;
       dsearchTotal = total;
       dsearchFuzzy = false;
@@ -185,7 +189,8 @@ async function loadMoreDrugQia() {
   const btn = document.getElementById('dsearch-more-btn');
   if (btn) { btn.disabled = true; btn.textContent = '불러오는 중...'; }
   try {
-    const { rows } = await fetchQiaPage(dsearchPage);
+    const { rows, rawCount } = await fetchQiaPage(dsearchPage);
+    dsearchLoaded += rawCount;
     dsearchRows = dsearchRows.concat(rows);
     renderDsearchResult();
   } catch (e) {
@@ -269,9 +274,9 @@ function renderDsearchResult() {
     <td>${r.제조수입 || ''}</td>
   </tr>`).join('');
 
-  const hasMore = !dsearchFuzzy && dsearchRows.length < dsearchTotal;
+  const hasMore = !dsearchFuzzy && dsearchLoaded < dsearchTotal;
   const moreBtn = hasMore
-    ? `<button id="dsearch-more-btn" class="btn btn-outline" style="width:100%;margin-top:10px" onclick="loadMoreDrugQia()">더 보기 (${dsearchRows.length} / ${dsearchTotal})</button>`
+    ? `<button id="dsearch-more-btn" class="btn btn-outline" style="width:100%;margin-top:10px" onclick="loadMoreDrugQia()">더 보기 (${dsearchLoaded} / ${dsearchTotal})</button>`
     : '';
 
   const fuzzyBanner = dsearchFuzzy
@@ -282,7 +287,7 @@ function renderDsearchResult() {
 
   const infoLine = dsearchFuzzy
     ? `유사 검색 결과 ${dsearchRows.length}건 · 제품명 클릭시 공식 상세정보(새창)`
-    : `QIA 공식 데이터 · 총 ${dsearchTotal.toLocaleString()}건 중 ${dsearchRows.length}건 표시 · 제품명 클릭시 공식 상세정보(새창)`;
+    : `QIA 공식 데이터 · 총 ${dsearchTotal.toLocaleString()}건 중 ${dsearchLoaded}건 조회 · 수출용 제외 ${dsearchRows.length}건 표시 · 제품명 클릭시 공식 상세정보(새창)`;
 
   // 결과를 통째로 다시 그리면 높이가 순간적으로 줄어 .content 스크롤이 맨 위로 튀고
   // 표의 좌우 스크롤도 초기화된다("더 보기" 후 스크롤이 먹통처럼 보임). 위치를 보존한다.
