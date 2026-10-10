@@ -196,7 +196,7 @@ pb(polcon.cc) 저장소의 GitHub Actions가 농식품부 「배합사료 생산
 받을 수 없다. 그래서 국내 리전인 이 서버가 대신 받아 그대로 돌려준다.
 
 - 인증: 문자 발송과 같은 `Authorization: Bearer <RELAY_SECRET>`
-- 허용 주소: `https://www.mafra.go.kr/bbs/home/789/` 의 목록(`artclList.do`)·글
+- 허용 주소: `https://www.mafra.go.kr/bbs/home/789/`(배합사료)와 `bbs/FMD-AI2/851/`(고병원성 AI 발생·검출 현황, pb의 AI 발생지도용) 의 목록(`artclList.do`)·글
   (`{id}/artclView.do`)·첨부(`{id}/download.do`)만. 다른 호스트·경로·http·리다이렉트로
   다른 호스트로 넘어가는 경우는 모두 거부(403/502)해서 열린 프록시가 되지 않는다.
 - 사용 예: `GET /fetch-mafra?url=https%3A%2F%2Fwww.mafra.go.kr%2Fbbs%2Fhome%2F789%2FartclList.do`

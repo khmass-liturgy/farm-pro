@@ -125,10 +125,11 @@ async function handleSendSms(req, res) {
 // 농식품부(mafra.go.kr)는 해외 IP 접속을 막아 GitHub Actions(미국)에서 직접
 // 받을 수 없다. 이 서버는 국내 리전이라 대신 받아 그대로 돌려준다. 열린
 // 프록시가 되지 않도록 RELAY_SECRET 인증 + https://www.mafra.go.kr 의 배합사료
-// 게시판(bbs/home/789) 목록·글·첨부 경로만 허용하고, 리다이렉트로 다른 호스트로
+// 게시판(bbs/home/789)·AI 발생현황 게시판(bbs/FMD-AI2/851) 목록·글·첨부 경로만 허용하고, 리다이렉트로 다른 호스트로
 // 넘어가면 거부한다.
 const MAFRA_HOST = 'www.mafra.go.kr';
-const MAFRA_ALLOWED_PATH = /^\/bbs\/home\/789\/(artclList\.do|\d+\/artclView\.do|\d+\/download\.do)$/;
+// 배합사료 게시판(bbs/home/789)과 고병원성 AI 「발생·검출 현황」 게시판(bbs/FMD-AI2/851) 두 곳만 허용한다.
+const MAFRA_ALLOWED_PATH = /^\/bbs\/(home\/789|FMD-AI2\/851)\/(artclList\.do|\d+\/artclView\.do|\d+\/download\.do)$/;
 const MAFRA_MAX_BYTES = 5 * 1024 * 1024;
 
 async function handleFetchMafra(req, res) {
