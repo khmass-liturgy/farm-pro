@@ -160,19 +160,56 @@ async function handleFetchMafra(req, res) {
   }
 }
 
+// ─── 관세청 수출입실적 중계 (pb 저장소의 GitHub Actions용) ────────────────────
+// 공공데이터포털(apis.data.go.kr)은 GitHub Actions(미국)에서 접속하면 응답이 없다.
+// 이 서버가 대신 받아 돌려준다. RELAY_SECRET 인증 + 관세청 「품목별 국가별 수출입실적」
+// 한 경로(Itemtrade/getItemtradeList)만 허용하고, 리다이렉트로 다른 호스트로 넘어가면 거부한다.
+// 서비스키(serviceKey)는 요청 주소에 실려 오지만 이 서버 앞에는 Caddy HTTPS가 있어 구간 암호화된다.
+const CUSTOMS_HOST = 'apis.data.go.kr';
+const CUSTOMS_ALLOWED_PATH = /^\/1220000\/Itemtrade\/getItemtradeList$/;
+const CUSTOMS_MAX_BYTES = 5 * 1024 * 1024;
+
+async function handleFetchCustoms(req, res) {
+  const target = new URL(req.url, 'http://localhost').searchParams.get('url') || '';
+  let u;
+  try { u = new URL(target); } catch { return sendJson(res, 400, { error: 'url이 올바르지 않습니다.' }); }
+  if (u.protocol !== 'https:' || u.hostname !== CUSTOMS_HOST || u.port || !CUSTOMS_ALLOWED_PATH.test(u.pathname)) {
+    return sendJson(res, 403, { error: '허용되지 않은 주소입니다.' });
+  }
+  try {
+    const upstream = await fetch(u, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; pb-customs-relay/1.0)', 'Accept': 'application/xml,text/xml,*/*' },
+      signal: AbortSignal.timeout(25_000),
+    });
+    if (new URL(upstream.url).hostname !== CUSTOMS_HOST) {
+      return sendJson(res, 502, { error: '다른 호스트로 리다이렉트되어 거부했습니다.' });
+    }
+    const buf = Buffer.from(await upstream.arrayBuffer());
+    if (buf.length > CUSTOMS_MAX_BYTES) return sendJson(res, 502, { error: '응답이 너무 큽니다.' });
+    res.writeHead(upstream.status, {
+      'Content-Type': upstream.headers.get('content-type') || 'application/xml',
+      'Content-Length': buf.length,
+    });
+    return res.end(buf);
+  } catch (e) {
+    return sendJson(res, 502, { error: `관세청 요청 실패: ${e instanceof Error ? e.message : String(e)}` });
+  }
+}
+
 const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/health') return sendJson(res, 200, { ok: true });
 
   const path = new URL(req.url, 'http://localhost').pathname;
   const isSms = req.method === 'POST' && req.url === '/send-sms';
   const isMafra = req.method === 'GET' && path === '/fetch-mafra';
-  if (!isSms && !isMafra) return sendJson(res, 404, { error: 'not found' });
+  const isCustoms = req.method === 'GET' && path === '/fetch-customs';
+  if (!isSms && !isMafra && !isCustoms) return sendJson(res, 404, { error: 'not found' });
 
   const auth = req.headers['authorization'] || '';
   if (auth !== `Bearer ${RELAY_SECRET}`) return sendJson(res, 401, { error: '인증되지 않은 요청입니다.' });
 
   try {
-    await (isSms ? handleSendSms : handleFetchMafra)(req, res);
+    await (isSms ? handleSendSms : isCustoms ? handleFetchCustoms : handleFetchMafra)(req, res);
   } catch (e) {
     sendJson(res, 500, { error: e instanceof Error ? e.message : String(e) });
   }
