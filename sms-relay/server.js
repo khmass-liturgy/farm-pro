@@ -164,10 +164,11 @@ async function handleFetchMafra(req, res) {
 // ─── 관세청 수출입실적 중계 (pb 저장소의 GitHub Actions용) ────────────────────
 // 공공데이터포털(apis.data.go.kr)은 GitHub Actions(미국)에서 접속하면 응답이 없다.
 // 이 서버가 대신 받아 돌려준다. RELAY_SECRET 인증 + 관세청 「품목별 국가별 수출입실적」
-// 한 경로(Itemtrade/getItemtradeList)만 허용하고, 리다이렉트로 다른 호스트로 넘어가면 거부한다.
+// 두 경로(Itemtrade/getItemtradeList, nitemtrade/getNitemtradeList)만 허용하고, 리다이렉트로 다른 호스트로 넘어가면 거부한다.
 // 서비스키(serviceKey)는 요청 주소에 실려 오지만 이 서버 앞에는 Caddy HTTPS가 있어 구간 암호화된다.
 const CUSTOMS_HOST = 'apis.data.go.kr';
-const CUSTOMS_ALLOWED_PATH = /^\/1220000\/Itemtrade\/getItemtradeList$/;
+// 품목별 수출입실적(Itemtrade)과 품목별 국가별 수출입실적(nitemtrade) 두 API만 허용한다.
+const CUSTOMS_ALLOWED_PATH = /^\/1220000\/(Itemtrade\/getItemtradeList|nitemtrade\/getNitemtradeList)$/;
 const CUSTOMS_MAX_BYTES = 5 * 1024 * 1024;
 
 async function handleFetchCustoms(req, res) {

@@ -208,7 +208,7 @@ pb 저장소의 「계란·닭고기 수입 통계 수집」이 관세청 「품
 (공공데이터포털 `apis.data.go.kr`)을 받는데, GitHub(미국)에서는 응답이 없다. 이 서버가 대신 받아 돌려준다.
 
 - 인증: `Authorization: Bearer <RELAY_SECRET>` (문자 발송과 같음)
-- 허용 주소: `https://apis.data.go.kr/1220000/Itemtrade/getItemtradeList` 한 경로뿐. 다른 호스트·경로·리다이렉트는 거부.
+- 허용 주소: `https://apis.data.go.kr/1220000/Itemtrade/getItemtradeList`와 `…/nitemtrade/getNitemtradeList`(품목별 국가별) 두 경로뿐. 다른 호스트·경로·리다이렉트는 거부.
 - 사용 예: `GET /fetch-customs?url=<위 주소 + ?serviceKey=…&strtYymm=…&endYymm=…&hsSgn=0207 를 URL 인코딩>`
 - **코드 반영**: 서버의 `/opt/sms-relay/server.js`를 이 저장소 최신으로 바꾸고 `sudo systemctl restart sms-relay`
 - 문자 발송과는 독립적이라 이 경로가 실패해도 문자 발송에는 영향이 없다.
