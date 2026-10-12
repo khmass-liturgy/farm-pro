@@ -103,6 +103,11 @@ function renderPreShipments() {
   const list = load('preShipments').filter(p =>
     (!q || (p.farmName || '').toLowerCase().includes(q) || (p.owner || '').toLowerCase().includes(q)) &&
     (!ff || p.farmId === ff)
+  // 최근 채취일이 위로 오게 정렬한다(같은 날은 출하일, 그다음 등록 순서가 최근인 것 먼저).
+  ).sort((a, b) =>
+    (b.sampledAt || '').localeCompare(a.sampledAt || '') ||
+    (b.shipDate || '').localeCompare(a.shipDate || '') ||
+    String(b.createdAt || '').localeCompare(String(a.createdAt || ''))
   );
   // 삭제된 항목의 선택 표시가 남지 않도록, 지금 존재하는 id만 유지한다.
   const liveIds = new Set(load('preShipments').map(p => p.id));
