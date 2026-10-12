@@ -388,6 +388,9 @@ function renderConsultLogPage() {
     const idsInFarm = new Set(batches.filter(b => b.farmId === farmId).map(b => b.id));
     logs = logs.filter(l => idsInFarm.has(l.batchId));
   }
+  // 최근 상담일이 위로 오게 한다. 저장소는 등록 순(오래된 것 먼저)이라 먼저 뒤집은 뒤
+  // 안정 정렬하면 같은 날짜 안에서도 나중에 등록한 것이 위로 온다.
+  logs = logs.reverse().sort((a, b) => (b.logDate || '').localeCompare(a.logDate || ''));
   // 필터가 바뀌었거나 삭제돼서 골라둔 항목이 더 이상 목록에 없으면 선택을 비운다.
   if (mcSelectedLogId && !logs.some(l => l.id === mcSelectedLogId)) mcSelectedLogId = null;
   const editBtn = document.getElementById('mc-edit-btn');
