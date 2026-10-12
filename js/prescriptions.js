@@ -224,7 +224,9 @@ function renderPrescriptions() {
     const productNames = (p.items || []).map(it => it.productName).join(' ').toLowerCase();
     return (!q || (p.farmName || '').toLowerCase().includes(q) || productNames.includes(q)) &&
       (!ff || p.farmId === ff);
-  });
+  // 최근 발급일이 위로 오게 한다. 저장소는 등록 순(오래된 것 먼저)이라 먼저 뒤집은 뒤
+  // 안정 정렬하면 같은 날짜 안에서도 나중에 발급한 것이 위로 온다.
+  }).reverse().sort((a, b) => (b.issueDate || '').localeCompare(a.issueDate || ''));
   const liveIds = new Set(load('prescriptions').map(p => p.id));
   rxSelectedIds.forEach(id => { if (!liveIds.has(id)) rxSelectedIds.delete(id); });
 
