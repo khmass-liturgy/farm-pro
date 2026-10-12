@@ -80,7 +80,10 @@ function renderHenShipments() {
   const list = load('henShipments').filter(h =>
     (!q || (h.farmName || '').toLowerCase().includes(q) || (h.owner || '').toLowerCase().includes(q)) &&
     (!ff || h.farmId === ff)
-  );
+  // 최근 신청일(없으면 출하일)이 위로 오게 한다. 저장소는 등록 순(오래된 것 먼저)이라 먼저
+  // 뒤집은 뒤 안정 정렬하면 같은 날짜 안에서도 나중에 등록한 것이 위로 온다.
+  ).reverse().sort((a, b) =>
+    (b.appliedAt || b.shipDate || '').localeCompare(a.appliedAt || a.shipDate || ''));
   const liveIds = new Set(load('henShipments').map(h => h.id));
   hsSelectedIds.forEach(id => { if (!liveIds.has(id)) hsSelectedIds.delete(id); });
 

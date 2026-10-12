@@ -56,7 +56,9 @@ function renderMovePermits() {
     (!q || (m.farmName || '').toLowerCase().includes(q) || (m.carrierName || '').toLowerCase().includes(q) ||
       (m.vehicleNo || '').toLowerCase().includes(q) || (m.shipTo || '').toLowerCase().includes(q)) &&
     (!ff || m.farmId === ff)
-  );
+  // 최근 발급일이 위로 오게 한다. 저장소는 등록 순(오래된 것 먼저)이라 먼저 뒤집은 뒤
+  // 안정 정렬하면 같은 날짜 안에서도 나중에 등록한 것이 위로 온다.
+  ).reverse().sort((a, b) => (b.issueDate || '').localeCompare(a.issueDate || ''));
   const liveIds = new Set(load('movePermits').map(m => m.id));
   mpSelectedIds.forEach(id => { if (!liveIds.has(id)) mpSelectedIds.delete(id); });
 
