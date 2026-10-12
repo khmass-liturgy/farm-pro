@@ -125,10 +125,11 @@ async function handleSendSms(req, res) {
 // 농식품부(mafra.go.kr)는 해외 IP 접속을 막아 GitHub Actions(미국)에서 직접
 // 받을 수 없다. 이 서버는 국내 리전이라 대신 받아 그대로 돌려준다. 열린
 // 프록시가 되지 않도록 RELAY_SECRET 인증 + https://www.mafra.go.kr 의 배합사료
-// 게시판(bbs/home/789) 목록·글·첨부 경로만 허용하고, 리다이렉트로 다른 호스트로
+// 게시판(bbs/home/789)·AI 발생현황 게시판(bbs/FMD-AI2/851) 목록·글·첨부 경로만 허용하고, 리다이렉트로 다른 호스트로
 // 넘어가면 거부한다.
 const MAFRA_HOST = 'www.mafra.go.kr';
-const MAFRA_ALLOWED_PATH = /^\/bbs\/home\/789\/(artclList\.do|\d+\/artclView\.do|\d+\/download\.do)$/;
+// 배합사료 게시판(bbs/home/789)과 고병원성 AI 「발생·검출 현황」 게시판(bbs/FMD-AI2/851) 두 곳만 허용한다.
+const MAFRA_ALLOWED_PATH = /^\/bbs\/(home\/789|FMD-AI2\/851)\/(artclList\.do|\d+\/artclView\.do|\d+\/download\.do)$/;
 const MAFRA_MAX_BYTES = 5 * 1024 * 1024;
 
 async function handleFetchMafra(req, res) {
@@ -160,19 +161,57 @@ async function handleFetchMafra(req, res) {
   }
 }
 
+// ─── 관세청 수출입실적 중계 (pb 저장소의 GitHub Actions용) ────────────────────
+// 공공데이터포털(apis.data.go.kr)은 GitHub Actions(미국)에서 접속하면 응답이 없다.
+// 이 서버가 대신 받아 돌려준다. RELAY_SECRET 인증 + 관세청 「품목별 국가별 수출입실적」
+// 두 경로(Itemtrade/getItemtradeList, nitemtrade/getNitemtradeList)만 허용하고, 리다이렉트로 다른 호스트로 넘어가면 거부한다.
+// 서비스키(serviceKey)는 요청 주소에 실려 오지만 이 서버 앞에는 Caddy HTTPS가 있어 구간 암호화된다.
+const CUSTOMS_HOST = 'apis.data.go.kr';
+// 품목별 수출입실적(Itemtrade)과 품목별 국가별 수출입실적(nitemtrade) 두 API만 허용한다.
+const CUSTOMS_ALLOWED_PATH = /^\/1220000\/(Itemtrade\/getItemtradeList|nitemtrade\/getNitemtradeList)$/;
+const CUSTOMS_MAX_BYTES = 5 * 1024 * 1024;
+
+async function handleFetchCustoms(req, res) {
+  const target = new URL(req.url, 'http://localhost').searchParams.get('url') || '';
+  let u;
+  try { u = new URL(target); } catch { return sendJson(res, 400, { error: 'url이 올바르지 않습니다.' }); }
+  if (u.protocol !== 'https:' || u.hostname !== CUSTOMS_HOST || u.port || !CUSTOMS_ALLOWED_PATH.test(u.pathname)) {
+    return sendJson(res, 403, { error: '허용되지 않은 주소입니다.' });
+  }
+  try {
+    const upstream = await fetch(u, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; pb-customs-relay/1.0)', 'Accept': 'application/xml,text/xml,*/*' },
+      signal: AbortSignal.timeout(25_000),
+    });
+    if (new URL(upstream.url).hostname !== CUSTOMS_HOST) {
+      return sendJson(res, 502, { error: '다른 호스트로 리다이렉트되어 거부했습니다.' });
+    }
+    const buf = Buffer.from(await upstream.arrayBuffer());
+    if (buf.length > CUSTOMS_MAX_BYTES) return sendJson(res, 502, { error: '응답이 너무 큽니다.' });
+    res.writeHead(upstream.status, {
+      'Content-Type': upstream.headers.get('content-type') || 'application/xml',
+      'Content-Length': buf.length,
+    });
+    return res.end(buf);
+  } catch (e) {
+    return sendJson(res, 502, { error: `관세청 요청 실패: ${e instanceof Error ? e.message : String(e)}` });
+  }
+}
+
 const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/health') return sendJson(res, 200, { ok: true });
 
   const path = new URL(req.url, 'http://localhost').pathname;
   const isSms = req.method === 'POST' && req.url === '/send-sms';
   const isMafra = req.method === 'GET' && path === '/fetch-mafra';
-  if (!isSms && !isMafra) return sendJson(res, 404, { error: 'not found' });
+  const isCustoms = req.method === 'GET' && path === '/fetch-customs';
+  if (!isSms && !isMafra && !isCustoms) return sendJson(res, 404, { error: 'not found' });
 
   const auth = req.headers['authorization'] || '';
   if (auth !== `Bearer ${RELAY_SECRET}`) return sendJson(res, 401, { error: '인증되지 않은 요청입니다.' });
 
   try {
-    await (isSms ? handleSendSms : handleFetchMafra)(req, res);
+    await (isSms ? handleSendSms : isCustoms ? handleFetchCustoms : handleFetchMafra)(req, res);
   } catch (e) {
     sendJson(res, 500, { error: e instanceof Error ? e.message : String(e) });
   }
