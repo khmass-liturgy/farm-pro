@@ -1525,10 +1525,14 @@
       <div class="form-group mp-general-only"><label>일령</label><input id="mp-age-label" placeholder="예) 95주령"></div>
     </div>
     <div class="form-row-3">
-      <div class="form-group"><label>운송차량 번호</label><input id="mp-vehicle-no" placeholder="예) 95거 5897"></div>
-      <div class="form-group"><label>운송인 성명 <span class="text-muted mp-breeder-only" style="display:none">(구매자)</span></label><input id="mp-carrier-name"></div>
+      <div class="form-group"><label>운송차량 번호</label><input id="mp-vehicle-no" list="mp-vehicle-list" placeholder="예) 95거 5897"></div>
+      <div class="form-group"><label>운송인 성명 <span class="text-muted mp-breeder-only" style="display:none">(구매자)</span></label><input id="mp-carrier-name" list="mp-carrier-list" autocomplete="off" oninput="onMpCarrierInput()" onchange="onMpCarrierInput(true)"></div>
       <div class="form-group"><label>운송인 전화번호</label><input id="mp-carrier-phone"></div>
+      <datalist id="mp-carrier-list"></datalist><datalist id="mp-vehicle-list"></datalist>
     </div>
+    <div id="mp-carrier-hint" class="text-muted" style="font-size:12px;margin:-6px 0 10px">운송인 성명을 입력하면 저장된 명단에서 차량번호·전화번호를 불러옵니다. 없는 사람이나 바뀐 차량은 발급 저장 시 명단에 자동으로 추가·갱신됩니다.
+      <a href="#" onclick="document.getElementById('mp-carrier-file').click(); return false;">운송인 명단 엑셀 불러오기</a>
+      <input type="file" id="mp-carrier-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="onMpCarrierFile(event)"></div>
     <div class="form-group"><label>비고</label><input id="mp-note"></div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-move-permit')">취소</button>
@@ -1819,7 +1823,7 @@
      쓰는 시점(사진 첨부 후 저장)엔 이미 다 로드돼 있다. -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="js/config.js?v=20261003f"></script>
-<script src="js/supabaseClient.js?v=20261003f"></script>
+<script src="js/supabaseClient.js?v=20261014a"></script>
 <script src="js/auth.js?v=20261003f"></script>
 <script src="js/googleDrive.js?v=20261003f"></script>
 <script src="js/breedStandards.js?v=20261003f"></script>
@@ -1833,7 +1837,7 @@
 <script src="js/medicationLog.js?v=20261012a"></script>
 <script src="js/prescriptions.js?v=20261012a"></script>
 <script src="js/preShipment.js?v=20261012a"></script>
-<script src="js/movePermit.js?v=20261012a"></script>
+<script src="js/movePermit.js?v=20261014a"></script>
 <script src="js/movePermitBulk.js?v=20261003f"></script>
 <script src="js/henShipment.js?v=20261012a"></script>
 <script src="js/vetReport.js?v=20261003f"></script>
@@ -1843,7 +1847,7 @@
 <script src="js/dashboard.js?v=20261003f"></script>
 <script src="js/reports.js?v=20261003f"></script>
 <script src="js/print.js?v=20261003f"></script>
-<script src="js/backup.js?v=20261003f"></script>
+<script src="js/backup.js?v=20261014a"></script>
 <script src="js/app.js?v=20261003f"></script>
 </body>
 </html>

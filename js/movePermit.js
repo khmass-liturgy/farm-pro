@@ -128,6 +128,86 @@ function onMpFormTypeChange() {
   document.querySelectorAll('.mp-breeder-only').forEach(el => { el.style.display = isBreeder ? '' : 'none'; });
 }
 
+// ─── 운송인 명단 (성명 → 차량번호·전화번호 자동 입력) ───────────────────────
+const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const mpNorm = s => String(s || '').replace(/\s+/g, '');
+
+function mpCarriersByName(name) {
+  const n = mpNorm(name);
+  return n ? load('carriers').filter(c => mpNorm(c.name) === n) : [];
+}
+
+function refreshMpCarrierLists() {
+  const names = [...new Set(load('carriers').map(c => c.name))];
+  document.getElementById('mp-carrier-list').innerHTML = names.map(n => `<option value="${escapeHtml(n)}">`).join('');
+}
+
+// 성명을 입력/선택할 때: 차량이 하나면 바로 채우고, 여러 대면 차량번호 칸 목록에 모두 올린다.
+// 이미 사용자가 적은 값은 덮어쓰지 않는다(수정 중인 승인서를 열었을 때 보호).
+function onMpCarrierInput(commit) {
+  const hits = mpCarriersByName(document.getElementById('mp-carrier-name').value);
+  document.getElementById('mp-vehicle-list').innerHTML =
+    hits.filter(c => c.vehicleNo).map(c => `<option value="${escapeHtml(c.vehicleNo)}">`).join('');
+  const hint = document.getElementById('mp-carrier-hint');
+  if (!hits.length) return;
+  const veh = document.getElementById('mp-vehicle-no'), ph = document.getElementById('mp-carrier-phone');
+  const withVeh = hits.filter(c => c.vehicleNo);
+  if (!veh.value && withVeh.length === 1) veh.value = withVeh[0].vehicleNo;
+  if (!ph.value) { const p = hits.find(c => c.phone); if (p) ph.value = p.phone; }
+  if (commit && withVeh.length > 1 && !veh.value) veh.focus();
+}
+
+// 발급 저장 시 호출: 명단에 없으면 추가, 같은 (성명, 차량)인데 전화가 다르면 갱신.
+async function rememberMpCarrier(name, vehicleNo, phone) {
+  if (!name) return;
+  const hits = mpCarriersByName(name);
+  const same = hits.find(c => mpNorm(c.vehicleNo) === mpNorm(vehicleNo));
+  try {
+    if (same) {
+      if (phone && phone !== same.phone) await updateRow('carriers', same.id, { ...same, phone });
+    } else if (vehicleNo) {
+      // 차량 없이 등록돼 있던 사람이면 그 줄을 채워 주고, 아니면 새 차량으로 추가
+      const blank = hits.find(c => !c.vehicleNo);
+      if (blank) await updateRow('carriers', blank.id, { ...blank, vehicleNo, phone: phone || blank.phone });
+      else await insertRow('carriers', { name, vehicleNo, phone });
+    } else if (!hits.length) {
+      await insertRow('carriers', { name, vehicleNo: '', phone });
+    }
+  } catch (e) { console.warn('[farm-pro] 운송인 명단 저장 실패(발급은 완료됨):', e); }
+}
+
+// 엑셀 형식: 1열 성명 · 2열 차량번호 · 3열 전화번호 · 4열 비고(운송업 허가번호 등).
+async function onMpCarrierFile(e) {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try {
+    const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: null });
+    const have = new Set(load('carriers').map(c => mpNorm(c.name) + '|' + mpNorm(c.vehicleNo)));
+    const add = [];
+    for (const r of rows) {
+      const name = String(r[0] ?? '').trim();
+      if (!name || /^[\d.\s]+$/.test(name) || name === '성명' || name === '이름') continue;
+      const vehicleNo = String(r[1] ?? '').trim();
+      const key = mpNorm(name) + '|' + mpNorm(vehicleNo);
+      if (have.has(key)) continue;
+      have.add(key);
+      add.push({ name, vehicle_no: vehicleNo, phone: r[2] ? String(r[2]).trim() : null, note: r[3] ? String(r[3]).trim() : null });
+    }
+    if (!add.length) { alert('새로 추가할 운송인이 없습니다. (이미 모두 등록되어 있거나 형식이 다릅니다)'); return; }
+    if (!confirm(`운송인 ${add.length}명(차량)을 명단에 추가합니다. 진행할까요?`)) return;
+    for (let i = 0; i < add.length; i += 200) {
+      const { error } = await sb.from('carriers').insert(add.slice(i, i + 200));
+      if (error) throw new Error(describeDbError(error));
+    }
+    await refreshOne('carriers');
+    refreshMpCarrierLists();
+    onMpCarrierInput();
+    alert(`운송인 ${add.length}건을 추가했습니다.`);
+  } catch (err) { alert('운송인 명단 불러오기 실패: ' + err.message); }
+}
+
 function onMpFarmChange(force) {
   const farm = load('farms').find(f => f.id === document.getElementById('mp-farm').value);
   const info = document.getElementById('mp-farm-info');
@@ -264,6 +344,8 @@ function openMovePermitModal(id, source) {
 
   onMpFormTypeChange();
   onMpFarmChange(false);
+  refreshMpCarrierLists();
+  onMpCarrierInput();
   openModal('modal-move-permit');
   if (isDup) document.getElementById('mp-carrier-name').focus();
 }
@@ -308,6 +390,7 @@ async function saveMovePermit() {
     if (editingId.movePermit) saved = await updateRow('movePermits', editingId.movePermit, data);
     else saved = await insertRow('movePermits', data);
   } catch (e) { alert('저장 실패: ' + e.message); return; }
+  await rememberMpCarrier(data.carrierName, data.vehicleNo, data.carrierPhone);
   const isNew = !editingId.movePermit;
   editingId.movePermit = null;
   closeModal('modal-move-permit');

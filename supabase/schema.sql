@@ -497,6 +497,27 @@ create trigger trg_move_permits_updated_at before update on move_permits
   for each row execute function set_updated_at();
 
 -- ─────────────────────────────────────────────────────────────────────────
+-- 운송인 명단: 이동승인서 발급 시 운송인 성명을 입력하면 차량번호·전화번호를 불러오는 용도.
+-- 같은 사람이 차량을 여러 대 쓸 수 있어 (성명, 차량번호)가 한 줄이다.
+-- 초기 명단은 이동승인서 화면의 "운송인 명단 불러오기"로 엑셀을 올려 채운다.
+-- ─────────────────────────────────────────────────────────────────────────
+create table if not exists carriers (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  vehicle_no text not null default '',
+  phone text,
+  note text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (name, vehicle_no)
+);
+
+drop trigger if exists trg_carriers_updated_at on carriers;
+create trigger trg_carriers_updated_at before update on carriers
+  for each row execute function set_updated_at();
+
+
+-- ─────────────────────────────────────────────────────────────────────────
 -- 공수의 업무 3: 산란성계 출하대장 (AI노계출하.xlsx 「검사의뢰서」 시트 —
 -- 산란성계 농장 출하전 정밀검사 의뢰서)
 --
@@ -719,7 +740,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['farms','drugs','vaccines','feeds','programs','batches','medication_logs','prescription_products','prescriptions','clinical_assessments','rodent_assessments','pre_shipment_inspections','move_permits','hen_shipments','vet_report_entries','vet_office_info']
+  foreach t in array array['farms','drugs','vaccines','feeds','programs','batches','medication_logs','prescription_products','prescriptions','clinical_assessments','rodent_assessments','pre_shipment_inspections','move_permits','carriers','hen_shipments','vet_report_entries','vet_office_info']
   loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists authenticated_full_access on %I', t);

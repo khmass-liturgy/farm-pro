@@ -8,7 +8,7 @@
 
 const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 
-const STORE = { farms: [], drugs: [], vaccines: [], feeds: [], programs: [], batches: [], medicationLogs: [], rxProducts: [], prescriptions: [], clinicalAssessments: [], rodentAssessments: [], preShipments: [], movePermits: [], henShipments: [], vetReportEntries: [], vetOfficeInfo: [] };
+const STORE = { farms: [], drugs: [], vaccines: [], feeds: [], programs: [], batches: [], medicationLogs: [], rxProducts: [], prescriptions: [], clinicalAssessments: [], rodentAssessments: [], preShipments: [], movePermits: [], carriers: [], henShipments: [], vetReportEntries: [], vetOfficeInfo: [] };
 
 // 현재 편집 중인 각 엔티티의 id. 여러 feature 파일이 공유하는 전역 상태라 여기서 한 번만 선언한다.
 const editingId = { farm: null, drug: null, vaccine: null, feed: null, program: null, batch: null, medicationLog: null, rxProduct: null, prescription: null, clinicalAssessment: null, rodentAssessment: null, preShipment: null, movePermit: null, henShipment: null, vetReportEntry: null };
@@ -268,6 +268,15 @@ const TABLES = {
         carrierName: r.carrier_name, carrierPhone: r.carrier_phone,
         note: r.note, issuedByEmail: r.issued_by_email, createdAt: r.created_at,
       };
+    },
+  },
+  carriers: {
+    table: 'carriers', orderBy: 'name', ascending: true,
+    toRow(o) {
+      return { name: o.name, vehicle_no: o.vehicleNo || '', phone: o.phone || null, note: o.note || null };
+    },
+    fromRow(r) {
+      return { id: r.id, name: r.name, vehicleNo: r.vehicle_no || '', phone: r.phone, note: r.note };
     },
   },
   henShipments: {
