@@ -93,6 +93,31 @@ function onBatchSpeciesChange() {
   populateBatchBreedSelect(document.getElementById('b-species').value, '');
 }
 
+// 중추로 들여온 계군은 병아리 입식일을 모를 수 있다. 중추 입식일과 그날의 일령(입식일이 1일령)으로
+// 거꾸로 계산해 입추일 칸에 채운다. 입추일은 그대로 일령 계산의 기준이므로 저장 구조는 바뀌지 않는다.
+const MID_AGE_KEY = 'batch_mid_age';
+
+function calcBatchPlacementFromMid() {
+  const midDate = document.getElementById('b-mid-date').value;
+  const age = Number(document.getElementById('b-mid-age').value);
+  const hint = document.getElementById('b-mid-hint');
+  if (!midDate || !Number.isInteger(age) || age < 1) {
+    hint.textContent = '중추 입식일과 그날의 일령을 입력하면 병아리 입식일(입추일)을 거꾸로 계산해 위 입추일에 채웁니다.';
+    return;
+  }
+  const [y, m, d] = midDate.split('-').map(Number);
+  const placement = new Date(Date.UTC(y, m - 1, d - (age - 1))).toISOString().slice(0, 10);
+  document.getElementById('b-placement-date').value = placement;
+  hint.textContent = `중추 입식일 ${midDate}(${age}일령) → 병아리 입식일 ${placement} 로 계산해 입추일에 넣었습니다.`;
+  try { localStorage.setItem(MID_AGE_KEY, String(age)); } catch (e) { /* 기억 못 해도 계산엔 지장 없음 */ }
+}
+
+// 입추일을 직접 고치면 앞서 계산에 쓴 중추 입력과 어긋나므로 중추 칸은 비운다.
+function onBatchPlacementManual() {
+  document.getElementById('b-mid-date').value = '';
+  document.getElementById('b-mid-hint').textContent = '중추 입식일과 그날의 일령을 입력하면 병아리 입식일(입추일)을 거꾸로 계산해 위 입추일에 채웁니다.';
+}
+
 function openBatchModal(id) {
   editingId.batch = id || null;
   const b = id ? load('batches').find(x => x.id === id) : null;
@@ -106,6 +131,11 @@ function openBatchModal(id) {
   populateBatchHouseSelect(b?.farmId || '', b?.house || '');
   document.getElementById('b-placement-date').value = b?.placementDate || new Date().toISOString().slice(0,10);
   document.getElementById('b-count').value = b?.birdCount || '';
+  document.getElementById('b-mid-date').value = '';
+  let lastMidAge = '';
+  try { lastMidAge = localStorage.getItem(MID_AGE_KEY) || ''; } catch (e) { /* 저장값 없이 진행 */ }
+  document.getElementById('b-mid-age').value = lastMidAge;
+  document.getElementById('b-mid-hint').textContent = '중추 입식일과 그날의 일령을 입력하면 병아리 입식일(입추일)을 거꾸로 계산해 위 입추일에 채웁니다.';
   document.getElementById('b-notes').value = b?.notes || '';
   const statusWrap = document.getElementById('b-status-wrap');
   statusWrap.style.display = id ? '' : 'none';
