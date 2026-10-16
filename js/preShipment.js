@@ -532,6 +532,7 @@ function openPsExcelModal() {
   document.getElementById('ps-xl-from').value = `${y}-${m}-01`;
   document.getElementById('ps-xl-to').value = `${y}-${m}-${String(new Date(Number(y), Number(m), 0).getDate()).padStart(2, '0')}`;
   updatePsExcelCount();
+  loadExcelJs().catch(() => {});
   openModal('modal-ps-excel');
 }
 
@@ -559,6 +560,22 @@ async function exportPsExcel() {
   const list = psExcelTargets();
   if (!list.length) { alert('해당 구간에 출하전검사가 없습니다.'); return; }
   const btn = document.getElementById('ps-xl-btn');
+  const range = psExcelRange();
+  const fileName = `시료채취결과기록대장_${range.from || list[0].sampledAt}_${range.to || list[list.length - 1].sampledAt}.xlsx`;
+  // 저장 위치 창은 버튼을 누른 직후(await 전)에 열어야 브라우저가 허용한다. 이 방식은
+  // 자동 다운로드 차단(Brave 등)의 영향을 받지 않아서 지원되는 브라우저에서는 먼저 쓴다.
+  let fileHandle = null;
+  if (window.showSaveFilePicker) {
+    try {
+      fileHandle = await window.showSaveFilePicker({
+        suggestedName: fileName,
+        types: [{ description: 'Excel', accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] } }],
+      });
+    } catch (e) {
+      if (e && e.name === 'AbortError') return; // 사용자가 저장 창을 닫음
+      fileHandle = null; // 지원 안 함·차단 → 일반 다운로드로 진행
+    }
+  }
   btn.disabled = true;
   try {
     await loadExcelJs();
@@ -638,11 +655,17 @@ async function exportPsExcel() {
     const monthEnd = new Date(refDate[0], refDate[1], 0);
     buildPsFeeSheet(wb, { farmCount, labVisits, over8h, monthEnd });
 
-    const { from, to } = psExcelRange();
     const buf = await wb.xlsx.writeBuffer();
+    if (fileHandle) {
+      const w = await fileHandle.createWritable();
+      await w.write(buf);
+      await w.close();
+      closeModal('modal-ps-excel');
+      return;
+    }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
-    a.download = `시료채취결과기록대장_${from || list[0].sampledAt}_${to || list[list.length - 1].sampledAt}.xlsx`;
+    a.download = fileName;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     closeModal('modal-ps-excel');
