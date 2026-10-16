@@ -569,11 +569,15 @@ function updatePsExcelCount() {
 
 function exportPsExcel() {
   if (!psXlPrepared) { alert('파일을 준비하는 중입니다. 잠시 후 다시 눌러주세요.'); return; }
+  // Brave에서도 받아지는 XLSX.writeFile(양식 다운로드)과 같은 방식으로 내려받는다:
+  // octet-stream 형식, 임시 주소는 60초 뒤 해제(브라우저가 다운로드를 확인하는 동안
+  // 주소가 먼저 사라지면 받기에 실패한다).
+  const url = URL.createObjectURL(psXlPrepared.blob);
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(psXlPrepared.blob);
   a.download = psXlPrepared.fileName;
+  a.href = url;
   document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
   closeModal('modal-ps-excel');
 }
 
@@ -668,7 +672,7 @@ async function buildPsExcelFile(list, range) {
   buildPsFeeSheet(wb, { farmCount, labVisits, over8h, monthEnd });
 
   const buf = await wb.xlsx.writeBuffer();
-  return { fileName, blob: new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }) };
+  return { fileName, blob: new Blob([buf], { type: 'application/octet-stream' }) };
 }
 
 function buildPsFeeSheet(wb, { farmCount, labVisits, over8h, monthEnd }) {
