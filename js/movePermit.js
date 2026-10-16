@@ -129,17 +129,17 @@ function onMpFormTypeChange() {
 }
 
 // ─── 운송인 명단 (성명 → 차량번호·전화번호 자동 입력) ───────────────────────
-const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const mpNorm = s => String(s || '').replace(/\s+/g, '');
+const mpEscapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const mpCarrierKey = s => String(s || '').replace(/\s+/g, '');
 
 function mpCarriersByName(name) {
-  const n = mpNorm(name);
-  return n ? load('carriers').filter(c => mpNorm(c.name) === n) : [];
+  const n = mpCarrierKey(name);
+  return n ? load('carriers').filter(c => mpCarrierKey(c.name) === n) : [];
 }
 
 function refreshMpCarrierLists() {
   const names = [...new Set(load('carriers').map(c => c.name))];
-  document.getElementById('mp-carrier-list').innerHTML = names.map(n => `<option value="${escapeHtml(n)}">`).join('');
+  document.getElementById('mp-carrier-list').innerHTML = names.map(n => `<option value="${mpEscapeHtml(n)}">`).join('');
 }
 
 // 성명을 입력/선택할 때: 차량이 하나면 바로 채우고, 여러 대면 차량번호 칸 목록에 모두 올린다.
@@ -147,7 +147,7 @@ function refreshMpCarrierLists() {
 function onMpCarrierInput(commit) {
   const hits = mpCarriersByName(document.getElementById('mp-carrier-name').value);
   document.getElementById('mp-vehicle-list').innerHTML =
-    hits.filter(c => c.vehicleNo).map(c => `<option value="${escapeHtml(c.vehicleNo)}">`).join('');
+    hits.filter(c => c.vehicleNo).map(c => `<option value="${mpEscapeHtml(c.vehicleNo)}">`).join('');
   const hint = document.getElementById('mp-carrier-hint');
   if (!hits.length) return;
   const veh = document.getElementById('mp-vehicle-no'), ph = document.getElementById('mp-carrier-phone');
@@ -161,7 +161,7 @@ function onMpCarrierInput(commit) {
 async function rememberMpCarrier(name, vehicleNo, phone) {
   if (!name) return;
   const hits = mpCarriersByName(name);
-  const same = hits.find(c => mpNorm(c.vehicleNo) === mpNorm(vehicleNo));
+  const same = hits.find(c => mpCarrierKey(c.vehicleNo) === mpCarrierKey(vehicleNo));
   try {
     if (same) {
       if (phone && phone !== same.phone) await updateRow('carriers', same.id, { ...same, phone });
@@ -184,13 +184,13 @@ async function onMpCarrierFile(e) {
   try {
     const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
     const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: null });
-    const have = new Set(load('carriers').map(c => mpNorm(c.name) + '|' + mpNorm(c.vehicleNo)));
+    const have = new Set(load('carriers').map(c => mpCarrierKey(c.name) + '|' + mpCarrierKey(c.vehicleNo)));
     const add = [];
     for (const r of rows) {
       const name = String(r[0] ?? '').trim();
       if (!name || /^[\d.\s]+$/.test(name) || name === '성명' || name === '이름') continue;
       const vehicleNo = String(r[1] ?? '').trim();
-      const key = mpNorm(name) + '|' + mpNorm(vehicleNo);
+      const key = mpCarrierKey(name) + '|' + mpCarrierKey(vehicleNo);
       if (have.has(key)) continue;
       have.add(key);
       add.push({ name, vehicle_no: vehicleNo, phone: r[2] ? String(r[2]).trim() : null, note: r[3] ? String(r[3]).trim() : null });
