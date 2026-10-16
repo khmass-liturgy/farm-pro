@@ -492,6 +492,15 @@ const PS_LAB_NAME = '북부시험소';
 const PS_LAB_ADDRESS = '경기도 양주시 고덕로 229-26';
 const PS_OVER8H_MIN_FARMS = 3;
 
+// <서식 2> 시료채취비용 지급 신청서 — 같은 파일의 두 번째 시트로 함께 저장한다.
+// 시간 기준은 원본 서식의 값: 농가당 2시간, 시험소 방문 1회당 3시간, 시간당 26,500원,
+// 8시간 초과 차감은 시험소 줄에 1이 찍힌 날마다 1시간.
+const PS_FEE = { hourly: 26500, hoursPerFarm: 2, hoursPerLabVisit: 3, over8hDeduct: 1 };
+const PS_APPLICANT = {
+  address: '경기도 파주시 청석로300,920-302',
+  account: 'SC제일은행 402-20-552944',
+};
+
 function loadExcelJs() {
   if (window.ExcelJS) return Promise.resolve();
   return new Promise((resolve, reject) => {
@@ -593,7 +602,7 @@ async function exportPsExcel() {
       for (const p of farms) {
         ws.getRow(r).height = 27;
         put(1, no++);
-        put(2, d, { font: { name: '돋움', size: 11 }, fmt: 'm"월" d"일";@' });
+        put(2, d, { font: { name: '돋움', size: 11 }, fmt: 'mm/dd' });
         put(3, p.owner || '', { font: { name: '굴림체', size: 11 } });
         put(4, p.farmName || '', { font: { name: '돋움', size: 9 } });
         put(5, p.species || '');
@@ -624,6 +633,11 @@ async function exportPsExcel() {
     foot(1, '농가수'); foot(3, farmCount); foot(4, '개소');
     foot(7, '시험소'); foot(8, labVisits); foot(9, '회방문'); foot(11, over8h);
 
+    // 신청서 작성일: 조회한 구간(종료일)이 속한 달의 말일
+    const refDate = (psExcelRange().to || list[list.length - 1].sampledAt).split('-').map(Number);
+    const monthEnd = new Date(refDate[0], refDate[1], 0);
+    buildPsFeeSheet(wb, { farmCount, labVisits, over8h, monthEnd });
+
     const { from, to } = psExcelRange();
     const buf = await wb.xlsx.writeBuffer();
     const a = document.createElement('a');
@@ -635,4 +649,70 @@ async function exportPsExcel() {
   } catch (e) {
     alert('엑셀 저장 실패: ' + e.message);
   } finally { btn.disabled = false; }
+}
+
+function buildPsFeeSheet(wb, { farmCount, labVisits, over8h, monthEnd }) {
+  const ws = wb.addWorksheet('Sheet2');
+  [23.9, 17.1, 8.8, 15.4, 8.8, 5.4].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+  const F = (size) => ({ name: 'HY헤드라인M', size });
+  const dbl = { style: 'double' }, thin = { style: 'thin' };
+  const set = (addr, v, size, align, extra = {}) => {
+    const c = ws.getCell(addr);
+    c.value = v; c.font = F(size);
+    c.alignment = { horizontal: align, vertical: 'middle' };
+    Object.assign(c, extra);
+    return c;
+  };
+  const W = '_-"₩"* #,##0_-;\-"₩"* #,##0_-;_-"₩"* "-"_-;_-@_-';
+
+  const farmHours = farmCount * PS_FEE.hoursPerFarm;
+  const labHours = labVisits * PS_FEE.hoursPerLabVisit;
+  const total = farmHours + labHours;
+  const deduct = over8h * PS_FEE.over8hDeduct;
+  const finalHours = total - deduct;
+  const amount = finalHours * PS_FEE.hourly;
+
+  ws.getRow(2).height = 26.4; ws.getRow(3).height = 18; ws.getRow(9).height = 20.4;
+  for (let r = 12; r <= 19; r++) ws.getRow(r).height = 30;
+  ws.getRow(31).height = 36.6;
+
+  set('A1', '<서식 2>', 9);
+  ws.mergeCells('A2:F2');
+  set('A2', 'AI 현장 시료채취비용 지급 신청서(공수의사 → 시군)', 14, 'center');
+  for (let c = 1; c <= 6; c++) ws.getCell(2, c).border = { bottom: dbl };
+
+  set('A4', '⃞ 신청금액 :', 14, 'left');
+  set('B4', { formula: 'E19*D5', result: amount }, 14, 'left', { numFmt: W });
+  set('A5', '⃞ 공수의사', 14, 'left');
+  set('C5', '(기준:', 8, 'right');
+  set('D5', PS_FEE.hourly, 8, 'left', { numFmt: W });
+  set('E5', '/시간)', 8, 'left');
+  set('A6', '⃝ 성   명 :', 14, 'right'); set('B6', RX_CLINIC.vetName, 14, 'left');
+  set('A7', '⃝ 주   소 :', 14, 'right'); set('B7', PS_APPLICANT.address, 14, 'left');
+  set('A8', '⃝ 연락처 :', 14, 'right'); set('B8', RX_CLINIC.phone, 14, 'left');
+  set('A10', '⃞ 시료채취비용 산출내역 :', 14, 'left');
+
+  set('A12', '항목', 14, 'center'); set('B12', '방문수/시간', 14, 'center');
+  for (let c = 1; c <= 6; c++) { ws.getCell(12, c).border = { bottom: dbl }; ws.getCell(12, c).font = F(14); }
+  ws.mergeCells('D13:E13');
+
+  set('A13', '방문 농가수 : ', 11, 'right'); set('B13', farmCount, 11, 'left'); set('C13', '농가', 11, 'left');
+  set('A14', '농가당 소요시간 :', 11, 'right'); set('B14', PS_FEE.hoursPerFarm, 11, 'left'); set('C14', '시간', 11, 'left');
+  set('D14', '총', 11, 'right'); set('E14', { formula: 'B13*B14', result: farmHours }, 11, 'center'); set('F14', '시간', 11, 'left');
+  set('A15', '시험소 방문 :', 11, 'right'); set('B15', labVisits, 11, 'left'); set('C15', '회', 11, 'left');
+  set('A16', '시험소 방문소요시간 : ', 11, 'right'); set('B16', PS_FEE.hoursPerLabVisit, 11, 'left'); set('C16', '시간', 11, 'left');
+  set('D16', '총', 11, 'right'); set('E16', { formula: 'B15*B16', result: labHours }, 11, 'center'); set('F16', '시간', 11, 'left');
+  set('E17', { formula: 'E14+E16', result: total }, 11, 'center'); set('F17', '시간', 11, 'left');
+  set('A18', '8시간 초과 차감', 11, 'right'); set('E18', deduct, 11, 'center'); set('F18', '시간', 11, 'left');
+  set('A19', '최종소요시간', 14, 'right'); set('E19', { formula: 'E17-E18', result: finalHours }, 11, 'center'); set('F19', '시간', 11, 'left');
+  for (const r of [14, 16, 18]) for (let c = 1; c <= 6; c++) { const cell = ws.getCell(r, c); cell.border = { bottom: thin }; cell.font = cell.font?.name ? cell.font : F(11); }
+
+  set('A20', '※  농가별 세부내역 별첨', 14, 'left');
+  set('A22', `⃞ 계좌번호 : ${PS_APPLICANT.account} (예금주 : ${RX_CLINIC.vetName})`, 14, 'left');
+  set('C25', `${monthEnd.getFullYear()}년`, 14, 'center');
+  set('D25', `${monthEnd.getMonth() + 1}월 `, 14, 'center');
+  set('E25', monthEnd.getDate(), 14, 'center');
+  set('F25', '일', 14, 'left');
+  set('B27', '공수의사 : ', 14, 'left'); set('C27', `${RX_CLINIC.vetName} 수의사`, 14, 'left'); set('E27', '(서명)', 9, 'left');
+  set('A31', '파주시장', 28, 'left');
 }
