@@ -378,6 +378,7 @@
         <div class="card-header">
           <div class="card-title">출하전검사 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 체크박스로 골라 인쇄·편집·삭제하세요(인쇄·삭제는 여러 건, 편집은 한 건)</span></div>
           <div class="flex-gap">
+            <button class="btn btn-outline btn-sm" onclick="openPsExcelModal()" title="채취일 구간을 정해 시료채취 결과 기록대장(서식 1) 엑셀로 저장">📊 엑셀 출력</button>
             <button class="btn btn-primary btn-sm" id="ps-print-btn" onclick="printSelectedPreShipments()" disabled>🖨️ 인쇄</button>
             <button class="btn btn-outline btn-sm" id="ps-edit-btn" onclick="editSelectedPreShipment()" disabled>편집</button>
             <button class="btn btn-danger btn-sm" id="ps-delete-btn" onclick="deleteSelectedPreShipments()" disabled>삭제</button>
@@ -1595,6 +1596,25 @@
 </div>
 
 <!-- 모달: 이동승인서 엑셀 명단 일괄 발급 (미리보기) -->
+<div class="modal-bg" id="modal-ps-excel">
+  <div class="modal" style="width:460px; max-width:97vw;">
+    <div class="modal-header">
+      <div class="modal-title">시료채취 결과 기록대장 엑셀 출력</div>
+      <button class="modal-close" onclick="closeModal('modal-ps-excel')">✕</button>
+    </div>
+    <p class="text-muted mb-16" style="font-size:12px">채취일이 아래 구간에 드는 출하전검사를 &lt;서식 1&gt; 양식으로 저장합니다. 같은 채취일은 이어서 적고, 날짜마다 다음 줄에 북부시험소가 들어갑니다. 한 날 농장을 3곳 이상 방문하면 그 시험소 줄의 "8H초과 차감시간"에 1이 들어갑니다.</p>
+    <div class="form-row">
+      <div class="form-group"><label>시작일</label><input id="ps-xl-from" type="date" min="1900-01-01" max="2999-12-31" onchange="updatePsExcelCount()"></div>
+      <div class="form-group"><label>종료일</label><input id="ps-xl-to" type="date" min="1900-01-01" max="2999-12-31" onchange="updatePsExcelCount()"></div>
+    </div>
+    <div id="ps-xl-count" class="text-muted" style="font-size:13px"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-ps-excel')">취소</button>
+      <button class="btn btn-primary" id="ps-xl-btn" onclick="exportPsExcel()">엑셀 저장</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="modal-mp-bulk">
   <div class="modal modal-wide" style="width:980px; max-width:97vw;">
     <div class="modal-header">
@@ -1841,7 +1861,7 @@
 <script src="js/batches.js?v=20261015a"></script>
 <script src="js/medicationLog.js?v=20261012a"></script>
 <script src="js/prescriptions.js?v=20261012a"></script>
-<script src="js/preShipment.js?v=20261012a"></script>
+<script src="js/preShipment.js?v=20261016a"></script>
 <script src="js/movePermit.js?v=20261014a"></script>
 <script src="js/movePermitBulk.js?v=20261015a"></script>
 <script src="js/henShipment.js?v=20261012a"></script>

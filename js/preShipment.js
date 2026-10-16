@@ -482,3 +482,157 @@ function printSelectedPreShipments() {
   document.getElementById('print-area').innerHTML = list.map(buildPreShipmentHtml).join('');
   setTimeout(() => window.print(), 200);
 }
+
+// ─── 엑셀 출력: AI 검사를 위한 현장 시료채취 결과 기록대장 (<서식 1>) ─────────
+// 공수의사 → 시군 제출 양식. 채취일이 같은 농장을 이어 적고, 날짜가 끝날 때마다
+// "북부시험소" 줄을 넣는다(시료를 시험소에 의뢰한 방문). 한 날 농장을 3곳 이상
+// 돌면 그날 시험소 줄의 "8H초과 차감시간"에 1을 적는다.
+// 서식(글꼴·테두리·열 너비)을 살려야 해서 스타일을 지원하는 ExcelJS를 필요할 때만 불러온다.
+const PS_LAB_NAME = '북부시험소';
+const PS_LAB_ADDRESS = '경기도 양주시 고덕로 229-26';
+const PS_OVER8H_MIN_FARMS = 3;
+
+function loadExcelJs() {
+  if (window.ExcelJS) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('엑셀 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해주세요.'));
+    document.head.appendChild(s);
+  });
+}
+
+function psExcelRange() {
+  return { from: document.getElementById('ps-xl-from').value, to: document.getElementById('ps-xl-to').value };
+}
+
+function psExcelTargets() {
+  const { from, to } = psExcelRange();
+  return load('preShipments')
+    .filter(p => p.sampledAt && (!from || p.sampledAt >= from) && (!to || p.sampledAt <= to))
+    // 날짜 오름차순(기록대장은 시간순), 같은 날은 등록 순서
+    .sort((a, b) => a.sampledAt.localeCompare(b.sampledAt) || String(a.createdAt || '').localeCompare(String(b.createdAt || '')));
+}
+
+function openPsExcelModal() {
+  const dates = load('preShipments').map(p => p.sampledAt).filter(Boolean).sort();
+  // 기본 구간: 가장 최근 채취일이 속한 달 전체
+  const last = dates[dates.length - 1] || new Date().toISOString().slice(0, 10);
+  const [y, m] = last.split('-');
+  document.getElementById('ps-xl-from').value = `${y}-${m}-01`;
+  document.getElementById('ps-xl-to').value = `${y}-${m}-${String(new Date(Number(y), Number(m), 0).getDate()).padStart(2, '0')}`;
+  updatePsExcelCount();
+  openModal('modal-ps-excel');
+}
+
+function updatePsExcelCount() {
+  const list = psExcelTargets();
+  const days = new Set(list.map(p => p.sampledAt)).size;
+  document.getElementById('ps-xl-count').textContent = list.length
+    ? `해당 구간: ${days}일 · 농장 ${list.length}건`
+    : '해당 구간에 출하전검사가 없습니다.';
+  document.getElementById('ps-xl-btn').disabled = !list.length;
+}
+
+// 채취건수 칸: 동별 표의 점수 중 가장 큰 값을 항목별로 "분변5점\n인후두5점" 식으로 적는다
+// (동마다 5점씩 뽑는 것이 표준이라 동 수만큼 곱하지 않는다).
+function psSampleCountText(ps) {
+  const order = ['feces', 'trachea', 'cloaca', 'env', 'carcass'];
+  const label = Object.fromEntries(PS_SAMPLE_COLS.map(c => [c.key, c.label]));
+  return order.map(k => {
+    const mx = Math.max(0, ...(ps.rows || []).map(r => Number(r[k]) || 0));
+    return mx ? `${label[k]}${mx}점` : '';
+  }).filter(Boolean).join('\n');
+}
+
+async function exportPsExcel() {
+  const list = psExcelTargets();
+  if (!list.length) { alert('해당 구간에 출하전검사가 없습니다.'); return; }
+  const btn = document.getElementById('ps-xl-btn');
+  btn.disabled = true;
+  try {
+    await loadExcelJs();
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet('Sheet1');
+    [4.9, 8.9, 13.1, 8.8, 9, 31, 9.4, 7.3, 8.8, 9.3, 8.8].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+    const thin = { style: 'thin' };
+    const box = { top: thin, left: thin, bottom: thin, right: thin };
+    const center = { horizontal: 'center', vertical: 'middle', wrapText: true };
+
+    ws.getCell('A1').value = '<서식 1>';
+    ws.getCell('A1').font = { name: '맑은 고딕', size: 10 };
+    ws.mergeCells('A2:J2');
+    ws.getCell('A2').value = 'AI 검사를 위한 현장 시료채취 결과 기록대장(공수의사 → 시군)';
+    ws.getCell('A2').font = { name: 'HY헤드라인M', size: 14 };
+    ws.getCell('A2').alignment = { horizontal: 'center', vertical: 'middle' };
+    ws.getRow(2).height = 26.4; ws.getRow(3).height = 16.2; ws.getRow(4).height = 35.4;
+
+    ['연번', '채취일자', '농장주', '농장명', '축종', '소재지', '사육수수', '동수', '채취건수', '비고', '8H초과\n차감시간']
+      .forEach((h, i) => {
+        const c = ws.getCell(4, i + 1);
+        c.value = h; c.font = { name: '맑은 고딕', size: i === 10 ? 10 : 11, bold: true };
+        c.alignment = center; c.border = box;
+      });
+
+    const byDate = new Map();
+    list.forEach(p => { if (!byDate.has(p.sampledAt)) byDate.set(p.sampledAt, []); byDate.get(p.sampledAt).push(p); });
+
+    let r = 5, no = 1, farmCount = 0, labVisits = 0, over8h = 0;
+    const f9 = { name: '맑은 고딕', size: 9 };
+    const put = (col, v, opt = {}) => {
+      const c = ws.getCell(r, col);
+      c.value = v; c.font = opt.font || f9; c.border = box;
+      c.alignment = { horizontal: opt.left ? 'left' : 'center', vertical: 'middle', wrapText: !!opt.wrap };
+      if (opt.fmt) c.numFmt = opt.fmt;
+    };
+    for (const [date, farms] of byDate) {
+      // 엑셀 날짜는 UTC 자정 기준 값으로 넣어야 시간대와 상관없이 같은 날짜로 보인다
+      const [yy, mm, dd] = date.split('-').map(Number);
+      const d = new Date(Date.UTC(yy, mm - 1, dd));
+      for (const p of farms) {
+        ws.getRow(r).height = 27;
+        put(1, no++);
+        put(2, d, { font: { name: '돋움', size: 11 }, fmt: 'm"월" d"일";@' });
+        put(3, p.owner || '', { font: { name: '굴림체', size: 11 } });
+        put(4, p.farmName || '', { font: { name: '돋움', size: 9 } });
+        put(5, p.species || '');
+        put(6, p.address || '', { left: true });
+        put(7, p.scale ?? '');
+        put(8, p.houseCount ?? ((p.rows || []).length || ''));
+        put(9, psSampleCountText(p), { wrap: true });
+        put(10, ''); put(11, '');
+        r++; farmCount++;
+      }
+      const over = farms.length >= PS_OVER8H_MIN_FARMS;
+      ws.getRow(r).height = 27;
+      put(1, no++); put(2, '');
+      put(3, PS_LAB_NAME, { font: { name: '굴림체', size: 10 } });
+      put(4, '-', { font: { name: '돋움', size: 9 } }); put(5, '-');
+      put(6, PS_LAB_ADDRESS, { left: true }); put(7, '-'); put(8, '-'); put(9, '', { wrap: true });
+      put(10, '샘플링시료\n검사의뢰', { wrap: true });
+      put(11, over ? 1 : '');
+      r++; labVisits++; if (over) over8h++;
+    }
+
+    ws.getRow(r).height = 21.6;
+    const foot = (col, v) => {
+      const c = ws.getCell(r, col);
+      c.value = v; c.font = { name: '맑은 고딕', size: 11 }; c.alignment = { horizontal: 'center', vertical: 'middle' };
+    };
+    ws.mergeCells(r, 1, r, 2);
+    foot(1, '농가수'); foot(3, farmCount); foot(4, '개소');
+    foot(7, '시험소'); foot(8, labVisits); foot(9, '회방문'); foot(11, over8h);
+
+    const { from, to } = psExcelRange();
+    const buf = await wb.xlsx.writeBuffer();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    a.download = `시료채취결과기록대장_${from || list[0].sampledAt}_${to || list[list.length - 1].sampledAt}.xlsx`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    closeModal('modal-ps-excel');
+  } catch (e) {
+    alert('엑셀 저장 실패: ' + e.message);
+  } finally { btn.disabled = false; }
+}
