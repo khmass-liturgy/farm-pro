@@ -532,17 +532,49 @@ function openPsExcelModal() {
   document.getElementById('ps-xl-from').value = `${y}-${m}-01`;
   document.getElementById('ps-xl-to').value = `${y}-${m}-${String(new Date(Number(y), Number(m), 0).getDate()).padStart(2, '0')}`;
   updatePsExcelCount();
-  loadExcelJs().catch(() => {});
   openModal('modal-ps-excel');
 }
+
+// 파일은 구간이 정해질 때마다 미리 만들어 두고, "엑셀 저장"을 누르면 곧바로 내려받는다.
+// 클릭 후 파일을 만드느라 기다리면 브라우저(Brave 등)가 클릭과 무관한 자동 다운로드로 보고
+// "다운로드 권한 필요"로 막기 때문이다.
+let psXlPrepared = null; // { key, blob, fileName }
+let psXlSeq = 0;
 
 function updatePsExcelCount() {
   const list = psExcelTargets();
   const days = new Set(list.map(p => p.sampledAt)).size;
-  document.getElementById('ps-xl-count').textContent = list.length
-    ? `해당 구간: ${days}일 · 농장 ${list.length}건`
-    : '해당 구간에 출하전검사가 없습니다.';
-  document.getElementById('ps-xl-btn').disabled = !list.length;
+  const countEl = document.getElementById('ps-xl-count');
+  const btn = document.getElementById('ps-xl-btn');
+  psXlPrepared = null;
+  if (!list.length) {
+    countEl.textContent = '해당 구간에 출하전검사가 없습니다.';
+    btn.disabled = true;
+    return;
+  }
+  const summary = `해당 구간: ${days}일 · 농장 ${list.length}건`;
+  countEl.textContent = `${summary} — 파일 준비 중...`;
+  btn.disabled = true;
+  const seq = ++psXlSeq;
+  buildPsExcelFile(list, psExcelRange()).then(file => {
+    if (seq !== psXlSeq) return; // 그사이 구간이 바뀜
+    psXlPrepared = file;
+    countEl.textContent = summary;
+    btn.disabled = false;
+  }).catch(e => {
+    if (seq !== psXlSeq) return;
+    countEl.textContent = `${summary} — 파일을 만들지 못했습니다: ${e.message}`;
+  });
+}
+
+function exportPsExcel() {
+  if (!psXlPrepared) { alert('파일을 준비하는 중입니다. 잠시 후 다시 눌러주세요.'); return; }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(psXlPrepared.blob);
+  a.download = psXlPrepared.fileName;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  closeModal('modal-ps-excel');
 }
 
 // 채취건수 칸: 동별 표의 점수 중 가장 큰 값을 항목별로 "분변5점\n인후두5점" 식으로 적는다
@@ -556,122 +588,87 @@ function psSampleCountText(ps) {
   }).filter(Boolean).join('\n');
 }
 
-async function exportPsExcel() {
-  const list = psExcelTargets();
-  if (!list.length) { alert('해당 구간에 출하전검사가 없습니다.'); return; }
-  const btn = document.getElementById('ps-xl-btn');
-  const range = psExcelRange();
+async function buildPsExcelFile(list, range) {
   const fileName = `시료채취결과기록대장_${range.from || list[0].sampledAt}_${range.to || list[list.length - 1].sampledAt}.xlsx`;
-  // 저장 위치 창은 버튼을 누른 직후(await 전)에 열어야 브라우저가 허용한다. 이 방식은
-  // 자동 다운로드 차단(Brave 등)의 영향을 받지 않아서 지원되는 브라우저에서는 먼저 쓴다.
-  let fileHandle = null;
-  if (window.showSaveFilePicker) {
-    try {
-      fileHandle = await window.showSaveFilePicker({
-        suggestedName: fileName,
-        types: [{ description: 'Excel', accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] } }],
-      });
-    } catch (e) {
-      if (e && e.name === 'AbortError') return; // 사용자가 저장 창을 닫음
-      fileHandle = null; // 지원 안 함·차단 → 일반 다운로드로 진행
-    }
-  }
-  btn.disabled = true;
-  try {
-    await loadExcelJs();
-    const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet('Sheet1');
-    [4.9, 8.9, 13.1, 8.8, 9, 31, 9.4, 7.3, 8.8, 9.3, 8.8].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
-    const thin = { style: 'thin' };
-    const box = { top: thin, left: thin, bottom: thin, right: thin };
-    const center = { horizontal: 'center', vertical: 'middle', wrapText: true };
+  await loadExcelJs();
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Sheet1');
+  [4.9, 8.9, 13.1, 8.8, 9, 31, 9.4, 7.3, 8.8, 9.3, 8.8].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+  const thin = { style: 'thin' };
+  const box = { top: thin, left: thin, bottom: thin, right: thin };
+  const center = { horizontal: 'center', vertical: 'middle', wrapText: true };
 
-    ws.getCell('A1').value = '<서식 1>';
-    ws.getCell('A1').font = { name: '맑은 고딕', size: 10 };
-    ws.mergeCells('A2:J2');
-    ws.getCell('A2').value = 'AI 검사를 위한 현장 시료채취 결과 기록대장(공수의사 → 시군)';
-    ws.getCell('A2').font = { name: 'HY헤드라인M', size: 14 };
-    ws.getCell('A2').alignment = { horizontal: 'center', vertical: 'middle' };
-    ws.getRow(2).height = 26.4; ws.getRow(3).height = 16.2; ws.getRow(4).height = 35.4;
+  ws.getCell('A1').value = '<서식 1>';
+  ws.getCell('A1').font = { name: '맑은 고딕', size: 10 };
+  ws.mergeCells('A2:J2');
+  ws.getCell('A2').value = 'AI 검사를 위한 현장 시료채취 결과 기록대장(공수의사 → 시군)';
+  ws.getCell('A2').font = { name: 'HY헤드라인M', size: 14 };
+  ws.getCell('A2').alignment = { horizontal: 'center', vertical: 'middle' };
+  ws.getRow(2).height = 26.4; ws.getRow(3).height = 16.2; ws.getRow(4).height = 35.4;
 
-    ['연번', '채취일자', '농장주', '농장명', '축종', '소재지', '사육수수', '동수', '채취건수', '비고', '8H초과\n차감시간']
-      .forEach((h, i) => {
-        const c = ws.getCell(4, i + 1);
-        c.value = h; c.font = { name: '맑은 고딕', size: i === 10 ? 10 : 11, bold: true };
-        c.alignment = center; c.border = box;
-      });
+  ['연번', '채취일자', '농장주', '농장명', '축종', '소재지', '사육수수', '동수', '채취건수', '비고', '8H초과\n차감시간']
+    .forEach((h, i) => {
+      const c = ws.getCell(4, i + 1);
+      c.value = h; c.font = { name: '맑은 고딕', size: i === 10 ? 10 : 11, bold: true };
+      c.alignment = center; c.border = box;
+    });
 
-    const byDate = new Map();
-    list.forEach(p => { if (!byDate.has(p.sampledAt)) byDate.set(p.sampledAt, []); byDate.get(p.sampledAt).push(p); });
+  const byDate = new Map();
+  list.forEach(p => { if (!byDate.has(p.sampledAt)) byDate.set(p.sampledAt, []); byDate.get(p.sampledAt).push(p); });
 
-    let r = 5, no = 1, farmCount = 0, labVisits = 0, over8h = 0;
-    const f9 = { name: '맑은 고딕', size: 9 };
-    const put = (col, v, opt = {}) => {
-      const c = ws.getCell(r, col);
-      c.value = v; c.font = opt.font || f9; c.border = box;
-      c.alignment = { horizontal: opt.left ? 'left' : 'center', vertical: 'middle', wrapText: !!opt.wrap };
-      if (opt.fmt) c.numFmt = opt.fmt;
-    };
-    for (const [date, farms] of byDate) {
-      // 엑셀 날짜는 UTC 자정 기준 값으로 넣어야 시간대와 상관없이 같은 날짜로 보인다
-      const [yy, mm, dd] = date.split('-').map(Number);
-      const d = new Date(Date.UTC(yy, mm - 1, dd));
-      for (const p of farms) {
-        ws.getRow(r).height = 27;
-        put(1, no++);
-        put(2, d, { font: { name: '돋움', size: 11 }, fmt: 'mm/dd' });
-        put(3, p.owner || '', { font: { name: '굴림체', size: 11 } });
-        put(4, p.farmName || '', { font: { name: '돋움', size: 9 } });
-        put(5, p.species || '');
-        put(6, p.address || '', { left: true });
-        put(7, p.scale ?? '');
-        put(8, p.houseCount ?? ((p.rows || []).length || ''));
-        put(9, psSampleCountText(p), { wrap: true });
-        put(10, ''); put(11, '');
-        r++; farmCount++;
-      }
-      const over = farms.length >= PS_OVER8H_MIN_FARMS;
+  let r = 5, no = 1, farmCount = 0, labVisits = 0, over8h = 0;
+  const f9 = { name: '맑은 고딕', size: 9 };
+  const put = (col, v, opt = {}) => {
+    const c = ws.getCell(r, col);
+    c.value = v; c.font = opt.font || f9; c.border = box;
+    c.alignment = { horizontal: opt.left ? 'left' : 'center', vertical: 'middle', wrapText: !!opt.wrap };
+    if (opt.fmt) c.numFmt = opt.fmt;
+  };
+  for (const [date, farms] of byDate) {
+    // 엑셀 날짜는 UTC 자정 기준 값으로 넣어야 시간대와 상관없이 같은 날짜로 보인다
+    const [yy, mm, dd] = date.split('-').map(Number);
+    const d = new Date(Date.UTC(yy, mm - 1, dd));
+    for (const p of farms) {
       ws.getRow(r).height = 27;
-      put(1, no++); put(2, '');
-      put(3, PS_LAB_NAME, { font: { name: '굴림체', size: 10 } });
-      put(4, '-', { font: { name: '돋움', size: 9 } }); put(5, '-');
-      put(6, PS_LAB_ADDRESS, { left: true }); put(7, '-'); put(8, '-'); put(9, '', { wrap: true });
-      put(10, '샘플링시료\n검사의뢰', { wrap: true });
-      put(11, over ? 1 : '');
-      r++; labVisits++; if (over) over8h++;
+      put(1, no++);
+      put(2, d, { font: { name: '돋움', size: 11 }, fmt: 'mm/dd' });
+      put(3, p.owner || '', { font: { name: '굴림체', size: 11 } });
+      put(4, p.farmName || '', { font: { name: '돋움', size: 9 } });
+      put(5, p.species || '');
+      put(6, p.address || '', { left: true });
+      put(7, p.scale ?? '');
+      put(8, p.houseCount ?? ((p.rows || []).length || ''));
+      put(9, psSampleCountText(p), { wrap: true });
+      put(10, ''); put(11, '');
+      r++; farmCount++;
     }
+    const over = farms.length >= PS_OVER8H_MIN_FARMS;
+    ws.getRow(r).height = 27;
+    put(1, no++); put(2, '');
+    put(3, PS_LAB_NAME, { font: { name: '굴림체', size: 10 } });
+    put(4, '-', { font: { name: '돋움', size: 9 } }); put(5, '-');
+    put(6, PS_LAB_ADDRESS, { left: true }); put(7, '-'); put(8, '-'); put(9, '', { wrap: true });
+    put(10, '샘플링시료\n검사의뢰', { wrap: true });
+    put(11, over ? 1 : '');
+    r++; labVisits++; if (over) over8h++;
+  }
 
-    ws.getRow(r).height = 21.6;
-    const foot = (col, v) => {
-      const c = ws.getCell(r, col);
-      c.value = v; c.font = { name: '맑은 고딕', size: 11 }; c.alignment = { horizontal: 'center', vertical: 'middle' };
-    };
-    ws.mergeCells(r, 1, r, 2);
-    foot(1, '농가수'); foot(3, farmCount); foot(4, '개소');
-    foot(7, '시험소'); foot(8, labVisits); foot(9, '회방문'); foot(11, over8h);
+  ws.getRow(r).height = 21.6;
+  const foot = (col, v) => {
+    const c = ws.getCell(r, col);
+    c.value = v; c.font = { name: '맑은 고딕', size: 11 }; c.alignment = { horizontal: 'center', vertical: 'middle' };
+  };
+  ws.mergeCells(r, 1, r, 2);
+  foot(1, '농가수'); foot(3, farmCount); foot(4, '개소');
+  foot(7, '시험소'); foot(8, labVisits); foot(9, '회방문'); foot(11, over8h);
 
-    // 신청서 작성일: 조회한 구간(종료일)이 속한 달의 말일
-    const refDate = (psExcelRange().to || list[list.length - 1].sampledAt).split('-').map(Number);
-    const monthEnd = new Date(refDate[0], refDate[1], 0);
-    buildPsFeeSheet(wb, { farmCount, labVisits, over8h, monthEnd });
+  // 신청서 작성일: 조회한 구간(종료일)이 속한 달의 말일
+  const refDate = (range.to || list[list.length - 1].sampledAt).split('-').map(Number);
+  const monthEnd = new Date(refDate[0], refDate[1], 0);
+  buildPsFeeSheet(wb, { farmCount, labVisits, over8h, monthEnd });
 
-    const buf = await wb.xlsx.writeBuffer();
-    if (fileHandle) {
-      const w = await fileHandle.createWritable();
-      await w.write(buf);
-      await w.close();
-      closeModal('modal-ps-excel');
-      return;
-    }
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
-    a.download = fileName;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-    closeModal('modal-ps-excel');
-  } catch (e) {
-    alert('엑셀 저장 실패: ' + e.message);
-  } finally { btn.disabled = false; }
+  const buf = await wb.xlsx.writeBuffer();
+  return { fileName, blob: new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }) };
 }
 
 function buildPsFeeSheet(wb, { farmCount, labVisits, over8h, monthEnd }) {
