@@ -371,10 +371,9 @@ function isConsultLog(l) {
   return l.programDay == null;
 }
 
-// 편집/삭제 버튼을 행마다 우측 끝에 두면 표가 넓어(칸이 많아) 스크롤해야 눌린다.
-// 그래서 행을 클릭해 하나만 고르면, 카드 상단 툴바의 편집/삭제 버튼이 그 건에
-// 작동하는 방식으로 바꿨다 — 버튼이 항상 스크롤 없이 보이는 위치에 있다.
-let mcSelectedLogId = null;
+// 행을 누르면 상세 보기 창이 열리고, 거기서 편집·삭제한다(버튼이 표 우측 끝에 있으면
+// 칸이 많아 스크롤해야 눌리기 때문에 행 클릭 -> 상세 창 방식으로 바꿨다).
+let mcViewedLogId = null;
 
 function renderConsultLogPage() {
   const farmId = document.getElementById('mc-farm-filter')?.value || '';
@@ -391,12 +390,6 @@ function renderConsultLogPage() {
   // 최근 상담일이 위로 오게 한다. 저장소는 등록 순(오래된 것 먼저)이라 먼저 뒤집은 뒤
   // 안정 정렬하면 같은 날짜 안에서도 나중에 등록한 것이 위로 온다.
   logs = logs.reverse().sort((a, b) => (b.logDate || '').localeCompare(a.logDate || ''));
-  // 필터가 바뀌었거나 삭제돼서 골라둔 항목이 더 이상 목록에 없으면 선택을 비운다.
-  if (mcSelectedLogId && !logs.some(l => l.id === mcSelectedLogId)) mcSelectedLogId = null;
-  const editBtn = document.getElementById('mc-edit-btn');
-  const deleteBtn = document.getElementById('mc-delete-btn');
-  if (editBtn) editBtn.disabled = !mcSelectedLogId;
-  if (deleteBtn) deleteBtn.disabled = !mcSelectedLogId;
 
   const tbody = document.getElementById('medconsult-tbody');
   const empty = document.getElementById('medconsult-empty');
@@ -411,8 +404,7 @@ function renderConsultLogPage() {
     // 입추일과 상담일자로 그날의 일령을 계산해 채운다(둘 중 하나라도 없으면 '-').
     const age = b?.placementDate ? dayAgeOnDate(b.placementDate, l.logDate) : null;
     const ageLabel = age == null ? '-' : age < 1 ? '입추 전' : `${age}일령`;
-    const selected = l.id === mcSelectedLogId;
-    return `<tr onclick="selectConsultLog('${l.id}')" style="cursor:pointer${selected ? ';background:var(--accent-light)' : ''}">
+    return `<tr onclick="viewConsultLog('${l.id}')" style="cursor:pointer">
       <td>${l.logDate}</td>
       <td>${farm?.name || '-'}</td>
       <td style="color:var(--text-secondary)">${b?.house || '-'}</td>
@@ -421,23 +413,68 @@ function renderConsultLogPage() {
       <td style="color:var(--text-secondary)">${l.note||'-'}</td>
       <td>${medParts.length ? medParts.join(' / ') : '-'}</td>
       <td>${photoCount ? `📷 ${photoCount}장` : '-'}</td>
-      <td style="color:var(--text-secondary);font-size:11px">${l.administeredByEmail||'-'}</td>
     </tr>`;
   }).join('');
 }
 
-// 같은 행을 다시 클릭하면 선택을 해제한다(다시 눌러 접을 수 있게).
-function selectConsultLog(id) {
-  mcSelectedLogId = mcSelectedLogId === id ? null : id;
-  renderConsultLogPage();
+function mlViewField(label, valueHtml) {
+  return `<div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">
+    <div style="flex:0 0 90px;color:var(--text-secondary);font-size:13px">${label}</div>
+    <div style="flex:1;white-space:pre-wrap;word-break:break-word">${valueHtml || '-'}</div>
+  </div>`;
 }
 
-function editSelectedConsultLog() {
-  if (!mcSelectedLogId) return;
-  openConsultLogModal(mcSelectedLogId);
+const mlViewEsc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function viewConsultLog(id) {
+  const l = load('medicationLogs').find(x => x.id === id);
+  if (!l) { alert('진료기록을 찾을 수 없습니다.'); return; }
+  mcViewedLogId = id;
+  const b = load('batches').find(x => x.id === l.batchId);
+  const farm = b ? load('farms').find(f => f.id === b.farmId) : null;
+  const age = b?.placementDate ? dayAgeOnDate(b.placementDate, l.logDate) : null;
+  const ageLabel = age == null ? '' : age < 1 ? '입추 전' : `${age}일령`;
+  const meds = [l.drugName, l.vaccineName].filter(Boolean).map(mlViewEsc).join(' / ');
+  const photos = l.necropsyPhotos || [];
+  const ph = '<div class="text-muted" style="width:120px;height:120px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:6px;font-size:12px">불러오는 중...</div>';
+  document.getElementById('consult-view-body').innerHTML =
+    mlViewField('상담일자', mlViewEsc(l.logDate)) +
+    mlViewField('농장', mlViewEsc(farm ? `${farm.name} (${farm.owner})` : '')) +
+    mlViewField('입추(동)', mlViewEsc([b?.house, b?.placementDate ? `입추 ${b.placementDate}` : '', ageLabel].filter(Boolean).join(' · '))) +
+    mlViewField('질병', mlViewEsc(l.disease)) +
+    mlViewField('투약/백신', meds) +
+    mlViewField('투여량/메모', mlViewEsc(l.doseNote)) +
+    mlViewField('내용', mlViewEsc(l.note)) +
+    mlViewField('부검사진', photos.length ? `<div id="consult-view-photos" style="display:flex;flex-wrap:wrap;gap:8px">${photos.map(() => ph).join('')}</div>` : '');
+  openModal('modal-consult-view');
+  if (photos.length) loadConsultViewPhotos(id, photos);
 }
 
-function deleteSelectedConsultLog() {
-  if (!mcSelectedLogId) return;
-  deleteMedicationLog(mcSelectedLogId);
+// 서명 URL은 만료되므로 저장하지 않고 열 때마다 새로 받는다(편집 창과 같은 방식).
+async function loadConsultViewPhotos(id, paths) {
+  const urls = await Promise.all(paths.map(async path => {
+    try {
+      const { data, error } = await sb.storage.from('necropsy-photos').createSignedUrl(path, 3600);
+      return !error && data ? data.signedUrl : null;
+    } catch (e) { return null; }
+  }));
+  const box = document.getElementById('consult-view-photos');
+  if (!box || mcViewedLogId !== id) return; // 그사이 창을 닫았거나 다른 기록을 연 경우
+  box.innerHTML = urls.map(u => u
+    ? `<a href="${u}" target="_blank" rel="noopener"><img src="${u}" style="width:120px;height:120px;object-fit:cover;border-radius:6px;border:1px solid var(--border)"></a>`
+    : '<div class="text-muted" style="width:120px;height:120px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:6px;font-size:12px">불러오기 실패</div>').join('');
+}
+
+function editViewedConsultLog() {
+  if (!mcViewedLogId) return;
+  const id = mcViewedLogId;
+  closeModal('modal-consult-view');
+  openConsultLogModal(id);
+}
+
+async function deleteViewedConsultLog() {
+  if (!mcViewedLogId) return;
+  const id = mcViewedLogId;
+  await deleteMedicationLog(id); // 확인창은 안에서 띄우고, 취소하면 아무 일도 하지 않는다
+  if (!load('medicationLogs').some(l => l.id === id)) { mcViewedLogId = null; closeModal('modal-consult-view'); }
 }
