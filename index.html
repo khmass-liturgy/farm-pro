@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20261015a">
 <link rel="icon" href="img/favicon.ico?v=20261015a">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20261015a">
-<link rel="stylesheet" href="css/styles.css?v=20261015a">
+<link rel="stylesheet" href="css/styles.css?v=20261022a">
 </head>
 <body>
 
@@ -541,12 +541,13 @@
           <div class="card-title">여비청구서 / 활동수당 청구서</div>
           <div class="flex-gap">
             <input type="month" id="vetinvoice-month" onchange="renderVetInvoiceSummary()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+            <button class="btn btn-primary btn-sm" onclick="printVetInvoice('both')" title="여비·활동수당 두 장을 한 번에">🖨️ 둘 다 인쇄</button>
             <button class="btn btn-outline btn-sm" onclick="printVetInvoice('travel')">🖨️ 여비 청구서</button>
             <button class="btn btn-outline btn-sm" onclick="printVetInvoice('activity')">🖨️ 활동수당 청구서</button>
           </div>
         </div>
         <p class="text-muted" id="vetinvoice-summary"></p>
-        <p class="text-muted mt-16">여비는 그달 방문 건수 × 건당 여비로 자동 계산됩니다. 금액·계좌·주민등록번호 등은 상단 "⚙️ 사무실 정보"에서 관리합니다.</p>
+        <p class="text-muted mt-16">서식은 첨부하신 청구서.xlsx(청구서(여비)·청구서 (활동수당))와 같은 배치입니다. 월만 고르면 월 문구와 월말 날짜가 바뀌고, 여비는 그달 방문 건수 × 건당 여비로 자동 계산됩니다. 금액·계좌·주민등록번호 등은 상단 "⚙️ 사무실 정보"에서 관리합니다.</p>
       </div>
     </div>
 
@@ -1877,7 +1878,7 @@
 <script src="js/movePermit.js?v=20261016a"></script>
 <script src="js/movePermitBulk.js?v=20261015a"></script>
 <script src="js/henShipment.js?v=20261012a"></script>
-<script src="js/vetReport.js?v=20261015a"></script>
+<script src="js/vetReport.js?v=20261022a"></script>
 <script src="js/clinicalAssessment.js?v=20261015a"></script>
 <script src="js/rodentControl.js?v=20261015a"></script>
 <script src="js/schedule.js?v=20261015a"></script>
@@ -1885,6 +1886,6 @@
 <script src="js/reports.js?v=20261015a"></script>
 <script src="js/print.js?v=20261015a"></script>
 <script src="js/backup.js?v=20261014a"></script>
-<script src="js/app.js?v=20261015a"></script>
+<script src="js/app.js?v=20261022a"></script>
 </body>
 </html>

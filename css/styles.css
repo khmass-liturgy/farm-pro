@@ -579,6 +579,20 @@ body { display: block !important; height: auto !important; overflow: visible !im
 .hs-signature-wrap { display: inline-block; width: 32mm; height: 12mm; vertical-align: middle; position: relative; margin: 0 4pt; }
 .hs-signature { position: absolute; width: 100%; height: 100%; object-fit: contain; opacity: 0.92; pointer-events: none; }
 
+/* 공수의 보고서 — 여비/활동수당 청구서(첨부 「청구서.xlsx」의 칸 배치·글꼴 그대로). 왼쪽 여백은 원본
+   엑셀의 인쇄 여백(좌 15mm, 상 19mm)에 맞춘다(@page 여백 10mm에 더해서). */
+.vi-page { width: auto; }
+.vi-sheet { position: relative; margin: 9mm 0 0 5mm; font-family: "GulimChe", "굴림체", "Gulim", "Malgun Gothic", sans-serif; font-size: 12pt; color: #000; }
+.vi-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.vi-table td { border: 0; padding: 0 2px; vertical-align: middle; line-height: 1.25; word-break: keep-all; overflow-wrap: anywhere; }
+.vi-table td.vi-b { border: 0.75pt solid #000; }
+.vi-table td.vi-c { text-align: center; }
+.vi-table td.vi-r { text-align: right; }
+.vi-table td.vi-title { text-align: center; font-size: 22pt; }
+.vi-table td.vi-big { font-size: 16pt; white-space: nowrap; }
+.vi-table td.vi-sign { font-size: 18pt; font-weight: 700; }
+.vi-stamp { position: absolute; }
+
 .no-print { display: none !important; }
 }
 #print-area { display: none; }

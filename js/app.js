@@ -43,6 +43,7 @@ const PAGE_ACTIONS = {
   preshipment: `<button class="btn btn-primary" onclick="openPreShipmentModal()">+ 출하전검사 작성</button>`,
   movepermit: `<button class="btn btn-primary" onclick="openMovePermitModal()">+ 이동승인서 발급</button>`,
   henshipment: `<button class="btn btn-primary" onclick="openHenShipmentModal()">+ 출하대장 작성</button>`,
+  'vet-invoice': `<button class="btn btn-outline" onclick="openVetOfficeInfoModal()">⚙️ 사무실 정보</button>`,
   'vet-entries': `<button class="btn btn-outline" onclick="openVetOfficeInfoModal()">⚙️ 사무실 정보</button><button class="btn btn-primary" onclick="openVetEntryModal()">+ 방문 기록 추가</button>`,
   drugs: `<button class="btn btn-primary" onclick="openDrugModal()">+ 약품 추가</button>`,
   'rx-products': `<button class="btn btn-primary" onclick="openRxProductModal()">+ 제품 추가</button>`,

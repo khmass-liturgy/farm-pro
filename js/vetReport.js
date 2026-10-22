@@ -234,7 +234,8 @@ function renderVetInvoiceSummary() {
   const travelFee = count * (o.travelFeePerVisit || 20000);
   document.getElementById('vetinvoice-summary').textContent =
     `${vetMonthLabel(monthEl.value)} 방문 ${count}건 · 여비 ${travelFee.toLocaleString()}원 (건당 ${(o.travelFeePerVisit || 20000).toLocaleString()}원)` +
-    (o.monthlyActivityAllowance ? ` · 활동수당 ${Number(o.monthlyActivityAllowance).toLocaleString()}원` : ' · 활동수당 금액이 사무실 정보에 없습니다');
+    (o.monthlyActivityAllowance ? ` · 활동수당 ${Number(o.monthlyActivityAllowance).toLocaleString()}원` : ' · 활동수당 금액이 사무실 정보에 없습니다') +
+    (o.vetName && o.residentNo && o.bankAccount ? '' : ' · ⚠️ 성명·주민등록번호·계좌번호가 사무실 정보에 없습니다(상단 ⚙️ 사무실 정보에서 입력)');
 }
 
 function vetMonthEndLabel(ym) {
@@ -243,38 +244,77 @@ function vetMonthEndLabel(ym) {
   return `${y}년 ${m}월 ${lastDay}일`;
 }
 
+// 첨부된 「청구서.xlsx」(시트 "청구서(여비)"·"청구서 (활동수당)")의 칸 배치를 그대로 옮긴 서식.
+// 열 너비(엑셀 글자수 × 7px)와 줄 높이(pt)를 원본 그대로 두고, 도장 그림은 원본의 앵커
+// (E열 왼쪽에서 441960EMU, 14행 위에서 45720EMU, 4cm 정사각형) 위치에 얹는다.
+// 두 서식은 제목·건명·금액·월 문구만 다르다. 월만 고르면 방문 건수로 여비가 계산된다.
+const VI_COL_CHARS = {
+  travel: [8.6, 14.6, 8.6, 13.8, 9.4, 16.0, 8.8],
+  activity: [8.6, 16.6, 8.6, 12.0, 9.8, 14.6, 7.8],
+};
+const VI_ROW_PT = [27, 18.75, 18.75, 14.25, 14.25, 55.5, 57.75, 82.5, 14.25, 14.25, 14.25, 14.25, 14.25, 20.25, 20.25, 20.25, 20.25, 14.25, 14.25, 14.25, 22.5];
+const VI_EMU_PX = 1 / 9525;
+
+function viResidentNo(rn) {
+  const s = String(rn || '').trim();
+  if (!s) return '';
+  const m = s.match(/^(\d{6})-?(\d+)$/);
+  return m ? `${m[1]}<br>-${m[2]}` : s;
+}
+
 function buildVetInvoiceHtml(kind, ym) {
   const o = vetOfficeInfo();
   const { count } = vetMonthStats(ym);
   const isTravel = kind === 'travel';
-  const title = isTravel ? '공수의 여비 청구서' : '공수의 활동수당 청구서';
-  const itemLabel = isTravel ? '공수의\n여비' : '공수의\n활동\n수당';
+  const widths = VI_COL_CHARS[kind].map(c => Math.round(c * 7));
   const amount = isTravel ? count * (o.travelFeePerVisit || 20000) : (o.monthlyActivityAllowance || 0);
+  const month = Number(ym.split('-')[1]);
+  const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>');
+  const spaced = (o.vetName || '').split('').join('&nbsp;&nbsp;');
+
+  const tr = (i, cells) => `<tr style="height:${VI_ROW_PT[i - 1]}pt">${cells}</tr>`;
+  const blank = i => tr(i, '<td colspan="7"></td>');
+
+  const rows = [
+    tr(1, '<td colspan="7" class="vi-title">' + (isTravel ? '공수의 여비 청구서' : '공수의 활동수당 청구서') + '</td>'),
+    blank(2), blank(3),
+    tr(4, `<td class="vi-r">${month}월</td><td colspan="6">분 공수의 ${isTravel ? '여비를' : '활동수당을'} 아래와 같이 청구합니다.</td>`),
+    blank(5),
+    tr(6, '<td class="vi-b vi-c" rowspan="2">건명</td><td class="vi-b vi-c" colspan="3">청구인</td><td class="vi-b vi-c" rowspan="2">청구금액</td><td class="vi-b vi-c" rowspan="2">계좌번호</td><td class="vi-b vi-c" rowspan="2">비 고</td>'),
+    tr(7, '<td class="vi-b vi-c">주 소</td><td class="vi-b vi-c">성 명</td><td class="vi-b vi-c">주민등록번호</td>'),
+    tr(8, `<td class="vi-b vi-c">${isTravel ? '공수의<br>여비' : '공수의<br>활동<br>수당'}</td>` +
+      `<td class="vi-b vi-c">${esc(o.address)}</td><td class="vi-b vi-c">${esc(o.vetName)}</td>` +
+      `<td class="vi-b vi-c">${viResidentNo(o.residentNo)}</td><td class="vi-b vi-c">${amount.toLocaleString()}</td>` +
+      `<td class="vi-b vi-c">${esc(o.bankName)}<br>${esc(o.bankAccount)}</td><td class="vi-b"></td>`),
+    blank(9), blank(10), blank(11), blank(12), blank(13),
+    tr(14, `<td colspan="2"></td><td colspan="4" class="vi-c vi-big">${vetMonthEndLabel(ym)}</td><td></td>`),
+    blank(15),
+    tr(16, `<td colspan="2"></td><td class="vi-big">청구인</td><td colspan="2" class="vi-c vi-big">${spaced}</td><td>(인)</td><td></td>`),
+    blank(17), blank(18), blank(19), blank(20),
+    tr(21, '<td colspan="2" class="vi-c vi-sign">파주시장</td><td colspan="5"></td>'),
+  ].join('');
+
+  const stampLeft = widths.slice(0, 4).reduce((s, w) => s + w, 0) + 441960 * VI_EMU_PX;
+  const stampTop = VI_ROW_PT.slice(0, 13).reduce((s, h) => s + h, 0) * 96 / 72 + 45720 * VI_EMU_PX;
+  const stampSize = 1440180 * VI_EMU_PX;
   return `
-  <div class="print-page">
-    <div class="ps-title" style="letter-spacing:2pt">${title}</div>
-    <div class="ps-request" style="text-indent:0">${vetMonthEndLabel(ym)}분 공수의 ${isTravel ? '여비' : '활동수당'}를 아래와 같이 청구합니다.</div>
-    <table class="ps-table">
-      <thead><tr><th>건명</th><th>주소</th><th>성명</th><th>주민등록번호</th><th>청구금액</th><th>계좌번호</th></tr></thead>
-      <tbody>
-        <tr>
-          <td>${itemLabel.replace(/\n/g, '<br>')}</td>
-          <td>${(o.address || '').replace(/\n/g, '<br>')}</td>
-          <td>${o.vetName || ''}</td>
-          <td>${o.residentNo || ''}</td>
-          <td class="ctr"><strong>${amount.toLocaleString()}</strong></td>
-          <td>${(o.bankName || '')} ${(o.bankAccount || '')}</td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="ps-request" style="text-align:right;text-indent:0">청구인 &#8195;&#8195;&#8195;&#8195; ${o.vetName || ''} &#8195;(인)</div>
-    <div class="ps-request" style="text-align:center;text-indent:0;margin-top:24pt">파&#8195;주&#8195;시&#8195;장</div>
+  <div class="print-page vi-page">
+    <div class="vi-sheet" style="width:${widths.reduce((s, w) => s + w, 0)}px">
+      <table class="vi-table"><colgroup>${widths.map(w => `<col style="width:${w}px">`).join('')}</colgroup>${rows}</table>
+      <img class="vi-stamp" src="img/vet-stamp-blue.png" alt="" style="left:${stampLeft.toFixed(1)}px;top:${stampTop.toFixed(1)}px;width:${stampSize.toFixed(1)}px;height:${stampSize.toFixed(1)}px">
+    </div>
   </div>`;
 }
 
+// kind: 'travel' | 'activity' | 'both'(두 장을 한 번에)
 function printVetInvoice(kind) {
   const ym = document.getElementById('vetinvoice-month').value || vetDefaultYm();
-  document.getElementById('print-area').innerHTML = buildVetInvoiceHtml(kind, ym);
+  const kinds = kind === 'both' ? ['travel', 'activity'] : [kind];
+  if (kinds.includes('travel') && !vetMonthStats(ym).count) {
+    alert('선택한 달에 방문 기록이 없어 여비를 계산할 수 없습니다. 일자별 근무내용에서 방문 기록을 먼저 등록해주세요.');
+    return;
+  }
+  document.getElementById('print-area').innerHTML = kinds.map(k => buildVetInvoiceHtml(k, ym)).join('');
   setTimeout(() => window.print(), 200);
 }
 
