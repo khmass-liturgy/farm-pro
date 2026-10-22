@@ -492,6 +492,9 @@
         <div class="card-header">
           <div class="card-title">일자별 근무내용 <span class="text-muted" style="font-weight:400;font-size:12px">— 여기서 등록한 방문 기록이 근무상황보고서·청구서·예찰내역·예찰일지·출장일지에 모두 쓰입니다</span></div>
           <div class="flex-gap">
+            <button class="btn btn-outline btn-sm" onclick="downloadVetEntryTemplate()" title="입력대장 형식의 엑셀 양식 내려받기">📋 양식 다운로드</button>
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('vetentry-file').click()" title="입력대장 엑셀을 올려 한꺼번에 등록">📥 엑셀 업로드</button>
+            <input type="file" id="vetentry-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="onVetEntryFile(event)">
             <button class="btn btn-outline btn-sm" id="vetentry-edit-btn" onclick="editSelectedVetEntry()" disabled>편집</button>
             <button class="btn btn-danger btn-sm" id="vetentry-delete-btn" onclick="deleteSelectedVetEntries()" disabled>삭제</button>
           </div>
@@ -501,7 +504,7 @@
             <thead>
               <tr>
                 <th style="text-align:center"><input type="checkbox" id="vetentry-check-all" onchange="toggleVetEntrySelectAll(this.checked)" title="전체 선택"></th>
-                <th>방문일</th><th>농장</th><th>축종</th><th>사육규모</th><th>내용</th>
+                <th>방문일</th><th>축주명(농장주)</th><th>농장명</th><th>주소</th><th>축종</th><th>사육두수</th><th>예찰내용</th>
               </tr>
             </thead>
             <tbody id="vetentry-tbody"></tbody>
@@ -1686,15 +1689,53 @@
     </div>
     <div class="form-row">
       <div class="form-group"><label>방문일 *</label><input id="vetentry-date" type="date" min="1900-01-01" max="2999-12-31"></div>
-      <div class="form-group"><label>농장 *</label>
-        <select id="vetentry-farm" onchange="onVetEntryFarmChange()"><option value="">농장 선택</option></select>
+      <div class="form-group"><label>축주명(농장주) *</label>
+        <select id="vetentry-farm" onchange="onVetEntryFarmChange()"><option value="">농장주 선택</option></select>
       </div>
     </div>
-    <div class="text-muted mb-16" id="vetentry-farm-info">농장을 선택하면 주소·축종·사육규모가 자동으로 채워집니다.</div>
-    <div class="form-group"><label>예찰내용/결과</label><textarea id="vetentry-content" rows="2" placeholder="예) AI진단키트 검사 -음성"></textarea></div>
+    <div class="form-group"><label>주소 <span class="text-muted">(자동조회)</span></label><input id="vetentry-address" disabled></div>
+    <div class="form-row">
+      <div class="form-group"><label>축종 <span class="text-muted">(자동)</span></label><input id="vetentry-species" disabled></div>
+      <div class="form-group"><label>사육두수 <span class="text-muted">(자동)</span></label><input id="vetentry-scale" disabled></div>
+    </div>
+    <div class="form-group"><label>예찰내용</label>
+      <select id="vetentry-content-sel" onchange="onVetContentSelChange()">
+        <option value="질병예찰 - 정상">질병예찰 - 정상</option>
+        <option value="AI진단키트 검사 -음성">AI진단키트 검사 -음성</option>
+        <option value="정기검사 샘플링 및 시험소의뢰">정기검사 샘플링 및 시험소의뢰</option>
+        <option value="__custom__">직접입력</option>
+      </select>
+      <input id="vetentry-content" placeholder="예찰내용을 직접 입력하세요" style="display:none;margin-top:6px">
+    </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-vet-entry')">취소</button>
       <button class="btn btn-primary" onclick="saveVetEntry()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 모달: 공수의 보고서 — 입력대장 엑셀 업로드 미리보기 -->
+<div class="modal-bg" id="modal-vet-import">
+  <div class="modal modal-wide" style="width:960px; max-width:97vw;">
+    <div class="modal-header">
+      <div class="modal-title">일자별 근무내용 — 엑셀 업로드 미리보기</div>
+      <button class="modal-close" onclick="closeModal('modal-vet-import')">✕</button>
+    </div>
+    <p class="text-muted mb-16">파일: <strong id="vetimp-file-name"></strong> · 축주명(농장주)으로 농장을 찾아 주소·축종·사육두수는 <strong>농장 등록 정보로 자동 입력</strong>됩니다. 빼고 싶은 줄은 체크를 해제하세요. <a href="#" onclick="downloadVetEntryTemplate(); return false;">양식 다운로드</a></p>
+    <div class="form-group"><label>시트</label><select id="vetimp-sheet" onchange="loadVetImportSheet()"></select></div>
+    <div class="text-muted mb-16" id="vetimp-count"></div>
+    <div class="tbl-wrap" style="max-height:48vh; overflow:auto;">
+      <table>
+        <thead><tr>
+          <th style="text-align:center"><input type="checkbox" id="vetimp-check-all" onchange="toggleVetImportAll(this.checked)" title="전체 선택"></th>
+          <th>줄</th><th>방문일</th><th>축주명(농장주)</th><th>주소</th><th>축종</th><th>사육두수</th><th>예찰내용</th><th>확인</th>
+        </tr></thead>
+        <tbody id="vetimp-tbody"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-vet-import')">취소</button>
+      <button class="btn btn-primary" id="vetimp-issue-btn" onclick="saveVetImport()" disabled>등록</button>
     </div>
   </div>
 </div>
@@ -1878,7 +1919,7 @@
 <script src="js/movePermit.js?v=20261016a"></script>
 <script src="js/movePermitBulk.js?v=20261015a"></script>
 <script src="js/henShipment.js?v=20261012a"></script>
-<script src="js/vetReport.js?v=20261022a"></script>
+<script src="js/vetReport.js?v=20261022b"></script>
 <script src="js/clinicalAssessment.js?v=20261015a"></script>
 <script src="js/rodentControl.js?v=20261015a"></script>
 <script src="js/schedule.js?v=20261015a"></script>

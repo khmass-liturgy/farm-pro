@@ -104,7 +104,9 @@ function renderVetEntries() {
     <tr>
       <td style="text-align:center"><input type="checkbox" ${vetEntrySelectedIds.has(e.id) ? 'checked' : ''} onchange="toggleVetEntrySelect('${e.id}', this.checked)"></td>
       <td>${e.visitDate}</td>
-      <td><strong>${e.farmName || '(삭제된 농장)'}</strong><div style="font-size:11px;color:var(--text-secondary)">${e.owner || ''}</div></td>
+      <td><strong>${e.owner || '-'}</strong></td>
+      <td>${e.farmName || '(삭제된 농장)'}</td>
+      <td>${e.address || '-'}</td>
       <td>${e.species || '-'}</td>
       <td>${e.scale != null ? Number(e.scale).toLocaleString() : '-'}</td>
       <td>${e.content || '-'}</td>
@@ -126,12 +128,33 @@ async function deleteSelectedVetEntries() {
   renderVetEntries();
 }
 
+// 입력대장 서식의 "(자동)" 칸 — 주소·축종·사육두수는 농장 등록 정보에서 자동으로 채워지고 직접 고치지 않는다.
+function populateVetEntryFarms(selectedId) {
+  const sel = document.getElementById('vetentry-farm');
+  sel.innerHTML = '<option value="">농장주 선택</option>' + farmsByOwner().map(f =>
+    `<option value="${f.id}"${f.id === selectedId ? ' selected' : ''}>${f.owner || '-'} — ${f.name || ''}</option>`).join('');
+}
+
 function onVetEntryFarmChange() {
   const farm = load('farms').find(f => f.id === document.getElementById('vetentry-farm').value);
-  const info = document.getElementById('vetentry-farm-info');
-  info.textContent = farm
-    ? [`주소 ${farm.address || '-'}`, `축종 ${farm.type || '-'}`, `사육규모 ${farm.count ? Number(farm.count).toLocaleString() : '-'}`].join(' · ')
-    : '농장을 선택하면 주소·축종·사육규모가 자동으로 채워집니다.';
+  document.getElementById('vetentry-address').value = farm?.address || '';
+  document.getElementById('vetentry-species').value = farm?.type || '';
+  document.getElementById('vetentry-scale').value = farm?.count ? Number(farm.count).toLocaleString() : '';
+}
+
+// 예찰내용: 자주 쓰는 세 가지 중에서 고르거나 "직접입력"으로 적는다.
+const VET_CONTENT_PRESETS = ['질병예찰 - 정상', 'AI진단키트 검사 -음성', '정기검사 샘플링 및 시험소의뢰'];
+
+function onVetContentSelChange() {
+  const custom = document.getElementById('vetentry-content-sel').value === '__custom__';
+  const input = document.getElementById('vetentry-content');
+  input.style.display = custom ? '' : 'none';
+  if (custom) input.focus();
+}
+
+function vetEntryContentValue() {
+  const sel = document.getElementById('vetentry-content-sel').value;
+  return sel === '__custom__' ? document.getElementById('vetentry-content').value.trim() : sel;
 }
 
 function openVetEntryModal(id) {
@@ -139,8 +162,12 @@ function openVetEntryModal(id) {
   const e = id ? load('vetReportEntries').find(x => x.id === id) : null;
   document.getElementById('modal-vet-entry-title').textContent = id ? '방문 기록 편집' : '방문 기록 추가';
   document.getElementById('vetentry-date').value = e?.visitDate || new Date().toISOString().slice(0, 10);
-  populateFarmSelect('vetentry-farm', e?.farmId || '');
-  document.getElementById('vetentry-content').value = e?.content || '';
+  populateVetEntryFarms(e?.farmId || '');
+  const content = e ? (e.content || '') : VET_CONTENT_PRESETS[0];
+  const preset = VET_CONTENT_PRESETS.includes(content);
+  document.getElementById('vetentry-content-sel').value = preset ? content : '__custom__';
+  document.getElementById('vetentry-content').value = preset ? '' : content;
+  onVetContentSelChange();
   onVetEntryFarmChange();
   openModal('modal-vet-entry');
 }
@@ -148,12 +175,12 @@ function openVetEntryModal(id) {
 async function saveVetEntry() {
   const visitDate = document.getElementById('vetentry-date').value;
   const farmId = document.getElementById('vetentry-farm').value;
-  if (!visitDate || !farmId) { alert('방문일과 농장은 필수입니다.'); return; }
+  if (!visitDate || !farmId) { alert('방문일과 축주명(농장주)은 필수입니다.'); return; }
   const farm = load('farms').find(f => f.id === farmId);
   const data = {
     visitDate, farmId, farmName: farm.name, owner: farm.owner,
     address: farm.address, species: farm.type, scale: farm.count,
-    content: document.getElementById('vetentry-content').value.trim(),
+    content: vetEntryContentValue(),
     createdByEmail: await currentUserEmail(),
   };
   try {
@@ -163,6 +190,195 @@ async function saveVetEntry() {
   editingId.vetReportEntry = null;
   closeModal('modal-vet-entry');
   renderVetEntries();
+}
+
+// ─── 일자별 근무내용: 입력대장 엑셀 업로드 ─────────────────────────────────
+// 형식은 「공수의 예찰 입력 대장」 시트(번호·방문일(자동)·축주명(농장주)·주소(자동조회)·
+// 축종(자동)·사육두수(자동)·예찰내용·비고(일련번호))와 같다. 열 이름으로 찾기 때문에 열 순서가
+// 달라도 된다. (자동) 칸은 파일 값이 아니라 농장 등록 정보로 채운다 — 축주명으로 농장을 못 찾을
+// 때만 파일에 적힌 값을 쓴다. 방문일이 비어 있으면 원본처럼 "기간 시작일 + 일련번호 - 1"로 계산한다.
+const VET_IMP_ALIASES = {
+  visitDate: ['방문일(자동)', '방문일', '방문날짜', '날짜', '날자'],
+  owner: ['축주명(농장주)', '축주명', '농장주', '대표자'],
+  address: ['주소(자동조회)', '주소'],
+  species: ['축종(자동)', '축종'],
+  scale: ['사육두수(자동)', '사육두수', '사육규모'],
+  content: ['예찰내용', '예찰결과', '내용'],
+  serial: ['비고(일련번호)', '일련번호', '비고'],
+};
+const vetImpNorm = v => String(v ?? '').replace(/\s+/g, '');
+
+function vetXlDate(v) {
+  if (v == null || v === '' || v === '-') return null;
+  const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  if (v instanceof Date && !isNaN(v)) return ymd(new Date(v.getTime() + 12 * 3600 * 1000));
+  if (typeof v === 'number') { const p = XLSX.SSF.parse_date_code(v); return p ? `${p.y}-${String(p.m).padStart(2, '0')}-${String(p.d).padStart(2, '0')}` : null; }
+  const m = String(v).trim().match(/^(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
+  return m ? `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}` : null;
+}
+
+function vetImpHeader(rows) {
+  for (let r = 0; r < Math.min(rows.length, 12); r++) {
+    const cells = (rows[r] || []).map(vetImpNorm);
+    const col = {};
+    for (const [key, names] of Object.entries(VET_IMP_ALIASES)) {
+      const i = cells.findIndex(c => names.map(vetImpNorm).includes(c));
+      if (i >= 0) col[key] = i;
+    }
+    if (col.owner != null && (col.visitDate != null || col.serial != null)) return { row: r, col };
+  }
+  return null;
+}
+
+// "기간" 라벨 오른쪽의 시작일(원본 B2)
+function vetImpPeriodStart(rows) {
+  for (let r = 0; r < Math.min(rows.length, 6); r++) {
+    const i = (rows[r] || []).findIndex(c => vetImpNorm(c) === '기간');
+    if (i >= 0) for (let k = i + 1; k < (rows[r] || []).length; k++) { const d = vetXlDate(rows[r][k]); if (d) return d; }
+  }
+  return null;
+}
+
+function vetImpAddDays(dateStr, days) {
+  const d = new Date(dateStr + 'T12:00:00'); d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function vetParseLedger(rows) {
+  const head = vetImpHeader(rows);
+  if (!head) return null;
+  const start = vetImpPeriodStart(rows);
+  const farms = load('farms');
+  const existing = load('vetReportEntries');
+  const clean = v => { const t = String(v ?? '').trim(); return t === '-' ? '' : t; };
+  const out = [];
+  for (let r = head.row + 1; r < rows.length; r++) {
+    const row = rows[r] || [];
+    const get = k => (head.col[k] == null ? null : row[head.col[k]]);
+    const owner = clean(get('owner'));
+    if (!owner) continue; // 빈 줄·합계 줄
+    const serial = Number(get('serial'));
+    const visitDate = vetXlDate(get('visitDate')) || (start && Number.isInteger(serial) && serial >= 1 ? vetImpAddDays(start, serial - 1) : null);
+    const fileAddr = clean(get('address'));
+    let owned = farms.filter(f => f.owner === owner);
+    if (owned.length > 1 && fileAddr) {
+      const byAddr = owned.filter(f => (f.address || '').replace(/\s+/g, '') === fileAddr.replace(/\s+/g, ''));
+      if (byAddr.length) owned = byAddr;
+    }
+    const farm = owned.length === 1 ? owned[0] : null;
+    const scaleRaw = clean(get('scale')).replace(/,/g, '');
+    const draft = {
+      visitDate, farmId: farm?.id || null,
+      farmName: farm?.name || '', owner,
+      address: farm ? (farm.address || '') : fileAddr,
+      species: farm ? (farm.type || '') : clean(get('species')),
+      scale: farm ? (farm.count ?? null) : (scaleRaw !== '' && !isNaN(Number(scaleRaw)) ? Number(scaleRaw) : null),
+      content: clean(get('content')),
+    };
+    const issues = [];
+    if (!visitDate) issues.push('방문일 없음');
+    const invalid = !visitDate;
+    if (!invalid && owned.length > 1) issues.push(`같은 농장주 ${owned.length}곳 — 농장을 정할 수 없어 파일 값으로 등록`);
+    else if (!invalid && !farm) issues.push('농장 목록에 없음 — 파일에 적힌 값으로 등록');
+    const dup = !invalid && existing.some(e => e.visitDate === visitDate && e.owner === owner);
+    if (dup) issues.push('이미 등록됨');
+    out.push({ draft, issues, invalid, dup, include: !invalid && !dup, sheetRow: r + 1 });
+  }
+  return out;
+}
+
+let vetImpWb = null, vetImpRows = [];
+
+async function onVetEntryFile(e) {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  try { vetImpWb = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true }); }
+  catch (err) { alert('엑셀 파일을 읽지 못했습니다: ' + err.message); return; }
+  const sheetRows = n => XLSX.utils.sheet_to_json(vetImpWb.Sheets[n], { header: 1, raw: true, defval: null });
+  const usable = vetImpWb.SheetNames.filter(n => vetImpHeader(sheetRows(n)));
+  if (!usable.length) {
+    alert('입력대장을 찾지 못했습니다.\n머리글 행에 "축주명(농장주)"과 "방문일(또는 비고(일련번호))" 열이 있는 시트가 필요합니다. "양식 다운로드"로 받은 양식을 사용해주세요.');
+    return;
+  }
+  const sel = document.getElementById('vetimp-sheet');
+  sel.innerHTML = usable.map(n => `<option value="${n}">${n}</option>`).join('');
+  document.getElementById('vetimp-file-name').textContent = file.name;
+  loadVetImportSheet();
+  openModal('modal-vet-import');
+}
+
+function loadVetImportSheet() {
+  const name = document.getElementById('vetimp-sheet').value;
+  vetImpRows = vetParseLedger(XLSX.utils.sheet_to_json(vetImpWb.Sheets[name], { header: 1, raw: true, defval: null })) || [];
+  renderVetImportPreview();
+}
+
+function toggleVetImportRow(i, checked) { vetImpRows[i].include = checked; renderVetImportPreview(); }
+function toggleVetImportAll(checked) { vetImpRows.forEach(r => { if (!r.invalid) r.include = checked; }); renderVetImportPreview(); }
+
+function renderVetImportPreview() {
+  const n = vetImpRows.filter(r => r.include).length;
+  document.getElementById('vetimp-count').textContent = `${vetImpRows.length}줄 중 ${n}건을 등록합니다` + (vetImpRows.some(r => r.dup) ? ' (이미 등록된 건은 기본으로 제외)' : '');
+  const btn = document.getElementById('vetimp-issue-btn');
+  btn.disabled = n === 0;
+  btn.textContent = n ? `${n}건 등록` : '등록';
+  document.getElementById('vetimp-check-all').checked = vetImpRows.length > 0 && vetImpRows.filter(r => !r.invalid).every(r => r.include);
+  document.getElementById('vetimp-tbody').innerHTML = vetImpRows.map((r, i) => {
+    const d = r.draft;
+    return `<tr${r.invalid ? ' style="opacity:.5"' : ''}>
+      <td style="text-align:center"><input type="checkbox" ${r.include ? 'checked' : ''} ${r.invalid ? 'disabled' : ''} onchange="toggleVetImportRow(${i}, this.checked)"></td>
+      <td>${r.sheetRow}</td><td>${d.visitDate || '-'}</td>
+      <td><strong>${d.owner}</strong>${d.farmName ? `<div style="font-size:11px;color:var(--text-secondary)">${d.farmName}</div>` : ''}</td>
+      <td>${d.address || '-'}</td><td>${d.species || '-'}</td><td>${d.scale != null ? Number(d.scale).toLocaleString() : '-'}</td>
+      <td>${d.content || '-'}</td>
+      <td style="font-size:11px;color:${r.invalid ? 'var(--red)' : 'var(--text-secondary)'}">${r.issues.join(' · ') || '정상'}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function saveVetImport() {
+  const rows = vetImpRows.filter(r => r.include);
+  if (!rows.length) return;
+  if (!confirm(`방문 기록 ${rows.length}건을 등록합니다. 계속하시겠습니까?`)) return;
+  const btn = document.getElementById('vetimp-issue-btn');
+  const email = await currentUserEmail();
+  btn.disabled = true;
+  let done = 0;
+  try {
+    for (const r of rows) {
+      btn.textContent = `등록 중... ${done + 1}/${rows.length}`;
+      await insertRow('vetReportEntries', { ...r.draft, createdByEmail: email });
+      done++;
+    }
+  } catch (e) {
+    alert(`${done}건 등록 후 중단되었습니다: ${e.message}\n이미 등록된 건은 목록에 남아 있으니 다시 올리기 전에 확인하세요.`);
+    renderVetEntries(); btn.disabled = false; return;
+  }
+  closeModal('modal-vet-import');
+  renderVetEntries();
+  alert(`${done}건을 등록했습니다.`);
+}
+
+function downloadVetEntryTemplate() {
+  const header = ['번호', '방문일(자동)', '축주명(농장주)', '주소(자동조회)', '축종(자동)', '사육두수(자동)', '예찰내용'];
+  const aoa = [['공수의 예찰 입력 대장'], header, ...Array.from({ length: 30 }, (_, i) => [i + 1, '', '', '', '', '', ''])];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
+  ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 28 }, { wch: 10 }, { wch: 12 }, { wch: 32 }];
+  const guide = XLSX.utils.aoa_to_sheet([
+    ['일자별 근무내용 업로드 양식 작성 방법'], [''],
+    ['· 한 줄이 하루 한 건의 농장 방문입니다. 머리글(2번째 줄)은 지우거나 바꾸지 마세요.'],
+    ['· 방문일(2026-09-01 형식)과 축주명(농장주)과 예찰내용만 적으면 됩니다.'],
+    ['· 주소·축종·사육두수는 비워두세요 — 축주명(농장주)으로 농장 등록 정보에서 자동으로 채워집니다.'],
+    ['· 예찰내용 예: 질병예찰 - 정상 / AI진단키트 검사 -음성 / 정기검사 샘플링 및 시험소의뢰'],
+    ['· 같은 방문일·같은 농장주가 이미 등록돼 있으면 기본으로 제외됩니다.'],
+  ]);
+  guide['!cols'] = [{ wch: 100 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '입력대장');
+  XLSX.utils.book_append_sheet(wb, guide, '작성방법');
+  XLSX.writeFile(wb, '일자별_근무내용_양식.xlsx');
 }
 
 // ─── 근무상황보고서 ─────────────────────────────────────────────────────────
