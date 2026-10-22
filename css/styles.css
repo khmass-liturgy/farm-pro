@@ -593,6 +593,20 @@ body { display: block !important; height: auto !important; overflow: visible !im
 .vi-table td.vi-sign { font-size: 18pt; font-weight: 700; }
 .vi-stamp { position: absolute; }
 
+/* 공수의 보고서 — 예찰내역(첨부 「예찰내역.xlsx」, 원본 인쇄 여백 좌 17.8mm·상 19mm). 크기는 JS에서 같은 배율로 준다. */
+.vp-page { width: auto; }
+.vp-sheet { margin: 9mm 0 0 7.8mm; font-family: "Malgun Gothic", "맑은 고딕", sans-serif; color: #000; }
+.vp-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.vp-table td { border: 0; padding: 0 3px; vertical-align: middle; line-height: 1.25; overflow-wrap: anywhere; }
+.vp-table td.vp-b { border: 0.75pt solid #000; }
+.vp-table td.vp-c { text-align: center; }
+.vp-table td.vp-l { text-align: left; }
+.vp-table td.vp-r { text-align: right; }
+.vp-table td.vp-bold { font-weight: 700; text-align: left; }
+.vp-table td.vp-title { text-align: center; font-weight: 700; font-size: 1.667em; }
+.vp-table td.vp-sm { font-size: 0.917em; }
+.vp-table td.vp-nw { white-space: nowrap; padding: 0; }
+
 .no-print { display: none !important; }
 }
 #print-area { display: none; }

@@ -534,49 +534,79 @@ function printVetInvoice(kind) {
   setTimeout(() => window.print(), 200);
 }
 
-// ─── 예찰내역 (15건씩 나눠 인쇄 — 원본 예찰내역1/예찰내역2와 같은 분량) ──────
+// ─── 예찰내역 ───────────────────────────────────────────────────────────────
+// 첨부 「예찰내역.xlsx」(시트 예찰내역1·예찰내역2)의 칸 배치를 그대로 옮긴 서식. 원본은 한 달을
+// 1~15일(상반기)·16일~말일(하반기) 두 장으로 나눠 내므로 똑같이 나눈다. 한 장은 15줄 고정이고
+// (남는 줄은 빈 칸으로 둔다), 한쪽에 15건이 넘으면 이어서 다음 장에 찍는다. 내용은 모두 일자별
+// 근무내용에서 온다 — 번호는 쪽 안에서 1부터, 축주명은 축주(농장주), 비고는 방문일(MM/DD).
+// 원본 인쇄는 "너비에 맞춤(약 77%)"이라 열 너비·줄 높이·글자 크기에 같은 배율(VP_SCALE)을 곱해 옮겼다.
+const VP_COL_CHARS = [[6, 16, 28, 14, 10, 37.57, 10], [6, 16, 28, 14, 10, 32, 10]];
+const VP_SCALE = 0.774;
+const VP_PAGE_ROWS = 15;
+
+function vetPatrolHalves(ym) {
+  const [y, m] = ym.split('-').map(Number);
+  const last = new Date(y, m, 0).getDate();
+  const list = vetEntriesForYm(ym);
+  const pad = n => String(n).padStart(2, '0');
+  return [
+    { label: '상반기', from: 1, to: 15, entries: list.filter(e => Number(e.visitDate.slice(8, 10)) <= 15) },
+    { label: '하반기', from: 16, to: last, entries: list.filter(e => Number(e.visitDate.slice(8, 10)) >= 16) },
+  ].map((h, idx) => ({ ...h, idx, start: `${y}-${pad(m)}-${pad(h.from)}`, end: `${y}-${pad(m)}-${pad(h.to)}`, days: h.to - h.from + 1 }));
+}
+
 function renderVetPatrolSummary() {
   const monthEl = document.getElementById('vetpatrol-month');
   if (!monthEl.value) monthEl.value = vetDefaultYm();
-  const { count, scaleSum } = vetMonthStats(monthEl.value);
-  document.getElementById('vetpatrol-summary').textContent = `${vetMonthLabel(monthEl.value)} 예찰 ${count}건 (15건씩 ${Math.max(1, Math.ceil(count / 15))}쪽으로 나눠 인쇄) · 사육규모 합계 ${scaleSum.toLocaleString()}`;
+  const halves = vetPatrolHalves(monthEl.value);
+  const pages = halves.reduce((s, h) => s + (h.entries.length ? Math.ceil(h.entries.length / VP_PAGE_ROWS) : 0), 0);
+  document.getElementById('vetpatrol-summary').textContent =
+    `${vetMonthLabel(monthEl.value)} — 상반기(1~15일) ${halves[0].entries.length}건 · 하반기(16일~) ${halves[1].entries.length}건 → 모두 ${pages}쪽으로 인쇄됩니다. 내용은 일자별 근무내용에서 가져옵니다.`;
 }
 
-function buildVetPatrolChunkHtml(chunk, startNo) {
-  const scaleSum = chunk.reduce((s, e) => s + (Number(e.scale) || 0), 0);
-  const rows = chunk.map((e, i) => `
-    <tr>
-      <td class="ctr">${startNo + i}</td>
-      <td>${e.farmName || ''}<div style="font-size:9px;color:#666">${e.owner || ''}</div></td>
-      <td>${e.address || '-'}</td>
-      <td class="ctr">${e.species || '-'}</td>
-      <td class="ctr">${e.scale != null ? Number(e.scale).toLocaleString() : '-'}</td>
-      <td>${e.content || '-'}</td>
-      <td class="ctr">${(e.visitDate || '').slice(5).replace('-', '/')}</td>
-    </tr>`).join('');
+function buildVetPatrolPageHtml(half, chunk, startNo) {
+  const S = VP_SCALE;
+  const widths = VP_COL_CHARS[half.idx].map(c => Math.round(c * 7 * S));
+  const pt = v => (v * S).toFixed(2) + 'pt';
+  const n = v => (v == null || v === '' ? '' : Number(v).toLocaleString());
+  const scaleSum = chunk.reduce((t, e) => t + (Number(e.scale) || 0), 0);
+  const esc = t => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const dataRows = Array.from({ length: VP_PAGE_ROWS }, (_, i) => {
+    const e = chunk[i];
+    return `<tr style="height:${pt(40.15)}">` + (e
+      ? `<td class="vp-b vp-c">${startNo + i}</td><td class="vp-b vp-c">${esc(e.owner)}</td><td class="vp-b vp-l">${esc(e.address)}</td>` +
+        `<td class="vp-b vp-c">${esc(e.species)}</td><td class="vp-b vp-r">${n(e.scale)}</td><td class="vp-b vp-l">${esc(e.content)}</td>` +
+        `<td class="vp-b vp-c">${(e.visitDate || '').slice(5).replace('-', '/')}</td>`
+      : '<td class="vp-b"></td>'.repeat(7)) + '</tr>';
+  }).join('');
+  const rows = [
+    `<tr style="height:${pt(7.5)}"><td colspan="7"></td></tr>`,
+    `<tr style="height:${pt(30)}"><td colspan="7" class="vp-title">동물질병 예찰내역</td></tr>`,
+    `<tr style="height:${pt(16.5)}"><td colspan="5"></td><td colspan="2" class="vp-r vp-sm">(공수의→시군)</td></tr>`,
+    `<tr style="height:${pt(26.45)}"><td colspan="2" class="vp-bold">1. 예찰일자 :</td><td class="vp-r vp-bold">${half.start}</td><td class="vp-l">부터</td><td colspan="2" class="vp-bold">${half.end}</td><td class="vp-r vp-nw">(${half.days}일간)</td></tr>`,
+    `<tr style="height:${pt(24.6)}"><td colspan="7" class="vp-bold">2. 예찰내역</td></tr>`,
+    `<tr style="height:${pt(40.15)}"><td class="vp-b vp-c vp-bold">번<br>호</td><td class="vp-b vp-c vp-bold">축주명<br>(농장명)</td><td class="vp-b vp-c vp-bold">주&nbsp;&nbsp;&nbsp;소</td><td class="vp-b vp-c vp-bold">축 종<br>(품 종)</td><td class="vp-b vp-c vp-bold">사육<br>두수</td><td class="vp-b vp-c vp-bold">예 찰 결 과</td><td class="vp-b vp-c vp-bold">비 고</td></tr>`,
+    dataRows,
+    `<tr style="height:${pt(40.15)}"><td class="vp-b vp-c">계</td><td colspan="3" class="vp-b vp-c">${chunk.length}</td><td class="vp-b vp-r">${scaleSum.toLocaleString()}</td><td colspan="2" class="vp-b vp-l">수</td></tr>`,
+    `<tr style="height:${pt(15.75)}"><td colspan="7" class="vp-sm">※ 예찰결과에는 폐사두수, 임상증상 등 질병발생상황을 기록</td></tr>`,
+  ].join('');
   return `
-  <div class="print-page">
-    <div class="ps-title">동물질병 예찰내역</div>
-    <div class="ps-request" style="text-align:right;text-indent:0">(공수의→시군)</div>
-    <div class="ps-request" style="text-indent:0">1. 예찰일자 : ${chunk[0]?.visitDate || ''} 부터 ${chunk[chunk.length - 1]?.visitDate || ''}</div>
-    <div class="ps-section">2. 예찰내역</div>
-    <table class="ps-table">
-      <thead><tr><th>번호</th><th>축주명(농장명)</th><th>주소</th><th>축종(품종)</th><th>사육두수</th><th>예찰결과</th><th>비고</th></tr></thead>
-      <tbody>
-        ${rows}
-        <tr class="ps-total"><td class="ctr">계</td><td class="ctr">${chunk.length}</td><td colspan="2"></td><td class="ctr">${scaleSum.toLocaleString()}</td><td colspan="2"></td></tr>
-      </tbody>
-    </table>
-    <div class="ps-foot-note">※ 예찰결과에는 폐사두수, 임상증상 등 질병발생상황을 기록</div>
+  <div class="print-page vp-page">
+    <div class="vp-sheet" style="width:${widths.reduce((t, w) => t + w, 0)}px;font-size:${(12 * S).toFixed(2)}pt">
+      <table class="vp-table"><colgroup>${widths.map(w => `<col style="width:${w}px">`).join('')}</colgroup>${rows}</table>
+    </div>
   </div>`;
 }
 
 function printVetPatrol() {
   const ym = document.getElementById('vetpatrol-month').value || vetDefaultYm();
-  const list = vetEntriesForYm(ym);
-  if (!list.length) { alert('선택한 달에 방문 기록이 없습니다.'); return; }
   const pages = [];
-  for (let i = 0; i < list.length; i += 15) pages.push(buildVetPatrolChunkHtml(list.slice(i, i + 15), i + 1));
+  vetPatrolHalves(ym).forEach(h => {
+    for (let i = 0; i < h.entries.length; i += VP_PAGE_ROWS) {
+      pages.push(buildVetPatrolPageHtml(h, h.entries.slice(i, i + VP_PAGE_ROWS), i + 1));
+    }
+  });
+  if (!pages.length) { alert('선택한 달에 방문 기록이 없습니다.'); return; }
   document.getElementById('print-area').innerHTML = pages.join('');
   setTimeout(() => window.print(), 200);
 }
