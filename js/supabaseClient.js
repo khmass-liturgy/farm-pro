@@ -371,6 +371,9 @@ const TABLES = {
         bank_name: o.bankName || null, bank_account: o.bankAccount || null,
         travel_fee_per_visit: numOrNull(o.travelFeePerVisit) ?? 20000,
         monthly_activity_allowance: numOrNull(o.monthlyActivityAllowance),
+        // 근무상황보고서 기타실적에 직접 입력해 저장한 문구(항목 번호 → 문구 목록). 값이 없으면 아예 보내지 않아서
+        // 이 컬럼이 아직 없는 DB에서도 사무실 정보 저장이 그대로 된다.
+        ...(o.workEtcOptions !== undefined ? { work_etc_options: o.workEtcOptions } : {}),
       };
     },
     fromRow(r) {
@@ -380,6 +383,7 @@ const TABLES = {
         address: r.address, residentNo: r.resident_no,
         bankName: r.bank_name, bankAccount: r.bank_account,
         travelFeePerVisit: r.travel_fee_per_visit, monthlyActivityAllowance: r.monthly_activity_allowance,
+        workEtcOptions: r.work_etc_options || {},
         updatedAt: r.updated_at,
       };
     },

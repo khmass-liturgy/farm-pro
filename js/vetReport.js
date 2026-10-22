@@ -382,62 +382,196 @@ function downloadVetEntryTemplate() {
 }
 
 // ─── 근무상황보고서 ─────────────────────────────────────────────────────────
-// "2. 예방주사 및 채혈내역"·"3. 동물질병예찰 실적"은 이 앱에 그 수치를 따로
-// 기록하는 화면이 없어 원본 서식과 같이 항상 "-"로 찍는다. "4. 기타실적"의
-// 업무명 5개는 매달 거의 같은 문구라 고정해두고, 그달의 추진실적만 화면에서
-// 입력해 인쇄에 반영한다(저장하지 않음 — 매달 조금씩 달라지는 자유 텍스트라서).
-const VET_WORK_ETC_ITEMS = ['출하이동승인서 발급', '기립불능우확인서 발급', 'AI 시료채취 및 의뢰', '산란성계 살충제검사 샘플링 및 검사의뢰', '역학관련'];
+// 첨부 「근무상황보고.xlsx」의 칸 배치를 그대로 옮긴 서식. 비고(수수)·예찰 횟수·예찰 농가수는 그달
+// 일자별 근무내용에서 온다(비고(수수) = 그달 방문한 농장들의 사육두수 합계, 횟수·농가수 = 방문 건수).
+// "2. 예방주사 및 채혈내역"·"3. 동물질병예찰 실적"은 이 앱에 그 수치를 따로 기록하는 화면이 없어
+// 원본과 같이 "-"로 찍는다. "4. 기타실적"의 추진실적은 원본에 적혀 있던 내용을 기본 선택지로 두고,
+// 직접 입력한 내용은 인쇄할 때 vet_office_info.work_etc_options에 저장돼 다음부터 선택지에 나온다.
+// 원본 인쇄는 99%·가로 가운데 정렬이라 열 너비·줄 높이·글자 크기에 WR_SCALE을 곱했다.
+const WR_COL_CHARS = [12.75, 10.75, 11.62, 15.5, 8.5, 10.75, 8.5];
+const WR_SCALE = 0.99;
+const WR_DEFAULT_ROW_PT = 13.5;
+const WR_FONTS = [
+  '"GulimChe","굴림체","Gulim","Malgun Gothic",sans-serif',
+  '"HY헤드라인M","HYHeadLine-Medium","Malgun Gothic",sans-serif',
+  '"HYMyeongJo","휴먼명조","Batang","바탕",serif',
+  '"경기천년바탕","Batang","바탕",serif',
+];
+// [높이pt, [[열 수, 행 수, 글, 테두리(lrtb), 가로(c/l/r), 세로(m/b), 글자크기, 굵게, 글꼴번호]...]]  ({…}는 채워 넣는 자리)
+const WR_ROWS = [
+  [14.25,[[1,1,"[붙임 1-1]","","l","m",12.0,1,3],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","r","m",10.0,0,0],[1,1,"","","","b",11.0,0,0]]],
+  [25.5,[[7,1,"공수의 근무상황 보고(산업동물)","","c","m",20.0,0,1]]],
+  [15.0,[[7,1,"(공수의 → 시군)","","c","m",12.0,1,2]]],
+  [12.0,[[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","l","m",10.0,0,0],[1,1,"","","","m",10.0,0,0],[1,1,"","","","m",10.0,0,0]]],
+  [null,[[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","l","m",10.0,0,0],[2,1,"","","c","m",10.0,0,0]]],
+  [14.25,[[7,1,"1. 공수의 근무상황","","l","m",12.0,1,0]]],
+  [20.1,[[3,1,"공 수 의","lrtb","c","m",10.0,0,0],[1,2,"담 당 지 역","lrtb","c","m",10.0,0,0],[2,1,"예찰내역","lrtb","c","m",10.0,0,0],[1,2,"비 고\n(수수)","lrtb","c","m",10.0,0,0]]],
+  [20.1,[[1,1,"동물병원","lrtb","c","m",10.0,0,0],[1,1,"성 명","lrtb","c","m",10.0,0,0],[1,1,"면허번호","lrtb","c","m",10.0,0,0],[1,1,"예찰 횟수","lrtb","c","m",9.0,0,0],[1,1,"예찰 농가수","lrtb","c","m",10.0,0,0]]],
+  [20.1,[[1,1,"{clinic}","lrtb","c","m",10.0,0,0],[1,1,"{vet}","lrtb","c","m",10.0,0,0],[1,1,"{license}","lrtb","c","m",10.0,0,0],[1,1,"경기 파주","lrtb","c","m",10.0,0,0],[1,1,"{count}","lrtb","c","m",9.0,0,0],[1,1,"{count}","lrtb","c","m",10.0,0,0],[1,1,"{scale}","lrtb","c","m",10.0,0,0]]],
+  [null,[[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0]]],
+  [14.25,[[5,1,"2. 예방주사 및 채혈내역","","l","m",12.0,1,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0]]],
+  [20.1,[[3,1,"예 방 주 사","lrtb","c","m",10.0,0,0],[3,1,"혈 청 검 사 용 채 혈 내 역","lrtb","c","m",10.0,0,0],[1,2,"비 고","lrtb","c","m",10.0,0,0]]],
+  [20.1,[[1,1,"병 류 별","lrtb","c","m",10.0,0,0],[1,1,"금월실적","lrtb","c","m",10.0,0,0],[1,1,"누 계","lrtb","c","m",10.0,0,0],[1,1,"종류","lrtb","c","m",10.0,0,0],[1,1,"금월실적","lrtb","c","m",10.0,0,0],[1,1,"누 계","lrtb","c","m",10.0,0,0]]],
+  [20.1,[[1,1,"구 제 역","lrtb","c","m",10.0,0,0],[1,1,"-","lrtb","c","m",10.0,0,0],[1,1,"두","lrtb","r","m",10.0,0,0],[1,1,"브 루 셀 라 병","lrtb","c","m",10.0,0,0],[1,1,"-","lrtb","c","m",10.0,0,0],[1,1,"두","lrtb","r","m",10.0,0,0],[1,1,"","lrtb","c","m",10.0,0,0]]],
+  [20.1,[[1,1,"광 견 병","lrtb","c","m",10.0,0,0],[1,1,"-","lrtb","c","m",10.0,0,0],[1,1,"두","lrtb","r","m",10.0,0,0],[1,1,"우 결 핵","lrtb","c","m",10.0,0,0],[1,1,"-","lrtb","c","m",10.0,0,0],[1,1,"두","lrtb","r","m",10.0,0,0],[1,1,"","lrtb","c","m",10.0,0,0]]],
+  [20.1,[[1,1,"탄저.기종저","lrtb","c","m",10.0,0,0],[1,1,"-","lrtb","c","m",10.0,0,0],[1,1,"두","lrtb","r","m",10.0,0,0],[1,1,"","lrtb","c","m",10.0,0,0],[1,1,"","lrtb","c","m",10.0,0,0],[1,1,"","lrtb","r","m",10.0,0,0],[1,1,"","lrtb","c","m",10.0,0,0]]],
+  [20.1,[[1,1,"돼지열병","lrtb","c","m",10.0,0,0],[1,1,"-","lrtb","c","m",10.0,0,0],[1,1,"두","lrtb","r","m",10.0,0,0],[1,1,"","lrtb","c","m",10.0,0,0],[1,1,"","lrtb","c","m",10.0,0,0],[1,1,"","lrtb","r","m",10.0,0,0],[1,1,"","lrtb","c","m",10.0,0,0]]],
+  [20.1,[[1,1,"기    타","lrtb","c","m",10.0,0,0],[1,1,"-","lrtb","c","m",10.0,0,0],[1,1,"두","lrtb","r","m",10.0,0,0],[1,1,"","lrtb","c","m",10.0,0,0],[1,1,"","lrtb","c","m",10.0,0,0],[1,1,"","lrtb","c","m",10.0,0,0],[1,1,"","lrtb","c","m",10.0,0,0]]],
+  [null,[[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0]]],
+  [14.25,[[5,1,"3. 동물질병예찰 실적","","l","m",12.0,1,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0]]],
+  [21.0,[[1,2,"지역별","lrtb","c","m",10.0,0,0],[2,1,"신고내역","lrtb","c","m",10.0,0,0],[3,2,"조치내역","lrtb","c","m",10.0,0,0],[1,2,"비 고","lrtb","c","m",10.0,0,0]]],
+  [28.5,[[1,1,"일시","lrtb","c","m",10.0,0,0],[1,1,"신고자(Tel.)","lrtb","c","m",10.0,0,0]]],
+  [27.0,[[1,1,"계","lrtb","c","m",10.0,0,0],[1,1,"-","lrtb","c","m",10.0,0,0],[1,1,"-","lrtb","c","m",10.0,0,0],[3,1,"-","lrtb","c","m",12.0,0,0],[1,1,"","lrtb","c","m",8.0,0,0]]],
+  [23.25,[[7,1,"동물 질병예찰 종합소견(발생동향 및 농가지도사항 등)","lrtb","c","m",10.0,0,0]]],
+  [14.25,[[7,1,"","lrtb","c","m",10.0,0,0]]],
+  [18.75,[[7,1,"","lrtb","l","m",10.0,0,0]]],
+  [null,[[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0]]],
+  [14.25,[[5,1,"4. 기타실적","","l","m",12.0,1,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0]]],
+  [20.1,[[2,1,"업무명","lrtb","c","m",10.0,0,0],[4,1,"추진실적","lrtb","c","m",10.0,0,0],[1,1,"비고","lrtb","c","m",10.0,0,0]]],
+  [20.1,[[2,1,"출하이동승인서 발급","lrtb","c","m",10.0,0,0],[4,1,"{etc0}","lrtb","c","m",10.0,0,0],[1,1,"","lrtb","","m",10.0,0,0]]],
+  [20.1,[[2,1,"기립불능우확인서 발급","lrtb","c","m",10.0,0,0],[4,1,"{etc1}","lrtb","c","m",10.0,0,0],[1,1,"","lrtb","","m",10.0,0,0]]],
+  [20.1,[[2,1,"AI 시료채취 및 의뢰","lrtb","c","m",10.0,0,0],[4,1,"{etc2}","lrtb","c","m",10.0,0,0],[1,1,"","lrtb","","m",10.0,0,0]]],
+  [37.9,[[2,1,"산란성계 살충제검사 샘플링\n및 검사의뢰","lrtb","c","m",10.0,0,0],[4,1,"{etc3}","lrtb","c","m",10.0,0,0],[1,1,"","lrtb","","m",10.0,0,0]]],
+  [45.6,[[2,1,"역학관련","lrtb","c","m",10.0,0,0],[4,1,"{etc4}","lrtb","c","m",10.0,0,0],[1,1,"","lrtb","","m",10.0,0,0]]],
+  [null,[[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0],[1,1,"","","","b",11.0,0,0]]],
+  [20.25,[[7,1,"▣ 제출자                       대한동물병원            최동명           (서명) ","","l","m",14.0,0,1]]]
+];
+
+// 업무명 5개와 원본에 적혀 있던 추진실적(기본 선택지). ''는 "비워두기".
+const VET_WORK_ETC_ITEMS = [
+  { name: '출하이동승인서 발급', defaults: ['매주 목요일 소래축산 관련 농장 이동승인서 발급', '-'] },
+  { name: '기립불능우확인서 발급', defaults: ['-'] },
+  { name: 'AI 시료채취 및 의뢰', defaults: ['AI정기검사, 육계 이동승인서 및 샘플채취', '-'] },
+  { name: '산란성계 살충제검사 샘플링 및 검사의뢰', defaults: ['이장수', '-'] },
+  { name: '역학관련', defaults: ['', '-'] },
+];
+let vetWorkEtcLists = [];   // 항목별 선택지(기본 + 저장된 것) — select의 option 번호가 이 배열의 위치다
+let vetWorkEtcBuilt = false;
+
+function vetWorkEtcSaved(i) { return ((vetOfficeInfo().workEtcOptions || {})[i] || []).filter(t => typeof t === 'string'); }
+
+function renderVetWorkEtc(selected) {
+  const wrap = document.getElementById('vetwork-etc-wrap');
+  if (!wrap) return;
+  const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  vetWorkEtcLists = VET_WORK_ETC_ITEMS.map((it, i) => {
+    const list = [...it.defaults];
+    vetWorkEtcSaved(i).forEach(t => { if (!list.includes(t)) list.push(t); });
+    return list;
+  });
+  wrap.innerHTML = VET_WORK_ETC_ITEMS.map((it, i) => {
+    const list = vetWorkEtcLists[i];
+    const want = selected && selected[i] != null ? list.indexOf(selected[i]) : 0;
+    return `<div class="form-group"><label>${esc(it.name)}</label>
+      <div class="flex-gap">
+        <select id="vetwork-etc-sel-${i}" onchange="onVetWorkEtcChange(${i})" style="flex:1">
+          ${list.map((t, k) => `<option value="${k}"${k === want ? ' selected' : ''}>${t === '' ? '(비워두기)' : esc(t)}${k >= it.defaults.length ? '  · 저장됨' : ''}</option>`).join('')}
+          <option value="c"${want < 0 ? ' selected' : ''}>직접입력</option>
+        </select>
+        <button type="button" class="btn btn-outline btn-sm" id="vetwork-etc-del-${i}" onclick="deleteVetWorkEtcSaved(${i})" style="display:none">저장된 항목 삭제</button>
+      </div>
+      <input id="vetwork-etc-${i}" value="${want < 0 ? esc(selected[i]) : ''}" placeholder="추진실적을 직접 입력하세요 (인쇄하면 저장되어 다음에 선택할 수 있습니다)" style="display:none;margin-top:6px">
+    </div>`;
+  }).join('');
+  VET_WORK_ETC_ITEMS.forEach((_, i) => onVetWorkEtcChange(i));
+  vetWorkEtcBuilt = true;
+}
+
+function onVetWorkEtcChange(i) {
+  const v = document.getElementById(`vetwork-etc-sel-${i}`).value;
+  document.getElementById(`vetwork-etc-${i}`).style.display = v === 'c' ? '' : 'none';
+  document.getElementById(`vetwork-etc-del-${i}`).style.display = v !== 'c' && Number(v) >= VET_WORK_ETC_ITEMS[i].defaults.length ? '' : 'none';
+  if (v === 'c') document.getElementById(`vetwork-etc-${i}`).focus();
+}
+
+function vetWorkEtcValues() {
+  return VET_WORK_ETC_ITEMS.map((_, i) => {
+    const v = document.getElementById(`vetwork-etc-sel-${i}`)?.value;
+    return v === 'c' ? document.getElementById(`vetwork-etc-${i}`).value.trim() : (vetWorkEtcLists[i]?.[Number(v)] ?? '');
+  });
+}
+
+async function saveVetWorkEtcOptions(options) {
+  const o = vetOfficeInfo();
+  const data = { ...o, workEtcOptions: options };
+  if (o.id != null) await updateRow('vetOfficeInfo', true, data); else await insertRow('vetOfficeInfo', data);
+}
+
+async function deleteVetWorkEtcSaved(i) {
+  const idx = Number(document.getElementById(`vetwork-etc-sel-${i}`).value);
+  const text = vetWorkEtcLists[i]?.[idx];
+  if (text == null || idx < VET_WORK_ETC_ITEMS[i].defaults.length) return;
+  if (!confirm(`저장된 항목을 삭제할까요?\n\n${text}`)) return;
+  const options = { ...(vetOfficeInfo().workEtcOptions || {}) };
+  options[i] = vetWorkEtcSaved(i).filter(t => t !== text);
+  try { await saveVetWorkEtcOptions(options); } catch (e) { alert('삭제 실패: ' + e.message); return; }
+  const keep = vetWorkEtcValues(); keep[i] = VET_WORK_ETC_ITEMS[i].defaults[0];
+  renderVetWorkEtc(keep);
+}
 
 function renderVetWorkReportSummary() {
   const monthEl = document.getElementById('vetwork-month');
   if (!monthEl.value) monthEl.value = vetDefaultYm();
+  if (!vetWorkEtcBuilt) renderVetWorkEtc();
   const { count, scaleSum } = vetMonthStats(monthEl.value);
-  document.getElementById('vetwork-summary').textContent = `${vetMonthLabel(monthEl.value)} 예찰 ${count}건 · 사육규모 합계 ${scaleSum.toLocaleString()}`;
+  document.getElementById('vetwork-summary').textContent =
+    `${vetMonthLabel(monthEl.value)} 예찰 ${count}건 · 비고(수수) ${scaleSum.toLocaleString()} — 일자별 근무내용에서 가져옵니다.`;
 }
 
-function buildVetWorkReportHtml(ym) {
+function buildVetWorkReportHtml(ym, etc) {
+  const S = WR_SCALE;
   const o = vetOfficeInfo();
   const { count, scaleSum } = vetMonthStats(ym);
-  const etcRows = VET_WORK_ETC_ITEMS.map((name, i) => `
-    <tr><td>${name}</td><td colspan="4">${(document.getElementById(`vetwork-etc-${i}`)?.value || '').trim() || '-'}</td></tr>`).join('');
+  const widths = WR_COL_CHARS.map(c => Math.round(c * 7 * S));
+  const esc = t => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const fill = {
+    '{clinic}': o.clinicName || '대한동물병원', '{vet}': o.vetName || '최동명', '{license}': o.licenseNo || '8433',
+    '{count}': `${count} 건 방문`, '{scale}': scaleSum.toLocaleString(),
+  };
+  etc.forEach((t, i) => { fill[`{etc${i}}`] = t; });
+  const align = { c: 'center', l: 'left', r: 'right' };
+  const trs = WR_ROWS.map(([h, cells]) => {
+    const tds = cells.map(([span, rspan, text, bd, ha, va, sz, bold, font]) => {
+      const style = [
+        bd.includes('l') ? 'border-left:0.75pt solid #000' : '', bd.includes('r') ? 'border-right:0.75pt solid #000' : '',
+        bd.includes('t') ? 'border-top:0.75pt solid #000' : '', bd.includes('b') ? 'border-bottom:0.75pt solid #000' : '',
+        `text-align:${align[ha] || 'left'}`, `vertical-align:${va === 'm' ? 'middle' : 'bottom'}`,
+        `font-size:${(sz * S).toFixed(2)}pt`, bold ? 'font-weight:700' : '', `font-family:${WR_FONTS[font]}`,
+        text === '{scale}' ? 'white-space:nowrap' : '',
+      ].filter(Boolean).join(';');
+      return `<td${span > 1 ? ` colspan="${span}"` : ''}${rspan > 1 ? ` rowspan="${rspan}"` : ''} style="${style}">${esc(fill[text] !== undefined ? fill[text] : text)}</td>`;
+    }).join('');
+    return `<tr style="height:${((h || WR_DEFAULT_ROW_PT) * S).toFixed(2)}pt">${tds}</tr>`;
+  }).join('');
+  // 파란 도장: 원본 앵커(F열 왼쪽에서 33131EMU, 34행 위에서 231914EMU, 4cm 정사각형)
+  const stampLeft = widths.slice(0, 5).reduce((t, w) => t + w, 0) + 33131 / 9525 * S;
+  const stampTop = WR_ROWS.slice(0, 33).reduce((t, [h]) => t + (h || WR_DEFAULT_ROW_PT), 0) * S * 96 / 72 + 231914 / 9525 * S;
+  const stampSize = 1440180 / 9525 * S;
   return `
-  <div class="print-page">
-    <div class="ps-docno">[붙임 1-1]</div>
-    <div class="ps-title">공수의 근무상황 보고(산업동물)</div>
-    <div class="ps-request" style="text-indent:0;text-align:right">(공수의 → 시군) &middot; ${vetMonthLabel(ym)}분</div>
-
-    <div class="ps-section">1. 공수의 근무상황</div>
-    <table class="ps-head">
-      <tr><td class="lbl">동물병원</td><td>${o.clinicName || ''}</td><td class="lbl2">담당지역</td><td colspan="2">${o.address || ''}</td></tr>
-      <tr><td class="lbl">성명</td><td>${o.vetName || ''}</td><td class="lbl2">면허번호</td><td colspan="2">${o.licenseNo || ''}</td></tr>
-      <tr><td class="lbl">예찰 횟수</td><td>${count} 건 방문</td><td class="lbl2">예찰 농가수</td><td colspan="2">${count} 건 방문</td></tr>
-      <tr><td class="lbl">비고(수수)</td><td colspan="4">${scaleSum.toLocaleString()} 수</td></tr>
-    </table>
-
-    <div class="ps-section">2. 예방주사 및 채혈내역</div>
-    <table class="ps-head">
-      <tr><td class="lbl">예방주사(구제역/광견병/탄저·기종저/돼지열병/기타)</td><td colspan="4">- (금월실적 없음)</td></tr>
-      <tr><td class="lbl">혈청검사용 채혈내역(브루셀라병/우결핵)</td><td colspan="4">- (금월실적 없음)</td></tr>
-    </table>
-
-    <div class="ps-section">3. 동물질병예찰 실적</div>
-    <table class="ps-head">
-      <tr><td class="lbl">지역별 신고내역·조치내역</td><td colspan="4">계 - / - / -</td></tr>
-    </table>
-
-    <div class="ps-section">4. 기타실적</div>
-    <table class="ps-table">
-      <thead><tr><th>업무명</th><th colspan="4">추진실적</th></tr></thead>
-      <tbody>${etcRows}</tbody>
-    </table>
-
-    <div class="ps-request">▣ 제출자&#8195;&#8195;&#8195;&#8195;&#8195;&#8195;${o.clinicName || ''}&#8195;&#8195;&#8195;${o.vetName || ''}&#8195;&#8195;&#8195;(서명)</div>
+  <div class="print-page vw-page">
+    <div class="vw-sheet" style="width:${widths.reduce((t, w) => t + w, 0)}px">
+      <table class="vw-table"><colgroup>${widths.map(w => `<col style="width:${w}px">`).join('')}</colgroup>${trs}</table>
+      <img class="vw-stamp" src="img/vet-stamp-blue.png" alt="" style="left:${stampLeft.toFixed(1)}px;top:${stampTop.toFixed(1)}px;width:${stampSize.toFixed(1)}px;height:${stampSize.toFixed(1)}px">
+    </div>
   </div>`;
 }
 
-function printVetWorkReport() {
+async function printVetWorkReport() {
   const ym = document.getElementById('vetwork-month').value || vetDefaultYm();
-  document.getElementById('print-area').innerHTML = buildVetWorkReportHtml(ym);
+  const etc = vetWorkEtcValues();
+  // 직접 입력한 새 내용은 저장해 두고 다음에 선택지로 보여준다(저장이 실패해도 인쇄는 계속한다).
+  const options = { ...(vetOfficeInfo().workEtcOptions || {}) };
+  let changed = false;
+  etc.forEach((t, i) => {
+    if (t === '' || vetWorkEtcLists[i].includes(t)) return;
+    options[i] = [...vetWorkEtcSaved(i), t];
+    changed = true;
+  });
+  if (changed) {
+    try { await saveVetWorkEtcOptions(options); renderVetWorkEtc(etc); }
+    catch (e) { alert('직접 입력한 내용을 저장하지 못했습니다(인쇄는 계속합니다).\n' + e.message); }
+  }
+  document.getElementById('print-area').innerHTML = buildVetWorkReportHtml(ym, etc);
   setTimeout(() => window.print(), 200);
 }
 

@@ -646,6 +646,9 @@ create table if not exists vet_office_info (
   constraint vet_office_info_singleton check (id)
 );
 
+-- 근무상황보고서 "4. 기타실적"에 직접 입력해 저장한 추진실적 문구(항목 번호 → 문구 배열)
+alter table vet_office_info add column if not exists work_etc_options jsonb not null default '{}'::jsonb;
+
 drop trigger if exists trg_vet_office_info_updated_at on vet_office_info;
 create trigger trg_vet_office_info_updated_at before update on vet_office_info
   for each row execute function set_updated_at();
