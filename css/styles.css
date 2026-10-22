@@ -627,6 +627,18 @@ body { display: block !important; height: auto !important; overflow: visible !im
 .vw-table td { border: 0; padding: 0 2px; line-height: 1.25; white-space: pre-line; overflow-wrap: normal; word-break: keep-all; }
 .vw-stamp { position: absolute; }
 
+/* 공수의 보고서 — 일자별 근무내용(첨부 「일자별근무.xlsx」: 상단 박스 + [관련자료]. 원본 인쇄 여백 좌 0.43인치·상 0.47인치, 가로 가운데). */
+.vy-page { width: auto; }
+.vy-sheet { margin: 2mm 0 0 31mm; width: 497px; font-family: "Malgun Gothic", "맑은 고딕", sans-serif; color: #000; }
+.vy-box { width: 100%; table-layout: fixed; border-collapse: collapse; border: 0.75pt solid #000; }
+.vy-box td { border: 0; padding: 0 4px; height: 26.25pt; font-size: 16pt; vertical-align: middle; line-height: 1.25; }
+.vy-box td.lbl { text-align: left; white-space: pre; }
+.vy-box td.val { text-align: center; }
+.vy-head { margin-top: 33pt; height: 26.25pt; font-size: 18pt; display: flex; align-items: center; }
+.vy-grid { display: grid; gap: 3mm; margin-top: 2mm; }
+.vy-grid .vy-cell { display: flex; align-items: center; justify-content: center; overflow: hidden; border: 0.5pt solid #ccc; min-height: 0; }
+.vy-grid img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
 .no-print { display: none !important; }
 }
 #print-area { display: none; }

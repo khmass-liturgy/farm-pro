@@ -346,6 +346,9 @@ const TABLES = {
         species_snapshot: o.species || null, scale_snapshot: numOrNull(o.scale),
         content: o.content || '',
         created_by_email: o.createdByEmail || null,
+        // 일자별 근무내용의 관련자료 사진 경로(올린 순서). 값이 있을 때만 보내서 이 컬럼이 아직 없는 DB에서도
+        // 방문 기록 저장·수정이 그대로 된다.
+        ...(o.photos !== undefined ? { photos: o.photos } : {}),
       };
     },
     fromRow(r) {
@@ -355,6 +358,7 @@ const TABLES = {
         owner: r.owner_snapshot, address: r.address_snapshot,
         species: r.species_snapshot, scale: r.scale_snapshot,
         content: r.content,
+        photos: r.photos || [],
         createdByEmail: r.created_by_email, createdAt: r.created_at,
       };
     },

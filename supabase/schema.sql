@@ -631,6 +631,9 @@ create table if not exists vet_report_entries (
 create index if not exists idx_vet_report_entries_visit_date on vet_report_entries(visit_date);
 create index if not exists idx_vet_report_entries_farm_id on vet_report_entries(farm_id);
 
+-- 일자별 근무내용의 "관련자료" 사진: necropsy-photos 버킷의 vet-daily/<기록id>/ 아래에 올리고, 올린 순서대로 경로를 담는다.
+alter table vet_report_entries add column if not exists photos jsonb not null default '[]'::jsonb;
+
 drop trigger if exists trg_vet_report_entries_updated_at on vet_report_entries;
 create trigger trg_vet_report_entries_updated_at before update on vet_report_entries
   for each row execute function set_updated_at();

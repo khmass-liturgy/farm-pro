@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20261015a">
 <link rel="icon" href="img/favicon.ico?v=20261015a">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20261015a">
-<link rel="stylesheet" href="css/styles.css?v=20261022e">
+<link rel="stylesheet" href="css/styles.css?v=20261022f">
 </head>
 <body>
 
@@ -72,7 +72,7 @@
     </button>
     <div class="sidebar-section-items" id="sidebar-items-vetreport">
       <div class="sidebar-item" onclick="showPage('vet-entries')">
-        <span class="icon">📅</span> 일자별 근무내용
+        <span class="icon">📒</span> 입력대장
       </div>
       <div class="sidebar-item" onclick="showPage('vet-workreport')">
         <span class="icon">📋</span> 근무상황보고서
@@ -88,6 +88,9 @@
       </div>
       <div class="sidebar-item" onclick="showPage('vet-trip')">
         <span class="icon">🚗</span> 출장일지
+      </div>
+      <div class="sidebar-item" onclick="showPage('vet-daily')">
+        <span class="icon">🗓️</span> 일자별 근무내용
       </div>
     </div>
   </div>
@@ -482,7 +485,7 @@
       </p>
     </div>
 
-    <!-- 공수의 보고서: 일자별 근무내용 (= 입력대장) -->
+    <!-- 공수의 보고서: 입력대장 (방문 기록 — 다른 보고서의 원본 데이터) -->
     <div id="page-vet-entries" class="page">
       <div class="search-bar">
         <input type="month" id="vetentry-month" onchange="renderVetEntries()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
@@ -490,7 +493,7 @@
       </div>
       <div class="card">
         <div class="card-header">
-          <div class="card-title">일자별 근무내용 <span class="text-muted" style="font-weight:400;font-size:12px">— 여기서 등록한 방문 기록이 근무상황보고서·청구서·예찰내역·예찰일지·출장일지에 모두 쓰입니다</span></div>
+          <div class="card-title">입력대장 <span class="text-muted" style="font-weight:400;font-size:12px">— 여기서 등록한 방문 기록이 근무상황보고서·청구서·예찰내역·예찰일지·출장일지에 모두 쓰입니다</span></div>
           <div class="flex-gap">
             <button class="btn btn-outline btn-sm" onclick="downloadVetEntryTemplate()" title="입력대장 형식의 엑셀 양식 내려받기">📋 양식 다운로드</button>
             <button class="btn btn-outline btn-sm" onclick="document.getElementById('vetentry-file').click()" title="입력대장 엑셀을 올려 한꺼번에 등록">📥 엑셀 업로드</button>
@@ -605,6 +608,37 @@
           </div>
         </div>
         <p class="text-muted" id="vettrip-summary"></p>
+      </div>
+    </div>
+
+    <!-- 공수의 보고서: 일자별 근무내용 (날짜별 한 장 + 관련자료 사진) -->
+    <div id="page-vet-daily" class="page">
+      <div class="search-bar">
+        <input type="month" id="vetdaily-month" onchange="renderVetDaily()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">일자별 근무내용 <span class="text-muted" style="font-weight:400;font-size:12px">— 상단은 입력대장 내용, 관련자료는 날짜별로 올린 사진이며 방문일마다 한 장씩 출력합니다</span></div>
+          <div class="flex-gap">
+            <button class="btn btn-primary btn-sm" id="vetdaily-print-btn" onclick="printSelectedVetDaily()" disabled>🖨️ 선택 인쇄</button>
+            <button class="btn btn-outline btn-sm" onclick="printAllVetDaily()">🖨️ 한 달 전체 인쇄</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align:center"><input type="checkbox" id="vetdaily-check-all" onchange="toggleVetDailySelectAll(this.checked)" title="전체 선택"></th>
+                <th>방문일</th><th>축주명(농장주)</th><th>예찰내용</th><th>관련자료 사진</th><th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="vetdaily-tbody"></tbody>
+          </table>
+        </div>
+        <div id="vetdaily-empty" class="empty-state" style="display:none">
+          <div class="icon-big">🗓️</div>
+          <p>선택한 달에 방문 기록이 없습니다. 입력대장에서 먼저 등록해주세요.</p>
+        </div>
       </div>
     </div>
 
@@ -1676,7 +1710,7 @@
   </div>
 </div>
 
-<!-- 모달: 공수의 보고서 — 방문 기록(일자별 근무내용) 추가/편집 -->
+<!-- 모달: 공수의 보고서 — 방문 기록(입력대장) 추가/편집 -->
 <div class="modal-bg" id="modal-vet-entry">
   <div class="modal">
     <div class="modal-header">
@@ -1710,11 +1744,31 @@
   </div>
 </div>
 
+<!-- 모달: 공수의 보고서 — 일자별 근무내용의 관련자료 사진(날짜별, 올린 순서대로) -->
+<div class="modal-bg" id="modal-vet-photos">
+  <div class="modal modal-wide" style="width:760px; max-width:97vw;">
+    <div class="modal-header">
+      <div class="modal-title" id="vetphoto-title">관련자료 사진</div>
+      <button class="modal-close" onclick="closeModal('modal-vet-photos')">✕</button>
+    </div>
+    <p class="text-muted mb-16">사진은 올린 순서대로 번호가 붙어 그 순서로 인쇄됩니다. ◀ ▶로 순서를 바꾸고 ✕로 지울 수 있습니다. 한 번에 여러 장을 고르면 고른 순서대로 올라갑니다.</p>
+    <div class="flex-gap mb-16">
+      <button class="btn btn-primary btn-sm" onclick="document.getElementById('vetphoto-file').click()">📷 사진 추가</button>
+      <input type="file" id="vetphoto-file" accept="image/*" multiple style="display:none" onchange="onVetPhotoFiles(this)">
+      <span class="text-muted" id="vetphoto-status"></span>
+    </div>
+    <div id="vetphoto-grid" style="display:flex;flex-wrap:wrap;gap:12px"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-vet-photos')">닫기</button>
+    </div>
+  </div>
+</div>
+
 <!-- 모달: 공수의 보고서 — 입력대장 엑셀 업로드 미리보기 -->
 <div class="modal-bg" id="modal-vet-import">
   <div class="modal modal-wide" style="width:960px; max-width:97vw;">
     <div class="modal-header">
-      <div class="modal-title">일자별 근무내용 — 엑셀 업로드 미리보기</div>
+      <div class="modal-title">입력대장 — 엑셀 업로드 미리보기</div>
       <button class="modal-close" onclick="closeModal('modal-vet-import')">✕</button>
     </div>
     <p class="text-muted mb-16">파일: <strong id="vetimp-file-name"></strong> · 축주명(농장주)으로 농장을 찾아 주소·축종·사육두수는 <strong>농장 등록 정보로 자동 입력</strong>됩니다. 빼고 싶은 줄은 체크를 해제하세요. <a href="#" onclick="downloadVetEntryTemplate(); return false;">양식 다운로드</a></p>
@@ -1898,7 +1952,7 @@
      쓰는 시점(사진 첨부 후 저장)엔 이미 다 로드돼 있다. -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="js/config.js?v=20261015a"></script>
-<script src="js/supabaseClient.js?v=20261022a"></script>
+<script src="js/supabaseClient.js?v=20261022b"></script>
 <script src="js/auth.js?v=20261015a"></script>
 <script src="js/googleDrive.js?v=20261015a"></script>
 <script src="js/breedStandards.js?v=20261015a"></script>
@@ -1915,7 +1969,7 @@
 <script src="js/movePermit.js?v=20261016a"></script>
 <script src="js/movePermitBulk.js?v=20261015a"></script>
 <script src="js/henShipment.js?v=20261012a"></script>
-<script src="js/vetReport.js?v=20261022f"></script>
+<script src="js/vetReport.js?v=20261022g"></script>
 <script src="js/clinicalAssessment.js?v=20261015a"></script>
 <script src="js/rodentControl.js?v=20261015a"></script>
 <script src="js/schedule.js?v=20261015a"></script>
@@ -1923,6 +1977,6 @@
 <script src="js/reports.js?v=20261015a"></script>
 <script src="js/print.js?v=20261015a"></script>
 <script src="js/backup.js?v=20261014a"></script>
-<script src="js/app.js?v=20261022a"></script>
+<script src="js/app.js?v=20261022b"></script>
 </body>
 </html>

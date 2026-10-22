@@ -9,12 +9,13 @@ const PAGE_TITLES = {
   preshipment: '출하전검사',
   movepermit: '이동승인서 발급',
   henshipment: '산란성계 출하대장',
-  'vet-entries': '일자별 근무내용',
+  'vet-entries': '입력대장',
   'vet-workreport': '근무상황보고서',
   'vet-invoice': '여비청구서/활동수당 청구서',
   'vet-patrol': '예찰내역',
   'vet-diary': '예찰일지',
   'vet-trip': '출장일지',
+  'vet-daily': '일자별 근무내용',
   clinical: '계군 임상평가',
   rodent: '구서작업 컨설팅 평가',
   farms: '농장 등록/관리',
@@ -139,6 +140,7 @@ function showPage(name) {
   if (name === 'vet-patrol') renderVetPatrolSummary();
   if (name === 'vet-diary') renderVetDiaryList();
   if (name === 'vet-trip') renderVetTripSummary();
+  if (name === 'vet-daily') renderVetDaily();
   if (name === 'schedule') populateScheduleSelects();
   if (name === 'reports') renderReports();
   if (name === 'drugs') renderDrugs();

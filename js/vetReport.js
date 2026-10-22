@@ -3,7 +3,7 @@
 // 방문 기록을 적으면 여비청구서/활동수당청구서/근무상황보고서/예찰내역/예찰일지/
 // 출장일지가 전부 그 시트를 참조해 자동으로 채워지던 구조)를 이 앱으로 옮긴 것.
 //
-// "입력대장"이 하던 일을 vet_report_entries 테이블 + 이 화면의 "일자별 근무내용"이
+// 엑셀 "입력대장" 시트가 하던 일을 vet_report_entries 테이블 + 이 화면(메뉴 이름도 "입력대장")이
 // 대신한다. 원본은 "기간 시작일 + 비고란의 1~30 일련번호"로 날짜를 계산했는데,
 // 그 방식은 일련번호가 하나라도 밀리면 그 아래 날짜가 전부 틀어진다. 여기서는
 // 방문일을 날짜로 직접 받아 그 문제 자체가 없다. 나머지 5개 화면은 모두 이
@@ -62,7 +62,7 @@ async function saveVetOfficeInfo() {
   alert('사무실 정보를 저장했습니다.');
 }
 
-// ─── 일자별 근무내용 (= 입력대장) — 방문 기록 등록/편집/삭제 ─────────────────
+// ─── 입력대장 (= 입력대장) — 방문 기록 등록/편집/삭제 ─────────────────
 let vetEntrySelectedIds = new Set();
 
 function toggleVetEntrySelectAll(checked) {
@@ -121,9 +121,12 @@ function editSelectedVetEntry() {
 async function deleteSelectedVetEntries() {
   if (!vetEntrySelectedIds.size) return;
   if (!confirm(`선택한 방문 기록 ${vetEntrySelectedIds.size}건을 삭제하시겠습니까?`)) return;
+  const photoPaths = load('vetReportEntries').filter(e => vetEntrySelectedIds.has(e.id)).flatMap(e => e.photos || []);
   try {
     for (const id of vetEntrySelectedIds) await deleteRow('vetReportEntries', id);
   } catch (e) { alert('삭제 실패: ' + e.message); return; }
+  // 기록이 지워지면 거기 딸린 관련자료 사진도 저장소에서 치운다(실패해도 기록 삭제는 이미 끝났으므로 조용히 넘어간다).
+  if (photoPaths.length) { try { await sb.storage.from(VY_BUCKET).remove(photoPaths); } catch (e) { /* 남은 파일은 무해 */ } }
   vetEntrySelectedIds.clear();
   renderVetEntries();
 }
@@ -192,7 +195,7 @@ async function saveVetEntry() {
   renderVetEntries();
 }
 
-// ─── 일자별 근무내용: 입력대장 엑셀 업로드 ─────────────────────────────────
+// ─── 입력대장: 입력대장 엑셀 업로드 ─────────────────────────────────
 // 형식은 「공수의 예찰 입력 대장」 시트(번호·방문일(자동)·축주명(농장주)·주소(자동조회)·
 // 축종(자동)·사육두수(자동)·예찰내용·비고(일련번호))와 같다. 열 이름으로 찾기 때문에 열 순서가
 // 달라도 된다. (자동) 칸은 파일 값이 아니라 농장 등록 정보로 채운다 — 축주명으로 농장을 못 찾을
@@ -367,7 +370,7 @@ function downloadVetEntryTemplate() {
   ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
   ws['!cols'] = [{ wch: 6 }, { wch: 12 }, { wch: 16 }, { wch: 28 }, { wch: 10 }, { wch: 12 }, { wch: 32 }];
   const guide = XLSX.utils.aoa_to_sheet([
-    ['일자별 근무내용 업로드 양식 작성 방법'], [''],
+    ['입력대장 업로드 양식 작성 방법'], [''],
     ['· 한 줄이 하루 한 건의 농장 방문입니다. 머리글(2번째 줄)은 지우거나 바꾸지 마세요.'],
     ['· 방문일(2026-09-01 형식)과 축주명(농장주)과 예찰내용만 적으면 됩니다.'],
     ['· 주소·축종·사육두수는 비워두세요 — 축주명(농장주)으로 농장 등록 정보에서 자동으로 채워집니다.'],
@@ -378,12 +381,12 @@ function downloadVetEntryTemplate() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '입력대장');
   XLSX.utils.book_append_sheet(wb, guide, '작성방법');
-  XLSX.writeFile(wb, '일자별_근무내용_양식.xlsx');
+  XLSX.writeFile(wb, '입력대장_양식.xlsx');
 }
 
 // ─── 근무상황보고서 ─────────────────────────────────────────────────────────
 // 첨부 「근무상황보고.xlsx」의 칸 배치를 그대로 옮긴 서식. 비고(수수)·예찰 횟수·예찰 농가수는 그달
-// 일자별 근무내용에서 온다(비고(수수) = 그달 방문한 농장들의 사육두수 합계, 횟수·농가수 = 방문 건수).
+// 입력대장에서 온다(비고(수수) = 그달 방문한 농장들의 사육두수 합계, 횟수·농가수 = 방문 건수).
 // "2. 예방주사 및 채혈내역"·"3. 동물질병예찰 실적"은 이 앱에 그 수치를 따로 기록하는 화면이 없어
 // 원본과 같이 "-"로 찍는다. "4. 기타실적"의 추진실적은 원본에 적혀 있던 내용을 기본 선택지로 두고,
 // 직접 입력한 내용은 인쇄할 때 vet_office_info.work_etc_options에 저장돼 다음부터 선택지에 나온다.
@@ -515,7 +518,7 @@ function renderVetWorkReportSummary() {
   if (!vetWorkEtcBuilt) renderVetWorkEtc();
   const { count, scaleSum } = vetMonthStats(monthEl.value);
   document.getElementById('vetwork-summary').textContent =
-    `${vetMonthLabel(monthEl.value)} 예찰 ${count}건 · 비고(수수) ${scaleSum.toLocaleString()} — 일자별 근무내용에서 가져옵니다.`;
+    `${vetMonthLabel(monthEl.value)} 예찰 ${count}건 · 비고(수수) ${scaleSum.toLocaleString()} — 입력대장에서 가져옵니다.`;
 }
 
 function buildVetWorkReportHtml(ym, etc) {
@@ -661,7 +664,7 @@ function printVetInvoice(kind) {
   const ym = document.getElementById('vetinvoice-month').value || vetDefaultYm();
   const kinds = kind === 'both' ? ['travel', 'activity'] : [kind];
   if (kinds.includes('travel') && !vetMonthStats(ym).count) {
-    alert('선택한 달에 방문 기록이 없어 여비를 계산할 수 없습니다. 일자별 근무내용에서 방문 기록을 먼저 등록해주세요.');
+    alert('선택한 달에 방문 기록이 없어 여비를 계산할 수 없습니다. 입력대장에서 방문 기록을 먼저 등록해주세요.');
     return;
   }
   document.getElementById('print-area').innerHTML = kinds.map(k => buildVetInvoiceHtml(k, ym)).join('');
@@ -695,7 +698,7 @@ function renderVetPatrolSummary() {
   const halves = vetPatrolHalves(monthEl.value);
   const pages = halves.reduce((s, h) => s + (h.entries.length ? Math.ceil(h.entries.length / VP_PAGE_ROWS) : 0), 0);
   document.getElementById('vetpatrol-summary').textContent =
-    `${vetMonthLabel(monthEl.value)} — 상반기(1~15일) ${halves[0].entries.length}건 · 하반기(16일~) ${halves[1].entries.length}건 → 모두 ${pages}쪽으로 인쇄됩니다. 내용은 일자별 근무내용에서 가져옵니다.`;
+    `${vetMonthLabel(monthEl.value)} — 상반기(1~15일) ${halves[0].entries.length}건 · 하반기(16일~) ${halves[1].entries.length}건 → 모두 ${pages}쪽으로 인쇄됩니다. 내용은 입력대장에서 가져옵니다.`;
 }
 
 function buildVetPatrolPageHtml(half, chunk, startNo) {
@@ -883,7 +886,7 @@ function printSelectedVetDiary() {
 
 // ─── 출장일지 ───────────────────────────────────────────────────────────────
 // 첨부 「출장일지.xlsx」의 칸 배치를 그대로 옮긴 서식. 월만 고르면 제출일자(월말)·기간·건수·합계가 바뀌고
-// 농가별 출장내역은 그달 일자별 근무내용에서 온다. 원본 표는 30줄(30일) 고정이라 남는 줄은 빈 칸으로 두고,
+// 농가별 출장내역은 그달 입력대장에서 온다. 원본 표는 30줄(30일) 고정이라 남는 줄은 빈 칸으로 두고,
 // 31건 이상이면 줄을 늘린다. 원본 인쇄는 "한 쪽에 맞춤(약 81%, 31줄까지 한 쪽에 들어가도록 77%)"이라 열 너비·줄 높이·글자 크기에 VT_SCALE을
 // 곱했다. 파란 도장은 원본 앵커(G열 왼쪽에서 1455420EMU, 맨 위, 4cm 정사각형) 위치에 얹는다.
 // 원본의 "품종" 칸은 축종을 다시 보여주는 값이라(원본 수식이 축종을 가져옴) 그대로 축종을 찍는다.
@@ -896,7 +899,7 @@ function renderVetTripSummary() {
   if (!monthEl.value) monthEl.value = vetDefaultYm();
   const { count, scaleSum } = vetMonthStats(monthEl.value);
   document.getElementById('vettrip-summary').textContent =
-    `${vetMonthLabel(monthEl.value)} 출장 ${count}일 · 총 두수 ${scaleSum.toLocaleString()} — 내용은 일자별 근무내용에서 가져옵니다.`;
+    `${vetMonthLabel(monthEl.value)} 출장 ${count}일 · 총 두수 ${scaleSum.toLocaleString()} — 내용은 입력대장에서 가져옵니다.`;
 }
 
 function buildVetTripHtml(ym) {
@@ -968,4 +971,221 @@ function printVetTrip() {
   if (!vetMonthStats(ym).count) { alert('선택한 달에 방문 기록이 없습니다.'); return; }
   document.getElementById('print-area').innerHTML = buildVetTripHtml(ym);
   setTimeout(() => window.print(), 200);
+}
+
+// ─── 일자별 근무내용 (방문일마다 한 장 + 관련자료 사진) ────────────────────────
+// 첨부 「일자별근무.xlsx」의 한 쪽을 옮긴 서식: 상단 박스(방문일·농장주·주소·축종·규모·내용)는 입력대장에서
+// 오고, [관련자료]에는 그날 올려 둔 사진이 올린 순서대로 들어간다. 사진은 진료기록 부검사진과 같은 비공개
+// 버킷(necropsy-photos)의 vet-daily/<기록id>/ 아래에 올리고 경로 순서를 vet_report_entries.photos에 둔다.
+// (원본 엑셀의 "검사증명서(가금류 이동 승인서)" 칸은 이동승인서 발급 메뉴와 겹치고 외부 파일 링크가 깨져 있어
+// 옮기지 않았다.)
+const VY_BUCKET = 'necropsy-photos';
+const VY_FIRST_PAGE_PHOTOS = 4;
+const VY_NEXT_PAGE_PHOTOS = 6;
+const VY_COL_CHARS = [6.71, 6.43, 6.43, 6.43, 6.43, 6.43, 6.43, 6.43, 6.43, 6.43, 6.43];
+let vetDailySelectedIds = new Set();
+let vetPhotoEntryId = null;
+let vetPhotoUrlCache = {};     // 저장소 경로 → 임시 보기 주소
+
+function toggleVetDailySelectAll(checked) {
+  const ids = vetEntriesForYm(document.getElementById('vetdaily-month').value).map(e => e.id);
+  vetDailySelectedIds = checked ? new Set(ids) : new Set();
+  renderVetDaily();
+}
+function toggleVetDailySelect(id, checked) {
+  if (checked) vetDailySelectedIds.add(id); else vetDailySelectedIds.delete(id);
+  renderVetDaily();
+}
+
+function renderVetDaily() {
+  const monthEl = document.getElementById('vetdaily-month');
+  if (!monthEl.value) monthEl.value = vetDefaultYm();
+  const list = vetEntriesForYm(monthEl.value);
+  const liveIds = new Set(list.map(e => e.id));
+  vetDailySelectedIds.forEach(id => { if (!liveIds.has(id)) vetDailySelectedIds.delete(id); });
+  document.getElementById('vetdaily-print-btn').disabled = vetDailySelectedIds.size === 0;
+  const tbody = document.getElementById('vetdaily-tbody');
+  const empty = document.getElementById('vetdaily-empty');
+  const checkAll = document.getElementById('vetdaily-check-all');
+  if (!list.length) { tbody.innerHTML = ''; empty.style.display = ''; if (checkAll) checkAll.checked = false; return; }
+  empty.style.display = 'none';
+  if (checkAll) checkAll.checked = list.every(e => vetDailySelectedIds.has(e.id));
+  tbody.innerHTML = list.map(e => `
+    <tr>
+      <td style="text-align:center"><input type="checkbox" ${vetDailySelectedIds.has(e.id) ? 'checked' : ''} onchange="toggleVetDailySelect('${e.id}', this.checked)"></td>
+      <td>${e.visitDate}</td>
+      <td><strong>${e.owner || '-'}</strong><div style="font-size:11px;color:var(--text-secondary)">${e.farmName || ''}</div></td>
+      <td>${e.content || '-'}</td>
+      <td>${(e.photos || []).length ? `📷 ${(e.photos || []).length}장` : '<span class="text-muted">없음</span>'}</td>
+      <td><div class="flex-gap">
+        <button class="btn btn-outline btn-sm" onclick="openVetPhotoModal('${e.id}')">📷 사진</button>
+        <button class="btn btn-primary btn-sm" onclick="printVetDaily(['${e.id}'])">🖨️ 인쇄</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+// ── 사진 올리기 ──
+// 휴대폰 사진은 한 장이 수 MB라 그대로 올리면 느리고 인쇄가 무거워진다. 긴 변 1600px·JPEG로 줄여 올린다
+// (EXIF 방향은 createImageBitmap이 반영). 줄이지 못하는 형식이면 원본 그대로 올린다.
+async function vetResizeImage(file, maxDim = 1600) {
+  try {
+    const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const scale = Math.min(1, maxDim / Math.max(bmp.width, bmp.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bmp.width * scale); canvas.height = Math.round(bmp.height * scale);
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    bmp.close?.();
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.85));
+    return blob || file;
+  } catch (e) { return file; }
+}
+
+async function vetPhotoUrls(paths) {
+  const need = paths.filter(p => !vetPhotoUrlCache[p]);
+  if (need.length) {
+    try {
+      const { data, error } = await sb.storage.from(VY_BUCKET).createSignedUrls(need, 3600);
+      if (!error && data) data.forEach(d => { if (d.signedUrl && d.path) vetPhotoUrlCache[d.path] = d.signedUrl; });
+    } catch (e) { /* 못 불러온 사진은 칸이 비어 보인다 */ }
+  }
+  return Object.fromEntries(paths.map(p => [p, vetPhotoUrlCache[p] || null]));
+}
+
+function vetPhotoEntry() { return load('vetReportEntries').find(e => e.id === vetPhotoEntryId); }
+
+async function openVetPhotoModal(id) {
+  vetPhotoEntryId = id;
+  const e = vetPhotoEntry();
+  if (!e) return;
+  document.getElementById('vetphoto-title').textContent = `관련자료 사진 — ${e.visitDate} ${e.owner || ''}`;
+  document.getElementById('vetphoto-status').textContent = '';
+  openModal('modal-vet-photos');
+  await renderVetPhotoGrid();
+}
+
+async function renderVetPhotoGrid() {
+  const e = vetPhotoEntry();
+  const grid = document.getElementById('vetphoto-grid');
+  if (!e) return;
+  const photos = e.photos || [];
+  if (!photos.length) { grid.innerHTML = '<div class="text-muted">아직 올린 사진이 없습니다. "사진 추가"로 올려주세요.</div>'; return; }
+  const urls = await vetPhotoUrls(photos);
+  const btn = 'style="border:none;background:rgba(0,0,0,.55);color:#fff;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:12px"';
+  grid.innerHTML = photos.map((p, i) => `
+    <div style="width:160px">
+      <div style="position:relative;width:160px;height:120px;background:#f1f3f5;border-radius:6px;overflow:hidden">
+        ${urls[p] ? `<img src="${urls[p]}" style="width:100%;height:100%;object-fit:cover">` : '<div class="text-muted" style="padding:44px 0;text-align:center;font-size:12px">불러오는 중...</div>'}
+        <span style="position:absolute;top:4px;left:4px;background:#1a2744;color:#fff;border-radius:10px;padding:1px 8px;font-size:12px;font-weight:700">${i + 1}</span>
+      </div>
+      <div class="flex-gap" style="justify-content:center;margin-top:5px">
+        <button type="button" ${btn} onclick="moveVetPhoto(${i}, -1)" ${i === 0 ? 'disabled' : ''}>◀</button>
+        <button type="button" ${btn} onclick="moveVetPhoto(${i}, 1)" ${i === photos.length - 1 ? 'disabled' : ''}>▶</button>
+        <button type="button" ${btn} onclick="removeVetPhoto(${i})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+async function saveVetPhotos(list) {
+  const e = vetPhotoEntry();
+  await updateRow('vetReportEntries', e.id, { ...e, photos: list });
+  await renderVetPhotoGrid();
+  renderVetDaily();
+}
+
+async function onVetPhotoFiles(input) {
+  const files = [...input.files];
+  input.value = '';
+  const e = vetPhotoEntry();
+  if (!files.length || !e) return;
+  const status = document.getElementById('vetphoto-status');
+  const uploaded = [];
+  let failed = 0;
+  for (let i = 0; i < files.length; i++) {   // 고른 순서대로 차례로 올려서 순서가 유지된다
+    status.textContent = `올리는 중 ${i + 1}/${files.length}...`;
+    try {
+      const blob = await vetResizeImage(files[i]);
+      const base = sanitizeFileNameForStorage(files[i].name).replace(/\.[^.]*$/, '');
+      const path = `vet-daily/${e.id}/${Date.now()}_${i}_${base}.jpg`;
+      const { error } = await sb.storage.from(VY_BUCKET).upload(path, blob, { contentType: blob.type || 'image/jpeg' });
+      if (error) throw error;
+      uploaded.push(path);
+    } catch (err) { failed++; console.warn('관련자료 사진 업로드 실패', err); }
+  }
+  if (uploaded.length) {
+    try { await saveVetPhotos([...(vetPhotoEntry().photos || []), ...uploaded]); }
+    catch (err) { alert('사진은 올렸지만 목록 저장에 실패했습니다: ' + err.message); }
+  }
+  status.textContent = failed ? `${uploaded.length}장 올림, ${failed}장 실패` : `${uploaded.length}장 올렸습니다.`;
+}
+
+async function moveVetPhoto(i, dir) {
+  const list = [...(vetPhotoEntry().photos || [])];
+  const j = i + dir;
+  if (j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
+  try { await saveVetPhotos(list); } catch (e) { alert('순서 저장 실패: ' + e.message); }
+}
+
+async function removeVetPhoto(i) {
+  const list = [...(vetPhotoEntry().photos || [])];
+  if (!confirm(`${i + 1}번 사진을 지울까요?`)) return;
+  const [gone] = list.splice(i, 1);
+  try { await saveVetPhotos(list); } catch (e) { alert('삭제 실패: ' + e.message); return; }
+  try { await sb.storage.from(VY_BUCKET).remove([gone]); } catch (e) { /* 파일이 남아도 목록에서는 빠졌다 */ }
+}
+
+// ── 인쇄 ──
+function buildVetDailyHtml(e, urls) {
+  const esc = t => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const widths = VY_COL_CHARS.map(c => Math.round(c * 7));
+  const photos = (e.photos || []).map(p => urls[p]).filter(Boolean);
+  const chunks = [photos.slice(0, VY_FIRST_PAGE_PHOTOS)];
+  for (let i = VY_FIRST_PAGE_PHOTOS; i < photos.length; i += VY_NEXT_PAGE_PHOTOS) chunks.push(photos.slice(i, i + VY_NEXT_PAGE_PHOTOS));
+  const rowsDef = [['방문일 :', e.visitDate || ''], ['농장주 :', e.owner || ''], ['주   소 :', e.address || ''],
+    ['축   종 :', e.species || ''], ['규   모 :', e.scale != null ? Number(e.scale).toLocaleString() : ''], ['내   용 :', e.content || '']];
+  const box = `<table class="vy-box"><colgroup>${widths.map(w => `<col style="width:${w}px">`).join('')}</colgroup>` +
+    rowsDef.map(([l, v]) => `<tr><td colspan="2" class="lbl">${esc(l)}</td><td colspan="9" class="val">${esc(v)}</td></tr>`).join('') + '</table>';
+  const grid = (list, first) => {
+    const n = list.length;
+    const cols = n <= 1 || (first && n === 2) ? 1 : 2;
+    const rows = first ? (n <= 1 ? 1 : n === 2 ? 2 : 2) : 3;
+    const height = first ? '185mm' : '235mm';
+    return `<div class="vy-grid" style="grid-template-columns:repeat(${cols},1fr);grid-template-rows:repeat(${rows},1fr);height:${height}">` +
+      list.map(u => `<div class="vy-cell"><img src="${u}" alt=""></div>`).join('') + '</div>';
+  };
+  return chunks.map((list, i) => `
+  <div class="print-page vy-page">
+    <div class="vy-sheet">
+      ${i === 0 ? box : ''}
+      <div class="vy-head">[관련자료]${i > 0 ? ' (계속)' : ''}</div>
+      ${list.length || i === 0 ? grid(list, i === 0) : ''}
+    </div>
+  </div>`).join('');
+}
+
+async function printVetDaily(ids) {
+  const entries = load('vetReportEntries').filter(e => ids.includes(e.id)).sort((a, b) => a.visitDate.localeCompare(b.visitDate));
+  if (!entries.length) { alert('인쇄할 방문 기록이 없습니다.'); return; }
+  const urls = await vetPhotoUrls(entries.flatMap(e => e.photos || []));
+  document.getElementById('print-area').innerHTML = entries.map(e => buildVetDailyHtml(e, urls)).join('');
+  // 사진이 다 불려온 뒤에 인쇄 창을 연다(안 그러면 빈 칸으로 인쇄된다).
+  const imgs = [...document.querySelectorAll('#print-area img')];
+  await Promise.race([
+    Promise.all(imgs.map(img => (img.complete ? null : new Promise(res => { img.onload = img.onerror = res; })))),
+    new Promise(res => setTimeout(res, 20000)),
+  ]);
+  setTimeout(() => window.print(), 200);
+}
+
+function printSelectedVetDaily() {
+  if (!vetDailySelectedIds.size) { alert('인쇄할 방문일을 먼저 체크해주세요.'); return; }
+  return printVetDaily([...vetDailySelectedIds]);
+}
+
+function printAllVetDaily() {
+  const list = vetEntriesForYm(document.getElementById('vetdaily-month').value || vetDefaultYm());
+  if (!list.length) { alert('선택한 달에 방문 기록이 없습니다.'); return; }
+  return printVetDaily(list.map(e => e.id));
 }
