@@ -748,45 +748,84 @@ function printSelectedVetDiary() {
 }
 
 // ─── 출장일지 ───────────────────────────────────────────────────────────────
+// 첨부 「출장일지.xlsx」의 칸 배치를 그대로 옮긴 서식. 월만 고르면 제출일자(월말)·기간·건수·합계가 바뀌고
+// 농가별 출장내역은 그달 일자별 근무내용에서 온다. 원본 표는 30줄(30일) 고정이라 남는 줄은 빈 칸으로 두고,
+// 31건 이상이면 줄을 늘린다. 원본 인쇄는 "한 쪽에 맞춤(약 81%, 31줄까지 한 쪽에 들어가도록 77%)"이라 열 너비·줄 높이·글자 크기에 VT_SCALE을
+// 곱했다. 파란 도장은 원본 앵커(G열 왼쪽에서 1455420EMU, 맨 위, 4cm 정사각형) 위치에 얹는다.
+// 원본의 "품종" 칸은 축종을 다시 보여주는 값이라(원본 수식이 축종을 가져옴) 그대로 축종을 찍는다.
+const VT_COL_CHARS = [6, 10.29, 30.86, 8.29, 8, 8.57, 31.71, 9.43];
+const VT_SCALE = 0.77;
+const VT_MIN_ROWS = 30;
+
 function renderVetTripSummary() {
   const monthEl = document.getElementById('vettrip-month');
   if (!monthEl.value) monthEl.value = vetDefaultYm();
   const { count, scaleSum } = vetMonthStats(monthEl.value);
-  document.getElementById('vettrip-summary').textContent = `${vetMonthLabel(monthEl.value)} 출장 ${count}일 · 비고(예찰수수) ${scaleSum.toLocaleString()}`;
+  document.getElementById('vettrip-summary').textContent =
+    `${vetMonthLabel(monthEl.value)} 출장 ${count}일 · 총 두수 ${scaleSum.toLocaleString()} — 내용은 일자별 근무내용에서 가져옵니다.`;
 }
 
 function buildVetTripHtml(ym) {
+  const S = VT_SCALE;
   const o = vetOfficeInfo();
   const { list, count, scaleSum } = vetMonthStats(ym);
-  const rows = list.map((e, i) => `
-    <tr>
-      <td class="ctr">${i + 1}</td>
-      <td>${e.owner || ''}</td>
-      <td>${e.address || '-'}</td>
-      <td class="ctr">${e.species || '-'}</td>
-      <td class="ctr">${(e.visitDate || '').slice(5)}</td>
-      <td>${e.content || '-'}</td>
-      <td class="ctr">${e.scale != null ? Number(e.scale).toLocaleString() : '-'}</td>
-    </tr>`).join('');
+  const [y, m] = ym.split('-').map(Number);
+  const pad = n => String(n).padStart(2, '0');
+  const last = new Date(y, m, 0).getDate();
+  const monthStart = `${y}-${pad(m)}-01`, monthEnd = `${y}-${pad(m)}-${pad(last)}`;
+  const widths = VT_COL_CHARS.map(c => Math.round(c * 7 * S));
+  const esc = t => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const num = v => (v == null || v === '' ? '' : Number(v).toLocaleString());
+  const clinic = o.clinicName || '대한동물병원', vet = o.vetName || '최동명', license = o.licenseNo || '8433';
+  // 셀: [열 수, 행 수, 글, 테두리(lrtb), 가로, 글자크기, 굵게, 세로]
+  const td = (span, rowspan, text, bd = '', ha = '', sz = 11, bold = 0, va = 'm', raw = false) => {
+    const style = [
+      bd.includes('l') ? 'border-left:0.75pt solid #000' : '', bd.includes('r') ? 'border-right:0.75pt solid #000' : '',
+      bd.includes('t') ? 'border-top:0.75pt solid #000' : '', bd.includes('b') ? 'border-bottom:0.75pt solid #000' : '',
+      ha ? `text-align:${{ c: 'center', l: 'left', r: 'right' }[ha]}` : '', `vertical-align:${va === 'm' ? 'middle' : 'bottom'}`,
+      `font-size:${(sz * S).toFixed(2)}pt`, bold ? 'font-weight:700' : '',
+    ].filter(Boolean).join(';');
+    return `<td${span > 1 ? ` colspan="${span}"` : ''}${rowspan > 1 ? ` rowspan="${rowspan}"` : ''} style="${style}">${raw ? text : esc(text)}</td>`;
+  };
+  const tr = (h, cells) => `<tr style="height:${(h * S).toFixed(2)}pt">${cells}</tr>`;
+  const B = 'lrtb';
+
+  const dataRows = Array.from({ length: Math.max(VT_MIN_ROWS, list.length) }, (_, i) => {
+    const e = list[i];
+    return tr(22.15, e
+      ? td(1, 1, i + 1, B, 'c') + td(1, 1, e.owner, B, 'c') + td(1, 1, e.address, B, 'l') + td(1, 1, e.species, B, 'c') +
+        td(1, 1, e.species, B, 'c') + td(1, 1, `${Number(e.visitDate.slice(5, 7))}/${Number(e.visitDate.slice(8, 10))}`, B, 'c') +
+        td(1, 1, e.content, B, 'l') + td(1, 1, num(e.scale), B, 'r')
+      : td(1, 1, '', B) .repeat(8));
+  }).join('');
+
+  const rows = [
+    tr(7.5, td(8, 1, '')),
+    tr(31.5, td(8, 1, '공수의 여비 지원사업 근무보고  (공수의→시군)', '', 'c', 20, 1)),
+    tr(15.75, td(5, 1, '') + td(1, 1, '발   신 :', '', '') + td(1, 1, `${clinic} ${vet} `, '', '') + td(1, 1, '(인)', '', '')),
+    tr(19.5, td(5, 1, '') + td(1, 1, '제출일자 :', '', '', 11, 0, 'b') + td(2, 1, monthEnd.replace(/-/g, '/'), '', 'l', 12, 0, 'b')),
+    tr(19.5, td(8, 1, '1. 근무상황', '', '', 11, 0, 'b')),
+    tr(19.5, td(3, 1, '공수의', B, 'c') + td(1, 2, '담당지역', B, 'c') + td(2, 1, '검진,살처분,출장내역', B, 'c', 9) + td(2, 2, '비고(예찰수수)', B, 'c')),
+    tr(19.5, td(2, 1, '동물병원', B, 'c') + td(1, 1, '성명/면허번호', B, 'c') + td(1, 1, '출장일수', B, 'c', 10) + td(1, 1, '농가수', B, 'c')),
+    tr(19.5, td(2, 1, clinic, B, 'c') + td(1, 1, `${vet}/${license}`, B, 'c') + td(1, 1, '파주전역', B, 'c') + td(1, 1, `${count}일`, B, 'c') + td(1, 1, count, B, 'c') + td(2, 1, num(scaleSum), B, 'c')),
+    tr(19.5, td(8, 1, '2. 농가별 출장내역', '', '', 11, 0, 'b')),
+    tr(19.5, td(1, 1, '기간', B, 'c', 11, 1) + td(3, 1, `${monthStart} ~ ${monthEnd}`, B, 'c', 11, 1) + td(1, 1, '출장일수', B, 'c', 11, 1) + td(3, 1, count, B, 'c', 11, 1)),
+    tr(19.5, td(1, 1, '농가수', B, 'c', 11, 1) + td(3, 1, `${count} 건`, B, 'c', 11, 1) + td(1, 1, '총 두수', B, 'c', 11, 1) + td(3, 1, num(scaleSum), B, 'c', 11, 1)),
+    tr(19.5, td(8, 1, '농가검진, 살처분 출장내역', B, 'c')),
+    tr(22.15, ['번호', '축주명', '지역(주소)', '축종', '품종', '출장일', '근무내용', '검진두수'].map(t => td(1, 1, t, B, 'c')).join('')),
+    dataRows,
+    tr(22.15, td(5, 1, '합    계', B, 'c') + td(1, 1, `${count}일`, B, 'c') + td(1, 1, '', B, 'c') + td(1, 1, num(scaleSum), B, 'r', 10)),
+    tr(7.5, td(8, 1, '')),
+  ].join('');
+
+  const stampLeft = widths.slice(0, 6).reduce((t, w) => t + w, 0) + 1455420 / 9525 * S;
+  const stampSize = 1440180 / 9525 * S;
   return `
-  <div class="print-page">
-    <div class="ps-title">공수의 여비 지원사업 근무보고</div>
-    <div class="ps-request" style="text-align:right;text-indent:0">(공수의→시군)&#8195;&#8195;발신 : ${o.clinicName || ''} ${o.vetName || ''} (인)</div>
-
-    <div class="ps-section">1. 근무상황</div>
-    <table class="ps-head">
-      <tr><td class="lbl">공수의</td><td>${o.clinicName || ''} / ${o.vetName || ''} / ${o.licenseNo || ''}</td><td class="lbl2">담당지역</td><td>${o.address || ''}</td></tr>
-      <tr><td class="lbl">출장일수</td><td>${count} 일</td><td class="lbl2">비고(예찰수수)</td><td>${scaleSum.toLocaleString()}</td></tr>
-    </table>
-
-    <div class="ps-section">2. 농가별 출장내역 — 기간 ${list[0]?.visitDate || ''} ~ ${list[list.length - 1]?.visitDate || ''} (농가수 ${count} 건, 총 두수 ${scaleSum.toLocaleString()})</div>
-    <table class="ps-table">
-      <thead><tr><th>번호</th><th>축주명</th><th>지역(주소)</th><th>축종</th><th>출장일</th><th>근무내용</th><th>검진두수</th></tr></thead>
-      <tbody>
-        ${rows}
-        <tr class="ps-total"><td colspan="4" class="ctr">합계</td><td colspan="2" class="ctr">${count}일</td><td class="ctr">${scaleSum.toLocaleString()}</td></tr>
-      </tbody>
-    </table>
+  <div class="print-page vt-page">
+    <div class="vt-sheet" style="width:${widths.reduce((t, w) => t + w, 0)}px">
+      <table class="vt-table"><colgroup>${widths.map(w => `<col style="width:${w}px">`).join('')}</colgroup>${rows}</table>
+      <img class="vt-stamp" src="img/vet-stamp-blue.png" alt="" style="left:${stampLeft.toFixed(1)}px;top:0;width:${stampSize.toFixed(1)}px;height:${stampSize.toFixed(1)}px">
+    </div>
   </div>`;
 }
 

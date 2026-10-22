@@ -613,6 +613,13 @@ body { display: block !important; height: auto !important; overflow: visible !im
 .vd-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
 .vd-table td { border: 0; padding: 0 3px; line-height: 1.25; white-space: pre-wrap; overflow-wrap: anywhere; }
 
+/* 공수의 보고서 — 출장일지(첨부 「출장일지.xlsx」, 원본 인쇄 여백 좌 0.7인치·상 0.75인치). 크기는 JS에서 같은 배율로 준다. */
+.vt-page { width: auto; }
+.vt-sheet { position: relative; margin: 9mm 0 0 7.8mm; font-family: "Malgun Gothic", "맑은 고딕", sans-serif; color: #000; }
+.vt-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.vt-table td { border: 0; padding: 0 1px; line-height: 1.25; white-space: nowrap; overflow: hidden; }
+.vt-stamp { position: absolute; }
+
 .no-print { display: none !important; }
 }
 #print-area { display: none; }
