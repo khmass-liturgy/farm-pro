@@ -653,39 +653,90 @@ function renderVetDiaryList() {
     </tr>`).join('');
 }
 
-// 원본 「공수의사 현장 예찰 일지」의 방역 체크리스트 문구는 항목이 매우 많아
-// (출입구 소독시설·방역복·소독제 종류 등 수십 줄) 여기서는 핵심 항목만 간추려
-// 옮긴다 — 실제 제출 서식과 문구를 통일해야 하면 이 배열만 고치면 된다.
-const VET_DIARY_CHECKLIST = [
-  '① 농장출입구 소독·방역시설 설치 및 운영여부',
-  '② 축사 내·외부 소독 실시여부',
-  '③ 방역복·장화 등 방역장비 구비 및 착용여부',
-  '④ 야생조수류·설치류 유입 차단시설 관리상태',
-  '⑤ 사료·물 관리상태 및 이상 유무',
+// ─── 예찰일지 (방문 건마다 한 쪽 — 체크박스로 여러 건 골라 한 번에 인쇄) ─────
+// 첨부 「예찰일지.xlsx」의 한 쪽(1~26행)을 칸 단위로 그대로 옮긴 서식이다. 건마다 바뀌는 곳은
+// 예찰일자와 농장 기본 정보(농장명·대표자·주소·사육축종·사육두수)와 예찰의견(그날 예찰내용)뿐이고
+// 나머지 문구는 모두 고정이다. 원본 인쇄는 95%·여백 0.5인치라 열 너비·줄 높이·글자 크기에 VD_SCALE을 곱했다.
+// 백신접종(닭) 칸은 사육축종에 따라 해당 항목의 글자를 파랑으로 보인다:
+//   육계·토종닭·오골계 → ① ② ⑤ / 산란계 → ① ③ ④ ⑤
+const VD_COL_CHARS = [14, 11, 10.71, 14, 15.29, 14, 10.29];
+const VD_SCALE = 0.95;
+const VD_TEXT_COLOR = '#0f243e';
+const VD_BLUE = '#0000ff';
+const VD_BLUE_ITEMS = [{ test: /육계|토종|오골/, items: [1, 2, 5] }, { test: /산란/, items: [1, 3, 4, 5] }];
+// [높이pt, [[열 수, 글, 테두리(lrtb), 가로(c/l/r), 세로(m/b), 글자크기, 굵게, 명조]...]]
+// (5행~16행의 {…}는 건마다 채워 넣는 자리)
+const VD_ROWS = [
+  [6.0,[[7,"","","","b",11.0,0,0]]],
+  [15.95,[[7,"공수의사 현장 예찰 일지(산업동물)","","c","m",18.0,1,0]]],
+  [13.15,[[7,"(공수의 → 시군)  ※공수의 근무상황 보고와 같이 제출","","c","m",9.0,0,0]]],
+  [13.15,[[1,"","","c","m",9.0,0,0],[1,"","","c","m",9.0,0,0],[1,"","","c","m",9.0,0,0],[1,"","","c","m",9.0,0,0],[1,"","","c","m",9.0,0,0],[1,"","","c","m",9.0,0,0],[1,"","","c","m",9.0,0,0]]],
+  [13.15,[[3,"▣ 농장 기본 정보","","","m",11.0,1,0],[2,"예찰일자","","c","m",11.0,1,0],[2,"{date}","","c","m",11.0,1,0]]],
+  [30.0,[[1,"농장명","lrtb","c","m",11.0,1,0],[2,"{farm}","lrtb","c","m",11.0,1,0],[1,"대표자","lrtb","c","m",11.0,1,0],[3,"{owner}","lrtb","c","m",11.0,1,0]]],
+  [30.0,[[1,"농장주소","lrtb","c","m",11.0,1,0],[6,"{address}","lrtb","l","m",11.0,1,0]]],
+  [30.0,[[1,"사육축종","lrtb","c","m",11.0,1,0],[2,"{species}","lrtb","c","m",11.0,1,0],[1,"사육두수","lrtb","c","m",11.0,1,0],[2,"{scale}","lrtb","r","m",11.0,1,0],[1,"수","lrtb","c","m",11.0,0,0]]],
+  [28.9,[[7,"▣ 농장 방문 목적 ( V 표시)","l","l","b",11.0,1,0]]],
+  [19.9,[[1,"예찰","lrtb","c","m",11.0,1,0],[1,"V","lrtb","c","m",11.0,1,0],[1,"채혈","lrtb","c","m",11.0,1,0],[1,"","lrtb","c","m",11.0,0,0],[1,"접종","lrtb","c","m",11.0,1,0],[1,"","lrtb","c","m",11.0,0,0],[1,"기타","lrtb","c","m",11.0,1,0]]],
+  [30.6,[[7,"▣ 현장 예찰 사항 (임상증상)","l","l","b",11.0,1,0]]],
+  [30.0,[[1,"임상증상","lrtb","c","m",11.0,1,0],[6,"①호흡기  ②소화기  ③신경계  ④폐사  ⑤유산  ⑥기타(           )  ⑦이상무","lrtb","l","m",11.0,0,0]]],
+  [55.9,[[1,"백신접종(소)","lrtb","c","m",11.0,1,0],[6,"①구제역(상반기·하반기, 접종: 자가 · 수의사) ②탄저·기종저 \n③아까바네 ④IBR ⑤BVD ⑥설사병(로타, 코로나 등) ⑦유방염 \n⑧부제병 ⑨버짐병 ⑩광견병 ⑪보툴리즘 ⑫기타(            )","lrtb","l","m",11.0,0,1]]],
+  [41.45,[[1,"백신접종\n(돼지)","lrtb","c","m",11.0,1,0],[6,"①구제역(비육: 일령, 일령, 모돈 회/년) ②돼지열병·단독혼합 ③일본뇌염 \n④PED ⑤돼지써코 ⑥ PRRS ⑦ 기타(               )","lrt","l","m",11.0,0,1]]],
+  [37.15,[[1,"백신접종\n(닭)","ltb","c","m",11.0,1,0],[1,"①뉴캐슬","ltb","","m",11.0,0,0],[1,"②감보로 ","tb","","m",11.0,0,0],[1," ③저병원성AI  ","tb","","m",11.0,0,0],[1,"④뉴모바이러스 ","tb","","m",11.0,0,0],[2," ⑤기타(전염성기관지염)","rtb","c","m",11.0,0,0]]],
+  [30.0,[[1,"예찰의견","lrtb","c","m",11.0,1,0],[6,"{content}","lrb","l","m",11.0,1,0]]],
+  [30.0,[[7,"▣ 농장 기본 방역","l","l","m",11.0,1,0]]],
+  [30.0,[[7,"기본 방역 사항","lrt","l","m",11.0,1,0]]],
+  [30.0,[[7,"① 농장출입구 소독·방역시설 설치 및 운영여부","lrt","l","m",11.0,0,0]]],
+  [30.0,[[7,"   - 소독시설 형태 : U자형     - 소독시설 작동여부 : 작동     - 미작동 시 지도·조치 : 유","lrb","l","m",11.0,0,0]]],
+  [30.0,[[7,"② 외부인 출입통제 및 소독 실시여부 (사용 소독약 : 노프러블럼)","lr","l","m",11.0,0,0]]],
+  [30.0,[[7,"   - 외부인 출입통제 안내 : 여     - 발판소독조 설치 여부 : 여","lr","l","m",11.0,0,0]]],
+  [30.0,[[7,"   - 농장 출입기록부 및 소독기록부 비치·기록 여부 : 여","lr","l","m",11.0,0,0]]],
+  [30.0,[[7,"   - 농장에 사람·가축·차량출입 전·후 소독실시여부 : 여","lrb","l","m",11.0,0,0]]],
+  [6.0,[[1,"","","","b",11.0,0,0],[1,"","","","b",11.0,0,0],[1,"","","","b",11.0,0,0],[1,"","","","b",11.0,0,0],[1,"","","","b",11.0,0,0],[1,"","","","b",11.0,0,0],[1,"","","","b",11.0,0,0]]],
+  [15.95,[[7,"▣ 제출자                         대한동물병원          최동명          (서명)","","l","m",14.0,1,0]]]
 ];
 
+function vetDiaryBlueItems(species) {
+  const hit = VD_BLUE_ITEMS.find(x => x.test.test(species || ''));
+  return hit ? hit.items : [];
+}
+
 function buildVetDiaryHtml(e) {
+  const S = VD_SCALE;
+  const widths = VD_COL_CHARS.map(c => Math.round(c * 7 * S));
+  const esc = t => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const fill = {
+    '{date}': (e.visitDate || '').replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$1년 $2월 $3일'),
+    '{farm}': e.farmName || '', '{owner}': e.owner || '', '{address}': e.address || '', '{species}': e.species || '',
+    '{scale}': e.scale != null ? Number(e.scale).toLocaleString() : '', '{content}': e.content || '',
+  };
+  const blue = vetDiaryBlueItems(e.species);
+  const align = { c: 'center', l: 'left', r: 'right' };
+  let col = 0;
+  const trs = VD_ROWS.map(([h, cells], ri) => {
+    col = 0;
+    const tds = cells.map(([span, text, bd, ha, va, sz, bold, serif]) => {
+      const startCol = col; col += span;
+      const isVaccine = ri === 14 && startCol >= 1;               // 15행: 백신접종(닭) 항목 ①~⑤
+      const itemNo = isVaccine ? startCol : 0;                    // B=1(①) C=2 D=3 E=4 F=5(⑤)
+      const style = [
+        bd.includes('l') ? 'border-left:0.75pt solid #000' : '', bd.includes('r') ? 'border-right:0.75pt solid #000' : '',
+        bd.includes('t') ? 'border-top:0.75pt solid #000' : '', bd.includes('b') ? 'border-bottom:0.75pt solid #000' : '',
+        `text-align:${align[ha] || 'left'}`, `vertical-align:${va === 'm' ? 'middle' : 'bottom'}`,
+        `font-size:${(sz * S).toFixed(2)}pt`, bold ? 'font-weight:700' : '',
+        serif ? 'font-family:"HYMyeongJo","휴먼명조","Batang","바탕",serif' : '',
+        itemNo && blue.includes(itemNo) ? `color:${VD_BLUE}` : '',
+        ri === 14 ? 'white-space:pre;overflow:visible' : '',
+      ].filter(Boolean).join(';');
+      const body = fill[text] !== undefined ? esc(fill[text]) : esc(text);
+      return `<td${span > 1 ? ` colspan="${span}"` : ''} style="${style}">${body}</td>`;
+    }).join('');
+    return `<tr style="height:${(h * S).toFixed(2)}pt">${tds}</tr>`;
+  }).join('');
   return `
-  <div class="print-page">
-    <div class="ps-title">공수의사 현장 예찰 일지(산업동물)</div>
-    <div class="ps-request" style="text-align:right;text-indent:0">(공수의 → 시군) ※공수의 근무상황 보고와 같이 제출</div>
-
-    <div class="ps-section">▣ 농장 기본 정보</div>
-    <table class="ps-head">
-      <tr><td class="lbl">농장명</td><td>${e.farmName || ''}</td><td class="lbl2">예찰일자</td><td>${e.visitDate}</td></tr>
-      <tr><td class="lbl">대표자</td><td>${e.owner || ''}</td><td class="lbl2">사육축종</td><td>${e.species || '-'}</td></tr>
-      <tr><td class="lbl">농장주소</td><td colspan="3">${e.address || '-'}</td></tr>
-      <tr><td class="lbl">사육두수</td><td colspan="3">${e.scale != null ? Number(e.scale).toLocaleString() + ' 수' : '-'}</td></tr>
-    </table>
-
-    <div class="ps-section">▣ 농장 방문 목적</div>
-    <table class="ps-head"><tr><td class="lbl">예찰 [■]</td><td>채혈 [ ]</td><td>접종 [ ]</td><td>기타 [ ]</td></tr></table>
-
-    <div class="ps-section">▣ 현장 예찰 사항 / 예찰의견</div>
-    <table class="ps-head"><tr><td colspan="4">${e.content || '-'}</td></tr></table>
-
-    <div class="ps-section">▣ 농장 기본 방역 확인 사항</div>
-    <div class="ps-foot-note">${VET_DIARY_CHECKLIST.join('<br>')}</div>
+  <div class="print-page vd-page">
+    <div class="vd-sheet" style="width:${widths.reduce((t, w) => t + w, 0)}px;color:${VD_TEXT_COLOR}">
+      <table class="vd-table"><colgroup>${widths.map(w => `<col style="width:${w}px">`).join('')}</colgroup>${trs}</table>
+    </div>
   </div>`;
 }
 

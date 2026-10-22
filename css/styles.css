@@ -607,6 +607,12 @@ body { display: block !important; height: auto !important; overflow: visible !im
 .vp-table td.vp-sm { font-size: 0.917em; }
 .vp-table td.vp-nw { white-space: nowrap; padding: 0; }
 
+/* 공수의 보고서 — 예찰일지(첨부 「예찰일지.xlsx」, 원본 인쇄 여백 0.5인치·95%). 크기는 JS에서 같은 배율로 준다. */
+.vd-page { width: auto; }
+.vd-sheet { margin: 2.7mm 0 0 2.7mm; font-family: "Malgun Gothic", "맑은 고딕", sans-serif; }
+.vd-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.vd-table td { border: 0; padding: 0 3px; line-height: 1.25; white-space: pre-wrap; overflow-wrap: anywhere; }
+
 .no-print { display: none !important; }
 }
 #print-area { display: none; }
