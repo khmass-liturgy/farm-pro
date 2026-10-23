@@ -198,6 +198,44 @@ async function handleFetchCustoms(req, res) {
   }
 }
 
+// ─── KREI 농업관측센터 육계 월보 중계 (pb 저장소의 GitHub Actions용) ──────────
+// pb의 「육용종계 사육현황」 수집이 KREI 농업관측센터(aglook.krei.re.kr) 육계 월보 PDF를 받는다.
+// GitHub Actions(미국)에서 직접 받히지 않을 때만 쓰는 우회 경로다. RELAY_SECRET 인증 +
+// 육계 월보 목록(uObserveMonth/OVR0000000014)과 그 첨부 다운로드(download/{id}/ORGTEXT_FILE)만
+// 허용하고, 리다이렉트로 다른 호스트로 넘어가면 거부한다.
+const KREI_HOST = 'aglook.krei.re.kr';
+const KREI_ALLOWED_PATH = /^\/main\/uObserveMonth\/OVR0000000014(\/download\/\d+\/ORGTEXT_FILE)?$/;
+const KREI_MAX_BYTES = 12 * 1024 * 1024;
+
+async function handleFetchKrei(req, res) {
+  const target = new URL(req.url, 'http://localhost').searchParams.get('url') || '';
+  let u;
+  try { u = new URL(target); } catch { return sendJson(res, 400, { error: 'url이 올바르지 않습니다.' }); }
+  if (u.protocol !== 'https:' || u.hostname !== KREI_HOST || u.port || !KREI_ALLOWED_PATH.test(u.pathname)) {
+    return sendJson(res, 403, { error: '허용되지 않은 주소입니다.' });
+  }
+  try {
+    const upstream = await fetch(u, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; pb-krei-relay/1.0)', 'Accept-Language': 'ko-KR,ko;q=0.9' },
+      signal: AbortSignal.timeout(45_000),
+    });
+    if (new URL(upstream.url).hostname !== KREI_HOST) {
+      return sendJson(res, 502, { error: '다른 호스트로 리다이렉트되어 거부했습니다.' });
+    }
+    const declared = Number(upstream.headers.get('content-length') || 0);
+    if (declared > KREI_MAX_BYTES) return sendJson(res, 502, { error: '응답이 너무 큽니다.' });
+    const buf = Buffer.from(await upstream.arrayBuffer());
+    if (buf.length > KREI_MAX_BYTES) return sendJson(res, 502, { error: '응답이 너무 큽니다.' });
+    res.writeHead(upstream.status, {
+      'Content-Type': upstream.headers.get('content-type') || 'application/octet-stream',
+      'Content-Length': buf.length,
+    });
+    return res.end(buf);
+  } catch (e) {
+    return sendJson(res, 502, { error: `KREI 요청 실패: ${e instanceof Error ? e.message : String(e)}` });
+  }
+}
+
 const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/health') return sendJson(res, 200, { ok: true });
 
@@ -205,13 +243,14 @@ const server = http.createServer(async (req, res) => {
   const isSms = req.method === 'POST' && req.url === '/send-sms';
   const isMafra = req.method === 'GET' && path === '/fetch-mafra';
   const isCustoms = req.method === 'GET' && path === '/fetch-customs';
-  if (!isSms && !isMafra && !isCustoms) return sendJson(res, 404, { error: 'not found' });
+  const isKrei = req.method === 'GET' && path === '/fetch-krei';
+  if (!isSms && !isMafra && !isCustoms && !isKrei) return sendJson(res, 404, { error: 'not found' });
 
   const auth = req.headers['authorization'] || '';
   if (auth !== `Bearer ${RELAY_SECRET}`) return sendJson(res, 401, { error: '인증되지 않은 요청입니다.' });
 
   try {
-    await (isSms ? handleSendSms : isCustoms ? handleFetchCustoms : handleFetchMafra)(req, res);
+    await (isSms ? handleSendSms : isCustoms ? handleFetchCustoms : isKrei ? handleFetchKrei : handleFetchMafra)(req, res);
   } catch (e) {
     sendJson(res, 500, { error: e instanceof Error ? e.message : String(e) });
   }

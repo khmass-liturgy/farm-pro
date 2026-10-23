@@ -213,6 +213,18 @@ pb 저장소의 「계란·닭고기 수입 통계 수집」이 관세청 「품
 - **코드 반영**: 서버의 `/opt/sms-relay/server.js`를 이 저장소 최신으로 바꾸고 `sudo systemctl restart sms-relay`
 - 문자 발송과는 독립적이라 이 경로가 실패해도 문자 발송에는 영향이 없다.
 
+## 추가 경로: `GET /fetch-krei` (pb 저장소용)
+
+pb의 「육용종계 사육현황」 수집(`scripts/fetch_broiler_breeder.py`)이 KREI 농업관측센터(aglook.krei.re.kr)의
+「축산관측 육계」 월보 PDF를 받는다. GitHub(미국)에서 직접 받히면 이 경로는 쓰이지 않고, 직접 접속이 막혔을 때만 우회한다.
+
+- 인증: `Authorization: Bearer <RELAY_SECRET>` (문자 발송과 같음)
+- 허용 주소: `https://aglook.krei.re.kr/main/uObserveMonth/OVR0000000014`(육계 월보 목록)와 그 첨부
+  `…/OVR0000000014/download/{id}/ORGTEXT_FILE`(PDF)뿐. 다른 호스트·경로·리다이렉트는 거부(403/502).
+- 사용 예: `GET /fetch-krei?url=https%3A%2F%2Faglook.krei.re.kr%2Fmain%2FuObserveMonth%2FOVR0000000014`
+- **코드 반영**: 서버의 `/opt/sms-relay/server.js`를 이 저장소 최신으로 바꾸고 `sudo systemctl restart sms-relay`
+- 문자 발송과는 독립적이라 이 경로가 실패해도 문자 발송에는 영향이 없다.
+
 ## 운영 중 참고
 
 - **코드 수정 후**: `/opt/sms-relay/server.js`를 고치고 `sudo systemctl restart sms-relay`
