@@ -626,7 +626,7 @@ body { display: block !important; height: auto !important; overflow: visible !im
 .vw-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
 .vw-table td { border: 0; padding: 0 2px; line-height: 1.25; white-space: pre-line; overflow-wrap: normal; word-break: keep-all; }
 .vw-sign { position: relative; display: inline-block; }
-.vw-stamp { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.vw-stamp { position: absolute; left: 50%; top: -18px; transform: translateX(-50%); } /* 4cm 도장: 윗변을 표 아래 여백 줄에 맞추고, (서명) 글자가 도장 안쪽 위쪽에 깔리게 한다 */
 
 /* 공수의 보고서 — 일자별 근무내용(첨부 「일자별근무.xlsx」: 상단 박스 + [관련자료]. 원본 인쇄 여백 좌 0.43인치·상 0.47인치, 가로 가운데). */
 .vy-page { width: auto; }

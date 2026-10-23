@@ -656,6 +656,25 @@ drop trigger if exists trg_vet_office_info_updated_at on vet_office_info;
 create trigger trg_vet_office_info_updated_at before update on vet_office_info
   for each row execute function set_updated_at();
 
+-- 공수의 보고서 월별 저장본: 근무상황보고서·예찰내역·예찰일지·출장일지·일자별 근무내용(청구서 제외)을
+-- 인쇄할 때마다 (년월, 종류)별로 한 벌씩 저장한다. html은 인쇄된 보고서 본문이고, meta는 다시 채울 값
+-- (근무상황보고서의 4. 기타실적 선택 등)과 표시용 메모다.
+create table if not exists vet_saved_reports (
+  id uuid primary key default gen_random_uuid(),
+  ym text not null,
+  kind text not null check (kind in ('work','patrol','diary','trip','daily')),
+  html text not null,
+  meta jsonb not null default '{}'::jsonb,
+  saved_by_email text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (ym, kind)
+);
+
+drop trigger if exists trg_vet_saved_reports_updated_at on vet_saved_reports;
+create trigger trg_vet_saved_reports_updated_at before update on vet_saved_reports
+  for each row execute function set_updated_at();
+
 -- 처방전용 제품 마스터 초기 데이터 (이미 같은 이름의 제품이 있으면 건너뜀)
 insert into prescription_products (name, ingredient, withdrawal_days, purpose, dose_amount, category, usage_method)
 select v.name, v.ingredient, v.withdrawal_days, v.purpose, v.dose_amount, v.category, v.usage_method
@@ -746,7 +765,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['farms','drugs','vaccines','feeds','programs','batches','medication_logs','prescription_products','prescriptions','clinical_assessments','rodent_assessments','pre_shipment_inspections','move_permits','carriers','hen_shipments','vet_report_entries','vet_office_info']
+  foreach t in array array['farms','drugs','vaccines','feeds','programs','batches','medication_logs','prescription_products','prescriptions','clinical_assessments','rodent_assessments','pre_shipment_inspections','move_permits','carriers','hen_shipments','vet_report_entries','vet_office_info','vet_saved_reports']
   loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists authenticated_full_access on %I', t);

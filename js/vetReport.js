@@ -515,13 +515,21 @@ async function deleteVetWorkEtcSaved(i) {
   renderVetWorkEtc(keep);
 }
 
+let vetWorkEtcYm = null;   // 기타실적 선택을 마지막으로 그려 둔 년월
+
 function renderVetWorkReportSummary() {
   const monthEl = document.getElementById('vetwork-month');
   if (!monthEl.value) monthEl.value = vetDefaultYm();
-  if (!vetWorkEtcBuilt) renderVetWorkEtc();
+  // 달을 바꾸면 그 달에 저장해 둔 4. 기타실적 선택을 되살린다(저장본이 없으면 기본 선택).
+  const ymNow = monthEl.value;
+  if (!vetWorkEtcBuilt || vetWorkEtcYm !== ymNow) {
+    renderVetWorkEtc(vetSavedFor(ymNow, 'work')?.meta?.etc);
+    vetWorkEtcYm = ymNow;
+  }
   const { count, scaleSum } = vetMonthStats(monthEl.value);
   document.getElementById('vetwork-summary').textContent =
     `${vetMonthLabel(monthEl.value)} 예찰 ${count}건 · 비고(수수) ${scaleSum.toLocaleString()} — 입력대장에서 가져옵니다.`;
+  renderVetSavedPanel('work', ymNow);
 }
 
 function buildVetWorkReportHtml(ym, etc) {
@@ -536,7 +544,7 @@ function buildVetWorkReportHtml(ym, etc) {
   };
   etc.forEach((t, i) => { fill[`{etc${i}}`] = t; });
   const align = { c: 'center', l: 'left', r: 'right' };
-  const stampSize = 72; // 첨부 PDF의 도장 크기(약 2cm)에 맞춤
+  const stampSize = 151; // 4cm(원본 도장 크기). 가운데를 (서명)에 맞춰 얹는다
   const trs = WR_ROWS.map(([h, cells]) => {
     const tds = cells.map(([span, rspan, text, bd, ha, va, sz, bold, font]) => {
       const style = [
@@ -577,7 +585,9 @@ async function printVetWorkReport() {
     try { await saveVetWorkEtcOptions(options); renderVetWorkEtc(etc); }
     catch (e) { alert('직접 입력한 내용을 저장하지 못했습니다(인쇄는 계속합니다).\n' + e.message); }
   }
-  document.getElementById('print-area').innerHTML = buildVetWorkReportHtml(ym, etc);
+  const html = buildVetWorkReportHtml(ym, etc);
+  document.getElementById('print-area').innerHTML = html;
+  await vetSaveReport(ym, 'work', html, { etc });
   setTimeout(() => window.print(), 200);
 }
 
@@ -702,6 +712,7 @@ function renderVetPatrolSummary() {
   const pages = halves.reduce((s, h) => s + (h.entries.length ? Math.ceil(h.entries.length / VP_PAGE_ROWS) : 0), 0);
   document.getElementById('vetpatrol-summary').textContent =
     `${vetMonthLabel(monthEl.value)} — 상반기(1~15일) ${halves[0].entries.length}건 · 하반기(16일~) ${halves[1].entries.length}건 → 모두 ${pages}쪽으로 인쇄됩니다. 내용은 입력대장에서 가져옵니다.`;
+  renderVetSavedPanel('patrol', monthEl.value);
 }
 
 function buildVetPatrolPageHtml(half, chunk, startNo) {
@@ -738,7 +749,7 @@ function buildVetPatrolPageHtml(half, chunk, startNo) {
   </div>`;
 }
 
-function printVetPatrol() {
+async function printVetPatrol() {
   const ym = document.getElementById('vetpatrol-month').value || vetDefaultYm();
   const pages = [];
   vetPatrolHalves(ym).forEach(h => {
@@ -747,7 +758,9 @@ function printVetPatrol() {
     }
   });
   if (!pages.length) { alert('선택한 달에 방문 기록이 없습니다.'); return; }
-  document.getElementById('print-area').innerHTML = pages.join('');
+  const html = pages.join('');
+  document.getElementById('print-area').innerHTML = html;
+  await vetSaveReport(ym, 'patrol', html, { note: `${pages.length}쪽` });
   setTimeout(() => window.print(), 200);
 }
 
@@ -769,6 +782,7 @@ function renderVetDiaryList() {
   if (!monthEl.value) monthEl.value = vetDefaultYm();
   const list = vetEntriesForYm(monthEl.value);
   const liveIds = new Set(list.map(e => e.id));
+  renderVetSavedPanel('diary', monthEl.value);
   vetDiarySelectedIds.forEach(id => { if (!liveIds.has(id)) vetDiarySelectedIds.delete(id); });
 
   const printBtn = document.getElementById('vetdiary-print-btn');
@@ -880,10 +894,12 @@ function buildVetDiaryHtml(e) {
   </div>`;
 }
 
-function printSelectedVetDiary() {
+async function printSelectedVetDiary() {
   const list = load('vetReportEntries').filter(e => vetDiarySelectedIds.has(e.id));
   if (!list.length) { alert('인쇄할 방문 기록을 먼저 체크해주세요.'); return; }
-  document.getElementById('print-area').innerHTML = list.map(buildVetDiaryHtml).join('');
+  const html = list.map(buildVetDiaryHtml).join('');
+  document.getElementById('print-area').innerHTML = html;
+  await vetSaveReport(document.getElementById('vetdiary-month').value || vetDefaultYm(), 'diary', html, { note: `${list.length}건` });
   setTimeout(() => window.print(), 200);
 }
 
@@ -903,6 +919,7 @@ function renderVetTripSummary() {
   const { count, scaleSum } = vetMonthStats(monthEl.value);
   document.getElementById('vettrip-summary').textContent =
     `${vetMonthLabel(monthEl.value)} 출장 ${count}일 · 총 두수 ${scaleSum.toLocaleString()} — 내용은 입력대장에서 가져옵니다.`;
+  renderVetSavedPanel('trip', monthEl.value);
 }
 
 function buildVetTripHtml(ym) {
@@ -969,10 +986,12 @@ function buildVetTripHtml(ym) {
   </div>`;
 }
 
-function printVetTrip() {
+async function printVetTrip() {
   const ym = document.getElementById('vettrip-month').value || vetDefaultYm();
   if (!vetMonthStats(ym).count) { alert('선택한 달에 방문 기록이 없습니다.'); return; }
-  document.getElementById('print-area').innerHTML = buildVetTripHtml(ym);
+  const html = buildVetTripHtml(ym);
+  document.getElementById('print-area').innerHTML = html;
+  await vetSaveReport(ym, 'trip', html, {});
   setTimeout(() => window.print(), 200);
 }
 
@@ -1005,6 +1024,7 @@ function renderVetDaily() {
   if (!monthEl.value) monthEl.value = vetDefaultYm();
   const list = vetEntriesForYm(monthEl.value);
   const liveIds = new Set(list.map(e => e.id));
+  renderVetSavedPanel('daily', monthEl.value);
   vetDailySelectedIds.forEach(id => { if (!liveIds.has(id)) vetDailySelectedIds.delete(id); });
   document.getElementById('vetdaily-print-btn').disabled = vetDailySelectedIds.size === 0;
   const tbody = document.getElementById('vetdaily-tbody');
@@ -1171,8 +1191,13 @@ function buildVetDailyHtml(e, urls) {
 async function printVetDaily(ids) {
   const entries = load('vetReportEntries').filter(e => ids.includes(e.id)).sort((a, b) => a.visitDate.localeCompare(b.visitDate));
   if (!entries.length) { alert('인쇄할 방문 기록이 없습니다.'); return; }
-  const urls = await vetPhotoUrls(entries.flatMap(e => e.photos || []));
+  const paths = entries.flatMap(e => e.photos || []);
+  const urls = await vetPhotoUrls(paths);
   document.getElementById('print-area').innerHTML = entries.map(e => buildVetDailyHtml(e, urls)).join('');
+  // 저장본에는 만료되는 임시 주소 대신 사진 경로를 적어 두고, 불러올 때 새 주소로 바꾼다.
+  const placeholders = Object.fromEntries(paths.map(p => [p, VET_SAVED_PHOTO_PREFIX + p]));
+  await vetSaveReport(document.getElementById('vetdaily-month').value || vetDefaultYm(), 'daily',
+    entries.map(e => buildVetDailyHtml(e, placeholders)).join(''), { note: `${entries.length}일` });
   // 사진이 다 불려온 뒤에 인쇄 창을 연다(안 그러면 빈 칸으로 인쇄된다).
   const imgs = [...document.querySelectorAll('#print-area img')];
   await Promise.race([
@@ -1191,4 +1216,75 @@ function printAllVetDaily() {
   const list = vetEntriesForYm(document.getElementById('vetdaily-month').value || vetDefaultYm());
   if (!list.length) { alert('선택한 달에 방문 기록이 없습니다.'); return; }
   return printVetDaily(list.map(e => e.id));
+}
+
+// ─── 월별 보고서 저장/불러오기 ───────────────────────────────────────────────
+// 근무상황보고서·예찰내역·예찰일지·출장일지·일자별 근무내용(청구서 제외)은 인쇄할 때마다
+// 그 달의 완성된 보고서를 vet_saved_reports에 (년월, 종류)별로 한 벌씩 저장한다. 다음에 그 달을 고르면
+// "저장본 불러와 인쇄"로 제출했던 모습 그대로 다시 뽑을 수 있다(입력대장이나 사무실 정보가 나중에
+// 바뀌어도 저장본은 그대로). 인쇄 본문(html)은 용량이 커서 부팅 때 읽는 목록에는 싣지 않고,
+// 불러올 때만 따로 가져온다(js/supabaseClient.js의 vetSavedReports.columns).
+const VET_SAVED_KINDS = {
+  work: '근무상황보고서', patrol: '예찰내역', diary: '예찰일지', trip: '출장일지', daily: '일자별 근무내용',
+};
+const VET_SAVED_PHOTO_PREFIX = 'vetphoto:'; // 일자별 근무내용의 사진: 임시 주소는 만료되므로 경로를 적어 두고 불러올 때 새로 받는다
+
+function vetSavedFor(ym, kind) {
+  return load('vetSavedReports').find(r => r.ym === ym && r.kind === kind) || null;
+}
+
+async function vetSaveReport(ym, kind, html, meta) {
+  try {
+    const prev = vetSavedFor(ym, kind);
+    const data = { ym, kind, html, meta: meta || {}, savedByEmail: await currentUserEmail() };
+    if (prev) await updateRow('vetSavedReports', prev.id, data);
+    else await insertRow('vetSavedReports', data);
+  } catch (e) {
+    console.warn('[farm-pro] 월별 보고서 저장 실패(인쇄는 계속됨):', e);
+    alert('이 달 보고서를 저장하지 못했습니다(인쇄는 계속합니다).\n' + e.message);
+  }
+  renderVetSavedPanel(kind, ym);
+}
+
+function renderVetSavedPanel(kind, ym) {
+  const box = document.getElementById(`vet-saved-${kind}`);
+  if (!box) return;
+  const saved = ym ? vetSavedFor(ym, kind) : null;
+  const when = saved?.updatedAt ? new Date(saved.updatedAt).toLocaleString('ko-KR', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+  box.style.cssText = 'display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;padding:8px 12px;border:1px dashed var(--border);border-radius:6px;font-size:13px';
+  box.innerHTML = saved
+    ? `<span>💾 ${vetMonthLabel(ym)} ${VET_SAVED_KINDS[kind]} 저장본 — ${when}${saved.meta?.note ? ` · ${saved.meta.note}` : ''}</span>
+       <button class="btn btn-outline btn-sm" onclick="openVetSaved('${kind}', '${ym}')">저장본 불러와 인쇄</button>
+       <button class="btn btn-danger btn-sm" onclick="deleteVetSaved('${kind}', '${ym}')">저장본 삭제</button>`
+    : `<span class="text-muted">💾 ${vetMonthLabel(ym)} ${VET_SAVED_KINDS[kind]} 저장본 없음 — 인쇄하면 이 달 보고서가 자동으로 저장됩니다.</span>`;
+}
+
+async function openVetSaved(kind, ym) {
+  const saved = vetSavedFor(ym, kind);
+  if (!saved) { alert('저장본이 없습니다.'); return; }
+  let html;
+  try {
+    const { data, error } = await sb.from('vet_saved_reports').select('html').eq('id', saved.id).single();
+    if (error) throw error;
+    html = data.html;
+  } catch (e) { alert('저장본을 불러오지 못했습니다: ' + e.message); return; }
+  if (html.includes(`src="${VET_SAVED_PHOTO_PREFIX}`)) {
+    const paths = [...new Set([...html.matchAll(new RegExp(`src="${VET_SAVED_PHOTO_PREFIX}([^"]+)"`, 'g'))].map(m => m[1]))];
+    const urls = await vetPhotoUrls(paths);
+    html = html.replace(new RegExp(`src="${VET_SAVED_PHOTO_PREFIX}([^"]+)"`, 'g'), (_, p) => `src="${urls[p] || ''}"`);
+  }
+  document.getElementById('print-area').innerHTML = html;
+  const imgs = [...document.querySelectorAll('#print-area img')];
+  await Promise.race([
+    Promise.all(imgs.map(img => (img.complete ? null : new Promise(res => { img.onload = img.onerror = res; })))),
+    new Promise(res => setTimeout(res, 20000)),
+  ]);
+  setTimeout(() => window.print(), 200);
+}
+
+async function deleteVetSaved(kind, ym) {
+  const saved = vetSavedFor(ym, kind);
+  if (!saved || !confirm(`${vetMonthLabel(ym)} ${VET_SAVED_KINDS[kind]} 저장본을 삭제할까요?\n(입력대장의 방문 기록은 그대로 남습니다)`)) return;
+  try { await deleteRow('vetSavedReports', saved.id); } catch (e) { alert('삭제 실패: ' + e.message); return; }
+  renderVetSavedPanel(kind, ym);
 }

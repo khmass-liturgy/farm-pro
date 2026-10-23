@@ -8,7 +8,7 @@
 
 const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 
-const STORE = { farms: [], drugs: [], vaccines: [], feeds: [], programs: [], batches: [], medicationLogs: [], rxProducts: [], prescriptions: [], clinicalAssessments: [], rodentAssessments: [], preShipments: [], movePermits: [], carriers: [], henShipments: [], vetReportEntries: [], vetOfficeInfo: [] };
+const STORE = { farms: [], drugs: [], vaccines: [], feeds: [], programs: [], batches: [], medicationLogs: [], rxProducts: [], prescriptions: [], clinicalAssessments: [], rodentAssessments: [], preShipments: [], movePermits: [], carriers: [], henShipments: [], vetReportEntries: [], vetOfficeInfo: [], vetSavedReports: [] };
 
 // 현재 편집 중인 각 엔티티의 id. 여러 feature 파일이 공유하는 전역 상태라 여기서 한 번만 선언한다.
 const editingId = { farm: null, drug: null, vaccine: null, feed: null, program: null, batch: null, medicationLog: null, rxProduct: null, prescription: null, clinicalAssessment: null, rodentAssessment: null, preShipment: null, movePermit: null, henShipment: null, vetReportEntry: null };
@@ -363,6 +363,17 @@ const TABLES = {
       };
     },
   },
+  // 월별 보고서 저장본(인쇄 본문 html은 용량이 커서 목록에는 싣지 않는다 — columns로 제외하고 불러올 때만 따로 읽는다)
+  vetSavedReports: {
+    table: 'vet_saved_reports', orderBy: 'updated_at', ascending: false,
+    columns: 'id,ym,kind,meta,saved_by_email,updated_at',
+    toRow(o) {
+      return { ym: o.ym, kind: o.kind, html: o.html, meta: o.meta || {}, saved_by_email: o.savedByEmail || null };
+    },
+    fromRow(r) {
+      return { id: r.id, ym: r.ym, kind: r.kind, meta: r.meta || {}, savedByEmail: r.saved_by_email, updatedAt: r.updated_at };
+    },
+  },
   // 단일 행(id=true)짜리 설정표라 orderBy는 의미가 없지만 load()/refreshAllStores()가
   // 공통으로 거치는 select 경로를 그대로 타야 해서 다른 테이블과 같은 모양을 갖춘다.
   vetOfficeInfo: {
@@ -400,7 +411,7 @@ function load(key) {
 
 async function refreshOne(key) {
   const cfg = TABLES[key];
-  const { data, error } = await sb.from(cfg.table).select('*').order(cfg.orderBy, { ascending: cfg.ascending });
+  const { data, error } = await sb.from(cfg.table).select(cfg.columns || '*').order(cfg.orderBy, { ascending: cfg.ascending });
   if (error) throw error;
   STORE[key] = (data || []).map(cfg.fromRow);
   return STORE[key];
