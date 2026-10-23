@@ -393,6 +393,9 @@ function downloadVetEntryTemplate() {
 // 원본 인쇄는 99%·가로 가운데 정렬이라 열 너비·줄 높이·글자 크기에 WR_SCALE을 곱했다.
 const WR_COL_CHARS = [12.75, 10.75, 11.62, 15.5, 8.5, 10.75, 8.5];
 const WR_SCALE = 0.99;
+// 첨부 PDF(공수의보고서-근무상황보고서.pdf)처럼 표 가로폭을 넓힌다: PDF의 표 폭 493pt ÷ 원본 환산 폭 407pt.
+// 글자 크기·줄 높이는 그대로 두고 열 너비에만 곱한다(업무명 칸이 넓어져 "산란성계 살충제검사 샘플링"이 한 줄에 들어가 두 줄로 나온다).
+const WR_WIDTH_SCALE = 1.21;
 const WR_DEFAULT_ROW_PT = 13.5;
 const WR_FONTS = [
   '"GulimChe","굴림체","Gulim","Malgun Gothic",sans-serif',
@@ -525,7 +528,7 @@ function buildVetWorkReportHtml(ym, etc) {
   const S = WR_SCALE;
   const o = vetOfficeInfo();
   const { count, scaleSum } = vetMonthStats(ym);
-  const widths = WR_COL_CHARS.map(c => Math.round(c * 7 * S));
+  const widths = WR_COL_CHARS.map(c => Math.round(c * 7 * S * WR_WIDTH_SCALE));
   const esc = t => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
   const fill = {
     '{clinic}': o.clinicName || '대한동물병원', '{vet}': o.vetName || '최동명', '{license}': o.licenseNo || '8433',
@@ -533,6 +536,7 @@ function buildVetWorkReportHtml(ym, etc) {
   };
   etc.forEach((t, i) => { fill[`{etc${i}}`] = t; });
   const align = { c: 'center', l: 'left', r: 'right' };
+  const stampSize = 72; // 첨부 PDF의 도장 크기(약 2cm)에 맞춤
   const trs = WR_ROWS.map(([h, cells]) => {
     const tds = cells.map(([span, rspan, text, bd, ha, va, sz, bold, font]) => {
       const style = [
@@ -541,20 +545,19 @@ function buildVetWorkReportHtml(ym, etc) {
         `text-align:${align[ha] || 'left'}`, `vertical-align:${va === 'm' ? 'middle' : 'bottom'}`,
         `font-size:${(sz * S).toFixed(2)}pt`, bold ? 'font-weight:700' : '', `font-family:${WR_FONTS[font]}`,
         text === '{scale}' ? 'white-space:nowrap' : '',
+        text.startsWith('▣ 제출자') ? 'white-space:pre' : '', // 이름 사이 띄어쓰기를 그대로 살려 첨부 PDF처럼 벌려 찍는다
       ].filter(Boolean).join(';');
-      return `<td${span > 1 ? ` colspan="${span}"` : ''}${rspan > 1 ? ` rowspan="${rspan}"` : ''} style="${style}">${esc(fill[text] !== undefined ? fill[text] : text)}</td>`;
+      // 제출자 줄: "(서명)" 글자 위에 도장을 얹는다(글자가 도장 뒤로 가도록 도장 이미지를 글자 칸 안에서 가운데 정렬).
+      const inner = esc(fill[text] !== undefined ? fill[text] : text)
+        .replace('(서명)', `<span class="vw-sign">(서명)<img class="vw-stamp" src="img/vet-stamp-blue.png" alt="" style="width:${stampSize}px;height:${stampSize}px"></span>`);
+      return `<td${span > 1 ? ` colspan="${span}"` : ''}${rspan > 1 ? ` rowspan="${rspan}"` : ''} style="${style}">${inner}</td>`;
     }).join('');
     return `<tr style="height:${((h || WR_DEFAULT_ROW_PT) * S).toFixed(2)}pt">${tds}</tr>`;
   }).join('');
-  // 파란 도장: 원본 앵커(F열 왼쪽에서 33131EMU, 34행 위에서 231914EMU, 4cm 정사각형)
-  const stampLeft = widths.slice(0, 5).reduce((t, w) => t + w, 0) + 33131 / 9525 * S;
-  const stampTop = WR_ROWS.slice(0, 33).reduce((t, [h]) => t + (h || WR_DEFAULT_ROW_PT), 0) * S * 96 / 72 + 231914 / 9525 * S;
-  const stampSize = 1440180 / 9525 * S;
   return `
   <div class="print-page vw-page">
     <div class="vw-sheet" style="width:${widths.reduce((t, w) => t + w, 0)}px">
       <table class="vw-table"><colgroup>${widths.map(w => `<col style="width:${w}px">`).join('')}</colgroup>${trs}</table>
-      <img class="vw-stamp" src="img/vet-stamp-blue.png" alt="" style="left:${stampLeft.toFixed(1)}px;top:${stampTop.toFixed(1)}px;width:${stampSize.toFixed(1)}px;height:${stampSize.toFixed(1)}px">
     </div>
   </div>`;
 }

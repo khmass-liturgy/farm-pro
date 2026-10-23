@@ -622,10 +622,11 @@ body { display: block !important; height: auto !important; overflow: visible !im
 
 /* 공수의 보고서 — 근무상황보고서(첨부 「근무상황보고.xlsx」, 원본 인쇄 여백 좌 0.8인치·상 0.35인치, 가로 가운데). */
 .vw-page { width: auto; }
-.vw-sheet { position: relative; margin: 0 0 0 27mm; color: #000; }
+.vw-sheet { position: relative; margin: 0 0 0 12mm; color: #000; }
 .vw-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
 .vw-table td { border: 0; padding: 0 2px; line-height: 1.25; white-space: pre-line; overflow-wrap: normal; word-break: keep-all; }
-.vw-stamp { position: absolute; }
+.vw-sign { position: relative; display: inline-block; }
+.vw-stamp { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
 
 /* 공수의 보고서 — 일자별 근무내용(첨부 「일자별근무.xlsx」: 상단 박스 + [관련자료]. 원본 인쇄 여백 좌 0.43인치·상 0.47인치, 가로 가운데). */
 .vy-page { width: auto; }
