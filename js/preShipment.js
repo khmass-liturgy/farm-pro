@@ -91,6 +91,9 @@ function psNextDocNo(dateStr) {
 // 시료채취일을 바꾸면 그 날짜 기준으로 다시 제안한다. 편집 중이거나 사용자가 직접 적어둔
 // 상태면 건드리지 않는다(movePermit.js의 onMpPrefixInput과 같은 패턴).
 function onPsSampledAtChange() {
+  // 의뢰일자는 시료채취일과 같은 날로 맞춘다. 사용자가 의뢰일자를 직접 고쳤으면 그 값을 지키지 않고 건드리지 않는다.
+  const reqEl = document.getElementById('ps-requested-at');
+  if (reqEl.dataset.manualEdit !== '1') reqEl.value = document.getElementById('ps-sampled-at').value;
   const docNoEl = document.getElementById('ps-doc-no');
   if (editingId.preShipment || docNoEl.dataset.manualEdit === '1') return;
   docNoEl.value = psNextDocNo(document.getElementById('ps-sampled-at').value);
@@ -356,7 +359,10 @@ function openPreShipmentModal(id) {
   document.getElementById('ps-sampler-name').value = ps?.samplerName || sampler.name;
   document.getElementById('ps-sampler-phone').value = ps?.samplerPhone || sampler.phone;
   document.getElementById('ps-request-org').value = ps?.requestOrg || `${PS_REQUEST_ORG} ${RX_CLINIC.name} ${RX_CLINIC.vetName} 수의사`;
-  document.getElementById('ps-requested-at').value = ps?.requestedAt || today;
+  // 새로 만들 때는 시료채취일과 같은 날로 시작하고, 이미 저장된 건은 채취일과 다르게 저장돼 있을 때만 "직접 고친 값"으로 본다.
+  const reqEl = document.getElementById('ps-requested-at');
+  reqEl.value = ps?.requestedAt || document.getElementById('ps-sampled-at').value;
+  reqEl.dataset.manualEdit = ps && ps.requestedAt && ps.requestedAt !== ps.sampledAt ? '1' : '';
 
   psRowSeq = 0;
   document.getElementById('ps-rows-body').innerHTML = '';
