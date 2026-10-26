@@ -571,12 +571,12 @@ function psExcelTargets() {
 }
 
 function openPsExcelModal() {
-  const dates = load('preShipments').map(p => p.sampledAt).filter(Boolean).sort();
-  // 기본 구간: 가장 최근 채취일이 속한 달 전체
-  const last = dates[dates.length - 1] || new Date().toISOString().slice(0, 10);
-  const [y, m] = last.split('-');
-  document.getElementById('ps-xl-from').value = `${y}-${m}-01`;
-  document.getElementById('ps-xl-to').value = `${y}-${m}-${String(new Date(Number(y), Number(m), 0).getDate()).padStart(2, '0')}`;
+  // 기본 구간: 시작일은 오늘, 종료일은 오늘이 속한 달의 말일(날짜는 한국 시간 기준 로컬 날짜)
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const y = now.getFullYear(), m = now.getMonth() + 1;
+  document.getElementById('ps-xl-from').value = `${y}-${pad(m)}-${pad(now.getDate())}`;
+  document.getElementById('ps-xl-to').value = `${y}-${pad(m)}-${pad(new Date(y, m, 0).getDate())}`;
   updatePsExcelCount();
   openModal('modal-ps-excel');
 }
