@@ -21,7 +21,51 @@ const PS_SAMPLE_COLS = [
   { key: 'carcass', label: '폐사체' },
 ];
 
+// 품종: 축종에 따라 고정값을 기본으로 두고, 그 밖의 품종은 "직접입력"으로 적는다.
+// 축종 칸은 자유 입력이라 "육계"·"토종닭"·"산란계"가 포함돼 있는지로 판단한다.
+const PS_BREED_BY_SPECIES = [['육계', '아바에이커'], ['토종', '한협3호'], ['산란', '하이라인']];
+
 let psRowSeq = 0;
+
+function psFixedBreed(species) {
+  const hit = PS_BREED_BY_SPECIES.find(([key]) => (species || '').includes(key));
+  return hit ? hit[1] : '';
+}
+
+function psBreedValue() {
+  const sel = document.getElementById('ps-breed-sel');
+  return sel.value === 'f' ? sel.options[sel.selectedIndex].text : document.getElementById('ps-breed').value.trim();
+}
+
+// 품종 칸을 다시 그린다: 축종에 맞는 고정값이 있으면 그 값을 첫 선택지로, 아니면 직접입력만 둔다.
+// breed가 고정값과 같으면(또는 비어 있고 고정값이 있으면) 고정값을 고르고, 다르면 직접입력에 그 값을 채운다.
+function setPsBreed(breed) {
+  const fixed = psFixedBreed(document.getElementById('ps-species').value);
+  const sel = document.getElementById('ps-breed-sel');
+  const input = document.getElementById('ps-breed');
+  const value = (breed == null ? '' : String(breed)).trim() || fixed;
+  sel.innerHTML = (fixed ? `<option value="f">${fixed}</option>` : '') + '<option value="c">직접입력</option>';
+  if (fixed && value === fixed) {
+    sel.value = 'f'; input.value = '';
+  } else {
+    sel.value = 'c'; input.value = value;
+  }
+  input.style.display = sel.value === 'c' ? '' : 'none';
+}
+
+function onPsBreedSelChange() {
+  const sel = document.getElementById('ps-breed-sel');
+  const input = document.getElementById('ps-breed');
+  input.style.display = sel.value === 'c' ? '' : 'none';
+  if (sel.value === 'c') input.focus();
+}
+
+// 축종을 바꾸면 고정 품종을 따라 바뀐다. 직접 적어 둔 품종은 그대로 둔다.
+function onPsSpeciesChange() {
+  const sel = document.getElementById('ps-breed-sel');
+  const typed = document.getElementById('ps-breed').value.trim();
+  setPsBreed(sel.value === 'c' && typed ? typed : '');
+}
 
 function psDefaultSampler() {
   return {
@@ -238,6 +282,7 @@ function onPsFarmChange(force) {
   set('ps-scale', farm.count);
   set('ps-house-count', farm.houses);
   set('ps-species', farm.type);
+  onPsSpeciesChange();
   set('ps-ship-count', farm.count);
   // 품종·일령은 농장이 아니라 계군(입추)에 있다. 사육중인 계군이 있으면 거기서 가져온다.
   const b = load('batches')
@@ -245,8 +290,9 @@ function onPsFarmChange(force) {
     .sort((a, c) => (c.placementDate || '').localeCompare(a.placementDate || ''))[0];
   if (b) {
     const speciesKey = speciesKeyOf(b.species);
+    // 품종은 축종별 고정값(육계 아바에이커 등)이 우선이고, 고정값이 없는 축종만 계군의 품종을 가져온다.
     const breedName = (speciesKey && CONSULT_BREEDS[speciesKey]?.breeds[b.breed]?.name) || b.breed || '';
-    if (breedName) set('ps-breed', breedName);
+    if (breedName && !psFixedBreed(document.getElementById('ps-species').value) && (force || !psBreedValue())) setPsBreed(breedName);
     const age = computeDayAge(b.placementDate);
     if (age >= 1) set('ps-age-days', age);
   }
@@ -297,7 +343,7 @@ function openPreShipmentModal(id) {
   document.getElementById('ps-scale').value = ps?.scale ?? '';
   document.getElementById('ps-house-count').value = ps?.houseCount ?? '';
   document.getElementById('ps-species').value = ps?.species || '';
-  document.getElementById('ps-breed').value = ps?.breed || '';
+  setPsBreed(ps?.breed || '');
   document.getElementById('ps-housing-type').innerHTML = PS_HOUSING_TYPES.map(t =>
     `<option value="${t}"${ps?.housingType === t ? ' selected' : ''}>${t}</option>`).join('');
   document.getElementById('ps-ship-date').value = ps?.shipDate || '';
@@ -336,7 +382,7 @@ async function savePreShipment() {
     sampledAt, farmId, farmName: farm.name,
     owner: val('ps-owner'), address: val('ps-address'), phone: val('ps-phone'),
     scale: numVal('ps-scale'), houseCount: numVal('ps-house-count'),
-    species: val('ps-species'), breed: val('ps-breed'),
+    species: val('ps-species'), breed: psBreedValue(),
     housingType: document.getElementById('ps-housing-type').value,
     shipDate: document.getElementById('ps-ship-date').value || null,
     shipHouses: val('ps-ship-houses'), shipCount: numVal('ps-ship-count'),
