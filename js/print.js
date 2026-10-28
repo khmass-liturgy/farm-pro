@@ -1,5 +1,48 @@
-// ─── A4 인쇄 ─────────────────────────────────────────────────────────────
-function printProgram(id) {
+// ─── 한 장에 맞춰 인쇄 ───────────────────────────────────────────────────
+// 인쇄 서식(.print-page)은 @media print 안에서만 스타일이 적용돼서 화면에서는 높이를 잴 수 없다.
+// 그래서 보이지 않는 iframe에 같은 스타일을 "항상 적용"으로 바꿔 넣고 A4 인쇄 폭(190mm)으로
+// 그려서 높이를 잰 뒤, A4 한 장(위아래 여백 10mm씩 빼고 277mm)보다 길면 그만큼 줄여서(zoom)
+// 한 장에 들어가게 만든다. 줄인 만큼 가로를 넓혀(190mm ÷ 배율) 용지 폭은 그대로 채운다.
+const PRINT_PAGE_HEIGHT_PX = 277 / 25.4 * 96 - 16; // 277mm를 96dpi 픽셀로, 반올림 오차 여유 16px
+const PRINT_MIN_SCALE = 0.45;
+
+async function fitPrintHtmlToOnePage(html) {
+  try {
+    const link = document.querySelector('link[rel="stylesheet"][href*="styles.css"]');
+    const css = (await (await fetch(link.href)).text())
+      .replace(/@page\s*\{[^}]*\}/g, '')
+      .replace(/@media print/g, '@media all');
+    const frame = document.createElement('iframe');
+    frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:190mm;height:1200px;border:0;visibility:hidden';
+    document.body.appendChild(frame);
+    // 주어진 html을 그려서 .print-page의 높이(px)를 잰다.
+    const measure = async variant => {
+      await new Promise(resolve => {
+        frame.onload = resolve;
+        frame.srcdoc = `<!doctype html><meta charset="utf-8"><style>${css}</style><body style="margin:0"><div id="print-area">${variant}</div></body>`;
+      });
+      const page = frame.contentDocument.querySelector('.print-page');
+      return page ? page.getBoundingClientRect().height : 0;
+    };
+    const withScale = scale => html.replace('<div class="print-page">', `<div class="print-page" style="zoom:${scale.toFixed(4)};width:${(190 / scale).toFixed(2)}mm">`);
+    let height = await measure(html);
+    if (!height || height <= PRINT_PAGE_HEIGHT_PX) { frame.remove(); return html; }
+    // 줄이면 줄바꿈이 달라져 높이가 정확히 비례하지 않으므로, 실제로 들어갈 때까지 다시 재며 조금씩 더 줄인다.
+    let scale = Math.max(PRINT_MIN_SCALE, PRINT_PAGE_HEIGHT_PX / height);
+    for (let i = 0; i < 5 && scale > PRINT_MIN_SCALE; i++) {
+      height = await measure(withScale(scale));
+      if (height <= PRINT_PAGE_HEIGHT_PX) break;
+      scale = Math.max(PRINT_MIN_SCALE, scale * PRINT_PAGE_HEIGHT_PX / height * 0.99);
+    }
+    frame.remove();
+    return withScale(scale);
+  } catch (e) {
+    console.warn('[farm-pro] 한 장 맞춤 계산 실패(원래 크기로 인쇄합니다):', e);
+    return html;
+  }
+}
+
+async function printProgram(id) {
   const prog = load('programs').find(p => p.id === id);
   if (!prog) return;
   const farm = load('farms').find(f => f.id === prog.farmId);
@@ -101,7 +144,7 @@ function printProgram(id) {
     </div>
   </div>`;
 
-  document.getElementById('print-area').innerHTML = html;
+  document.getElementById('print-area').innerHTML = await fitPrintHtmlToOnePage(html);
   closeModal('modal-prog-view');
   setTimeout(() => window.print(), 200);
 }
