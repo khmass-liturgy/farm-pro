@@ -75,6 +75,13 @@ function onBatchHouseSelectChange() {
 function populateBatchBreedSelect(species, selectedBreed) {
   const sel = document.getElementById('b-breed');
   const hint = document.getElementById('b-breed-hint');
+  if (species === '삼계') {
+    sel.disabled = false;
+    hint.style.display = 'none';
+    sel.innerHTML = '<option value="">품종 선택</option>' + SAMGYE_BREEDS.map(name =>
+      `<option value="${name}"${name === selectedBreed ? ' selected' : ''}>${name}</option>`).join('');
+    return;
+  }
   const speciesKey = species === '육계' ? 'broiler' : species === '산란계' ? 'layer' : null;
   if (!speciesKey) {
     sel.innerHTML = '<option value="">-</option>';

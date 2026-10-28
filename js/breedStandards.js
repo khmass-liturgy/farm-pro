@@ -151,6 +151,10 @@ function lookupEnvStandard(speciesKey, breedKey, age) {
   };
 }
 
+// 삼계는 표준 사양매뉴얼(CONSULT_BREEDS)이 없어 품종을 이름 그대로(키 = 이름) 고르게만 한다.
+// 투약 프로그램·입추 등록의 품종 선택지가 이 목록을 함께 쓴다.
+const SAMGYE_BREEDS = ['하이라인', '로만라이트'];
+
 // 축종 라벨(육계/산란계) → CONSULT_BREEDS 키. 여러 파일이 같은 변환을 반복해서 쓴다.
 function speciesKeyOf(species) {
   return species === '육계' ? 'broiler' : species === '산란계' ? 'layer' : null;

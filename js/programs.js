@@ -579,6 +579,14 @@ function populateProgramBreedSelect(species, selectedBreed) {
   const sel = document.getElementById('p-breed');
   const hint = document.getElementById('p-breed-hint');
   const speciesKey = speciesKeyOf(species);
+  if (species === '삼계') {
+    // 삼계: 표준 매뉴얼은 없지만 품종은 하이라인/로만라이트 중에서 고른다(저장값은 품종 이름 그대로).
+    sel.disabled = false;
+    sel.innerHTML = '<option value="">품종 선택</option>' + SAMGYE_BREEDS.map(name =>
+      `<option value="${name}"${name === selectedBreed ? ' selected' : ''}>${name}</option>`).join('');
+    hint.style.display = 'none';
+    return;
+  }
   if (!speciesKey) {
     // species가 있는데 speciesKey가 없는 건 "축종 미선택"이 아니라 삼계/토종닭/기타처럼
     // 표준 매뉴얼(CONSULT_BREEDS)이 아예 없는 축종이라는 뜻이다 — 안내 문구를 구분한다.
