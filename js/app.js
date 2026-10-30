@@ -157,7 +157,8 @@ const PB_TABS = { 'pb-polcon': true };
 
 function showPbTab() {
   const frame = document.getElementById('pb-frame');
-  if (frame && !frame.getAttribute('src')) frame.src = PB_BASE_URL;
+  // polcon.cc는 10분간 브라우저에 보관돼 사이트가 바뀌어도 낡은 화면이 남는다 → 5분 단위 값을 붙여 새로 받는다.
+  if (frame && !frame.getAttribute('src')) frame.src = PB_BASE_URL + '?_=' + Math.floor(Date.now() / 300000);
 }
 
 // 사이드바 "바로가기" — 이 앱과 별개로 배포된 대한가축약품 사이트로 나간다.
