@@ -4,13 +4,23 @@
 // — 원본 저장이 이미 끝난 뒤에 하는 부가 작업이라, 여기서 실패해도 진료기록
 // 저장 자체는 막지 않는다(아래 backupPhotosToGoogleDrive 참고).
 //
+// 같은 클라이언트 ID(GOOGLE_DRIVE_CLIENT_ID)를 이동승인서 이메일 발송(js/movePermitBulk.js,
+// Gmail API)도 함께 쓴다. 그래서 아래 설정에 Gmail 쪽 항목이 함께 들어 있다.
+//
 // ── 처음 연결하는 방법 (Google Cloud Console, 1회) ──────────────────────
 //   1. https://console.cloud.google.com 에서 새 프로젝트를 만든다(무료).
-//   2. "API 및 서비스 → 라이브러리"에서 Google Drive API를 사용 설정한다.
+//   2. "API 및 서비스 → 라이브러리"에서 아래 두 API를 모두 사용 설정한다.
+//        · Google Drive API  — 부검사진 백업
+//        · Gmail API         — 이동승인서 이메일 발송
+//      Gmail API를 안 켜면 이메일 발송 시 "Gmail API has not been used in project … or it is
+//      disabled"가 뜬다. 켠 뒤에도 구글에 반영되기까지 몇 분 걸릴 수 있다.
 //   3. "API 및 서비스 → OAuth 동의 화면"을 구성한다 — User Type은 외부(External),
 //      게시 상태는 테스트(Testing)로 둔다. 이 앱을 실제로 쓸 직원 구글 계정을
 //      "테스트 사용자"로 추가해야 그 계정으로 로그인했을 때 동의 화면이 뜬다
-//      (추가 안 하면 "확인되지 않은 앱" 오류로 막힌다).
+//      (추가 안 하면 "액세스 차단됨(access_denied)" 오류로 막힌다).
+//      "데이터 액세스(범위)"에는 아래 두 범위를 추가해 둔다.
+//        · .../auth/drive.file
+//        · .../auth/gmail.send
 //   4. "API 및 서비스 → 사용자 인증 정보 → 사용자 인증 정보 만들기 → OAuth 클라이언트 ID"
 //      → 애플리케이션 유형: 웹 애플리케이션 → 승인된 자바스크립트 원본에
 //      https://khmass-liturgy.github.io 추가(로컬 확인용이면 http://localhost:5173도).
@@ -18,8 +28,13 @@
 //      (클라이언트 ID는 비밀값이 아니다 — Supabase anon key와 같은 성격의 공개 값.
 //      실제 권한은 매번 그 사용자가 브라우저에서 동의해야만 나온다.)
 //
-// 권한 범위는 drive.file(이 앱이 만든 파일만 건드릴 수 있는 최소 범위)만 요청한다.
-// 그래서 구글의 "민감한 범위" 심사 없이도 테스트 사용자 목록에 있는 계정으로 바로 쓸 수 있다.
+// 권한 범위는 두 가지를 쓴다. 두 기능은 각자 필요할 때 따로 동의를 받는다.
+//   · drive.file  — 이 앱이 만든 파일만 건드릴 수 있는 최소 범위.
+//   · gmail.send  — 메일 "보내기"만 가능하고 받은편지함은 읽지 못한다. 구글 기준으로는
+//                   "민감한 범위"라서 앱 심사를 받지 않은 상태(테스트)에서는 처음 동의할 때
+//                   "확인되지 않은 앱" 경고가 뜬다. 테스트 사용자 계정이면 "고급 → (앱 이름)으로
+//                   이동"을 눌러 계속 진행하면 된다.
+// 테스트 사용자 목록에 있는 계정은 심사 없이 바로 쓸 수 있다.
 
 const GDRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 

@@ -1939,14 +1939,15 @@
      버전 고정해 불러온다 — SheetJS는 그 뒤로 자체 CDN(cdn.sheetjs.com)으로 옮겨갔지만
      unpkg에 이미 있는 안정 버전을 그대로 쓰는 편이 새 CDN 도메인을 하나 더 신뢰하는 것보다 낫다. -->
 <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<!-- 진료기록 부검사진의 구글 드라이브 자동 백업(js/googleDrive.js)에만 쓴다.
+<!-- 진료기록 부검사진의 구글 드라이브 자동 백업(js/googleDrive.js)과
+     이동승인서 이메일 발송(js/movePermitBulk.js, Gmail API)의 구글 로그인에 쓴다.
      async defer라 이 스크립트가 늦게 끝나도 페이지 로드를 막지 않는다 — 실제로
-     쓰는 시점(사진 첨부 후 저장)엔 이미 다 로드돼 있다. -->
+     쓰는 시점(사진 저장·이메일 발송)엔 이미 다 로드돼 있다. -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="js/config.js?v=20261015a"></script>
 <script src="js/supabaseClient.js?v=20261023b"></script>
 <script src="js/auth.js?v=20261015a"></script>
-<script src="js/googleDrive.js?v=20261015a"></script>
+<script src="js/googleDrive.js?v=20261030e"></script>
 <script src="js/breedStandards.js?v=20261028b"></script>
 <script src="js/farms.js?v=20261015a"></script>
 <script src="js/sms.js?v=20261015a"></script>
