@@ -455,14 +455,24 @@ async function sendMpEmail() {
       to: to.join(', '), subject, body: document.getElementById('mpmail-body').value,
       filename: mpPdfFileName(list), pdfBase64: pdf.output('datauristring').split('base64,')[1],
     });
-    const res = await fetch('https://gmail.googleapis.com/upload/gmail/v1/users/me/messages/send?uploadType=media', {
-      method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'message/rfc822' }, body: mime,
-    });
+    // 일반 JSON 엔드포인트(raw = base64url 한 MIME)를 쓴다. 업로드 엔드포인트(/upload/gmail/...,
+    // message/rfc822)는 401·403 같은 오류 응답에 CORS 헤더를 안 붙여서, 브라우저가 진짜 오류
+    // 내용을 가리고 "Failed to fetch"만 보여줬다(Gmail API 미사용 설정 등 원인을 알 수 없었음).
+    const raw = mpB64Utf8(mime).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    let res;
+    try {
+      res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+        method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raw }),
+      });
+    } catch (e) {
+      throw new Error('Gmail 서버에 연결하지 못했습니다. 인터넷 연결을 확인하고 다시 시도하세요.');
+    }
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       const msg = err?.error?.message || `HTTP ${res.status}`;
       throw new Error(res.status === 403 || res.status === 401
-        ? `${msg}\n(구글 클라우드에서 Gmail API 사용 설정과 gmail.send 범위 추가가 되어 있는지 확인하세요)` : msg);
+        ? `${msg}\n(구글 클라우드에서 Gmail API 사용 설정과 gmail.send 범위 추가가 되어 있는지 확인하세요: console.cloud.google.com/apis/library/gmail.googleapis.com)` : msg);
     }
     try { localStorage.setItem(MP_EMAIL_TO_KEY, to.join(', ')); } catch (e) { /* 기억 못 해도 발송엔 지장 없음 */ }
     closeModal('modal-mp-email');
