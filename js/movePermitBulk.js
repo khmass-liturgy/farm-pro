@@ -392,8 +392,20 @@ function mpEncodeHeader(s) {
   return words.map(w => `=?UTF-8?B?${mpB64Utf8(w)}?=`).join('\r\n ');
 }
 
+// 이메일 첨부 파일명 — "이동승인서YYMMDD.pdf"(예: 이동승인서261030.pdf). 여러 건이면 가장 이른
+// 발급일 기준이다(mpSelectedPermits가 발급일 순으로 정렬). PDF 저장 파일명(mpPdfFileName)과는 별개.
+function mpEmailFileName(list) {
+  const d = (list[0]?.issueDate || new Date().toISOString().slice(0, 10)).replace(/-/g, '').slice(2);
+  return `이동승인서${d}.pdf`;
+}
+
 function buildMpMime({ to, subject, body, filename, pdfBase64 }) {
   const boundary = '=_mp_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+  // 한글 파일명을 헤더에 두 방식으로 모두 싣는다. RFC 2231(filename*=)만 넣으면 그걸 못 읽는
+  // 메일 서비스(Daum 등)는 일반 filename만 읽어서 이름이 엉뚱하게 보인다. 그래서 일반
+  // filename/name에도 RFC 2047 인코딩 단어를 넣는다. 파일명이 짧아 한 단어(75자 이내)로 충분하다.
+  const encName = `=?UTF-8?B?${mpB64Utf8(filename)}?=`;
+  const encExt = encodeURIComponent(filename);
   return [
     `To: ${to}`,
     `Subject: ${mpEncodeHeader(subject)}`,
@@ -406,9 +418,9 @@ function buildMpMime({ to, subject, body, filename, pdfBase64 }) {
     '',
     mpWrap76(mpB64Utf8(body)),
     `--${boundary}`,
-    `Content-Type: application/pdf; name="move_permits.pdf"; name*=UTF-8''${encodeURIComponent(filename)}`,
+    `Content-Type: application/pdf; name="${encName}"; name*=UTF-8''${encExt}`,
     'Content-Transfer-Encoding: base64',
-    `Content-Disposition: attachment; filename="move_permits.pdf"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+    `Content-Disposition: attachment; filename="${encName}"; filename*=UTF-8''${encExt}`,
     '',
     mpWrap76(pdfBase64),
     `--${boundary}--`,
@@ -426,7 +438,7 @@ function openMpEmailModal() {
   document.getElementById('mpmail-to').value = to;
   document.getElementById('mpmail-subject').value = `[대한동물병원] 이동승인서 ${list.length}건 (${list[0].issueDate}${list[list.length - 1].issueDate !== list[0].issueDate ? ' ~ ' + list[list.length - 1].issueDate : ''})`;
   document.getElementById('mpmail-body').value = `안녕하세요. 대한동물병원입니다.\n이동승인서 ${list.length}건을 PDF로 첨부합니다.`;
-  document.getElementById('mpmail-summary').textContent = `첨부: ${mpPdfFileName(list)} — ${list.map(m => `${m.farmName}${m.vehicleNo ? '(' + m.vehicleNo + ')' : ''}`).join(', ')}`;
+  document.getElementById('mpmail-summary').textContent = `첨부: ${mpEmailFileName(list)} —${list.map(m => `${m.farmName}${m.vehicleNo ? '(' + m.vehicleNo + ')' : ''}`).join(', ')}`;
   document.getElementById('mpmail-status').textContent = '';
   document.getElementById('mpmail-send-btn').disabled = false;
   openModal('modal-mp-email');
@@ -453,7 +465,7 @@ async function sendMpEmail() {
     status.textContent = '메일 보내는 중...';
     const mime = buildMpMime({
       to: to.join(', '), subject, body: document.getElementById('mpmail-body').value,
-      filename: mpPdfFileName(list), pdfBase64: pdf.output('datauristring').split('base64,')[1],
+      filename: mpEmailFileName(list), pdfBase64: pdf.output('datauristring').split('base64,')[1],
     });
     // 일반 JSON 엔드포인트(raw = base64url 한 MIME)를 쓴다. 업로드 엔드포인트(/upload/gmail/...,
     // message/rfc822)는 401·403 같은 오류 응답에 CORS 헤더를 안 붙여서, 브라우저가 진짜 오류
