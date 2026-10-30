@@ -1,7 +1,7 @@
 // ─── 네비게이션 / 부팅 ──────────────────────────────────────────────────────
 const PAGE_TITLES = {
   dashboard: '대시보드',
-  'pb-polcon': '농장동물 컨설팅',
+  'pb-polcon': '가금컨설팅',
   preshipment: '출하전검사',
   movepermit: '이동승인서 발급',
   henshipment: '산란성계 출하대장',
