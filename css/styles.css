@@ -1,23 +1,30 @@
-/* 디자인 토큰 — 피그마 "대한동물병원 업무시스템 - 디자인"(밝고 깔끔한 모던)의 Tokens 컬렉션과 1:1.
-   피그마 변수 이름 color/accent ↔ --accent 처럼 code syntax로 연결해 두었다. */
+/* 디자인 토큰 — 피그마 "대한동물병원 업무시스템 - 디자인"의 Tokens 컬렉션과 1:1.
+   피그마 변수 이름 color/accent ↔ --accent 처럼 code syntax로 연결해 두었다.
+   방향: 진한 초록 사이드바 + 초록 그라데이션 상단바 + 민트 배경 + 노란 포인트, 통계는 카드마다 다른 색. */
 :root {
-  --bg: #f8fafc;
+  --bg: #e8f3f0;
   --bg-card: #ffffff;
-  --bg-sidebar: #ffffff;
-  --bg-sidebar-hover: #f1f5f9;
-  --bg-sidebar-active: #eff4ff;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #8190a5;
-  --text-sidebar: #475569;
-  --text-sidebar-active: #1d4ed8;
-  --text-sidebar-label: #64748b;
+  --bg-sidebar: #0e4a45;
+  --bg-sidebar-hover: rgba(255,255,255,0.08);
+  --bg-sidebar-active: rgba(255,255,255,0.14);
+  --text-primary: #0f2a28;
+  --text-secondary: #4b6561;
+  --text-muted: #7f9a95;
+  --text-sidebar: #cfe8e4;
+  --text-sidebar-active: #ffffff;
+  --text-sidebar-label: #7fd1c7;
+  --text-sidebar-title: #ffffff;
+  --border-sidebar: rgba(255,255,255,0.12);
+  --sidebar-accent: #fbbf24;
   --on-accent: #ffffff;
-  --border: #e2e8f0;
-  --border-focus: #2563eb;
-  --accent: #2563eb;
-  --accent-light: #eff4ff;
-  --accent-dark: #1d4ed8;
+  --border: #dbe7e4;
+  --border-focus: #0d9488;
+  --accent: #0f766e;
+  --accent-bright: #14b8a6;
+  --accent-light: #e6f4f1;
+  --accent-dark: #115e59;
+  --blue: #2563eb;
+  --blue-bg: #eff6ff;
   --green: #059669;
   --green-bg: #ecfdf5;
   --red: #dc2626;
@@ -26,8 +33,12 @@
   --amber-bg: #fffbeb;
   --purple: #7c3aed;
   --purple-bg: #f5f3ff;
-  --teal: #0f766e;
-  --teal-bg: #f0fdfa;
+  --teal: #0e7490;
+  --teal-bg: #ecfeff;
+  --stat-teal: #14b8a6; --stat-teal-bg: #d5efe9; --stat-teal-text: #0f5f58;
+  --stat-amber: #f59e0b; --stat-amber-bg: #fdeccb; --stat-amber-text: #92400e;
+  --stat-blue: #3b82f6; --stat-blue-bg: #dbe9fe; --stat-blue-text: #1e40af;
+  --stat-purple: #8b5cf6; --stat-purple-bg: #e9e1fd; --stat-purple-text: #5b21b6;
   --radius: 12px;
   --radius-sm: 8px;
   --radius-lg: 16px;
@@ -41,15 +52,14 @@ body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; backgrou
 /* 사이드바 */
 #sidebar {
   width: 220px; min-width: 220px; background: var(--bg-sidebar);
-  border-right: 1px solid var(--border);
   display: flex; flex-direction: column; height: 100vh; overflow-y: auto;
 }
 .sidebar-logo {
   padding: 20px 18px 16px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-sidebar);
 }
-.sidebar-logo h1 { font-size: 15px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
-.sidebar-logo span { font-size: 11px; color: var(--text-muted); margin-top: 2px; display: block; }
+.sidebar-logo h1 { font-size: 15px; font-weight: 700; color: var(--text-sidebar-title); line-height: 1.3; }
+.sidebar-logo span { font-size: 11px; color: var(--text-sidebar-label); margin-top: 2px; display: block; }
 .sidebar-section { padding: 14px 12px 6px; }
 .sidebar-section-label { font-size: 14px; font-weight: 700; color: var(--text-sidebar-label); letter-spacing: 0.03em; text-transform: uppercase; padding: 0 6px; margin-bottom: 4px; }
 /* 자주 안 쓰는 묶음은 접어둔다. 라벨을 button으로 만들어 키보드로도 펼칠 수 있게 하고,
@@ -59,7 +69,7 @@ body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; backgrou
   background: none; border: none; font-family: inherit; text-align: left;
   cursor: pointer; padding: 4px 6px; margin-bottom: 2px; border-radius: var(--radius-sm);
 }
-.sidebar-section-label.toggle:hover { background: var(--bg-sidebar-hover); color: var(--text-primary); }
+.sidebar-section-label.toggle:hover { background: var(--bg-sidebar-hover); color: var(--text-sidebar-active); }
 .sidebar-section-label.toggle .chevron { font-size: 11px; transition: transform 0.15s; display: inline-block; }
 .sidebar-section-label.toggle[aria-expanded="true"] .chevron { transform: rotate(90deg); }
 .sidebar-section-items { display: none; }
@@ -71,21 +81,33 @@ body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; backgrou
   font-size: 13px; font-weight: 500; transition: all 0.15s;
   margin-bottom: 2px;
 }
-.sidebar-item:hover { background: var(--bg-sidebar-hover); color: var(--text-primary); }
-.sidebar-item.active { background: var(--bg-sidebar-active); color: var(--text-sidebar-active); }
+.sidebar-item:hover { background: var(--bg-sidebar-hover); color: var(--text-sidebar-active); }
+.sidebar-item.active { background: var(--bg-sidebar-active); color: var(--text-sidebar-active); font-weight: 700; box-shadow: inset 3px 0 0 var(--sidebar-accent); }
 .sidebar-item .icon { font-size: 16px; opacity: 0.85; }
-.sidebar-footer { margin-top: auto; padding: 12px; border-top: 1px solid var(--border); }
-.sidebar-user-email { font-size: 11px; color: var(--text-secondary); padding: 0 6px 8px; word-break: break-all; }
+.sidebar-footer { margin-top: auto; padding: 12px; border-top: 1px solid var(--border-sidebar); }
+.sidebar-user-email { font-size: 11px; color: var(--text-sidebar); padding: 0 6px 8px; word-break: break-all; }
+/* 어두운 사이드바 위의 외곽선 버튼(로그아웃 등)은 흰 글자·옅은 흰 테두리 */
+.sidebar-footer .btn-outline { color: var(--text-sidebar-active); border-color: rgba(255,255,255,0.4); }
+.sidebar-footer .btn-outline:hover { background: var(--bg-sidebar-hover); }
 
 /* 메인 */
 #main { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .topbar {
-  background: var(--bg-card); border-bottom: 1px solid var(--border);
+  background: var(--accent); background: linear-gradient(90deg, var(--accent), var(--accent-bright));
   padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
   min-height: 54px; flex-wrap: wrap; row-gap: 8px;
 }
-.topbar-title { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+.topbar-title { font-size: 18px; font-weight: 700; color: var(--on-accent); }
 .topbar-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+/* 초록 띠 위에서는 버튼 색을 따로 둔다: 외곽선=흰색, 주 버튼=노란색 */
+.topbar .btn-outline { color: var(--on-accent); border-color: rgba(255,255,255,0.6); }
+.topbar .btn-outline:hover { background: rgba(255,255,255,0.15); }
+.topbar .btn-primary { background: var(--sidebar-accent); border-color: var(--sidebar-accent); color: var(--text-primary); }
+.topbar .btn-primary:hover { background: #f59e0b; border-color: #f59e0b; }
+.topbar .btn-danger { background: var(--bg-card); border-color: var(--bg-card); color: var(--red); }
+.topbar .btn-danger:hover { background: var(--red-bg); }
+.topbar .btn-green { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.6); color: var(--on-accent); }
+.topbar .btn-green:hover { background: rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.6); }
 .content { flex: 1; overflow-y: auto; padding: 24px; }
 
 /* 버튼 */
@@ -108,11 +130,12 @@ body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; backgrou
 
 /* 카드 */
 .card {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--bg-card); border: 1px solid var(--border); border-top: 4px solid var(--accent); border-radius: var(--radius);
   box-shadow: var(--shadow); padding: 20px;
 }
 .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; row-gap: 8px; }
 .card-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.card-title::before { content: ''; display: inline-block; width: 4px; height: 16px; border-radius: 2px; background: var(--accent); margin-right: 8px; vertical-align: -3px; }
 
 /* 그리드 */
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -157,13 +180,15 @@ table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-
    지워버린다(마지막 줄만 셀 border-bottom이 없는 것처럼 보이는 원인이었다). */
 .tbl-wrap table tr:last-child td { border-bottom: none; }
 table tr:hover td { background: var(--bg); }
+/* 목록 표(.tbl-wrap 안)의 머리글은 옅은 초록 바탕 + 진한 초록 글자. 인쇄용 표에는 걸리지 않게 .tbl-wrap로 한정한다. */
+.tbl-wrap table th { background: var(--accent-light); color: var(--accent-dark); }
 
 /* 배지 */
 .badge {
   display: inline-block; padding: 2px 8px; border-radius: var(--radius-pill);
   font-size: 11px; font-weight: 600; white-space: nowrap;
 }
-.badge-blue { background: var(--accent-light); color: var(--accent-dark); }
+.badge-blue { background: var(--blue-bg); color: var(--blue); }
 .badge-green { background: var(--green-bg); color: var(--green); }
 .badge-amber { background: var(--amber-bg); color: var(--amber); }
 .badge-red { background: var(--red-bg); color: var(--red); }
@@ -173,7 +198,7 @@ table tr:hover td { background: var(--bg); }
 /* 모달 */
 .modal-bg {
   display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(15, 23, 42, 0.45); z-index: 1000; align-items: center; justify-content: center;
+  background: rgba(11, 59, 56, 0.5); z-index: 1000; align-items: center; justify-content: center;
 }
 .modal-bg.open { display: flex; }
 .modal {
@@ -183,7 +208,7 @@ table tr:hover td { background: var(--bg); }
 }
 .modal-wide { width: 900px; }
 .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-.modal-title { font-size: 17px; font-weight: 700; }
+.modal-title { font-size: 17px; font-weight: 700; color: var(--accent-dark); }
 .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); padding: 4px; line-height: 1; }
 .modal-close:hover { color: var(--red); }
 .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
@@ -202,7 +227,7 @@ table tr:hover td { background: var(--bg); }
   body.mobile-nav-open #main { display: flex; }
   .mobile-back-btn {
     display: inline-flex; align-items: center; background: none; border: none;
-    font-size: 14px; font-weight: 700; color: var(--accent); cursor: pointer; padding: 4px;
+    font-size: 14px; font-weight: 700; color: var(--on-accent); cursor: pointer; padding: 4px;
   }
 }
 
@@ -226,9 +251,18 @@ table tr:hover td { background: var(--bg); }
 
 /* 대시보드 통계 카드 */
 .stat-card {
-  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  --sc: var(--stat-teal); --sbg: var(--stat-teal-bg); --stx: var(--stat-teal-text);
+  position: relative; overflow: hidden;
+  background: var(--sbg); border-radius: var(--radius);
   padding: 20px; box-shadow: var(--shadow);
 }
+/* 같은 줄의 카드 4개가 초록·노랑·파랑·보라 순으로 색을 입는다(대시보드·리포트·입추 상세 공통) */
+.stat-card:nth-child(4n+2) { --sc: var(--stat-amber); --sbg: var(--stat-amber-bg); --stx: var(--stat-amber-text); }
+.stat-card:nth-child(4n+3) { --sc: var(--stat-blue); --sbg: var(--stat-blue-bg); --stx: var(--stat-blue-text); }
+.stat-card:nth-child(4n+4) { --sc: var(--stat-purple); --sbg: var(--stat-purple-bg); --stx: var(--stat-purple-text); }
+.stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--sc); }
+.stat-card .stat-label, .stat-card .stat-value, .stat-card .stat-sub { color: var(--stx); }
+.stat-card .stat-sub { opacity: 0.75; }
 .stat-label { font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; }
 .stat-value { font-size: 28px; font-weight: 700; color: var(--text-primary); }
 .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
@@ -424,9 +458,9 @@ table tr:hover td { background: var(--bg); }
 }
 
 /* 로그인 페이지 */
-.login-wrap { min-height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center; background: var(--bg); }
+.login-wrap { min-height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center; background: var(--bg-sidebar); background: linear-gradient(135deg, var(--bg-sidebar), var(--accent-bright)); }
 .login-card { width: 380px; max-width: 92vw; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 32px 28px; }
-.login-card h1 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.login-card h1 { font-size: 18px; font-weight: 700; margin-bottom: 4px; color: var(--accent-dark); }
 .login-card .sub { font-size: 12px; color: var(--text-secondary); margin-bottom: 22px; }
 .login-error { background: var(--red-bg); color: var(--red); font-size: 12px; padding: 8px 12px; border-radius: 6px; margin-bottom: 14px; display: none; }
 .login-error.show { display: block; }
