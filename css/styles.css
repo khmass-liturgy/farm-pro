@@ -1,33 +1,39 @@
+/* 디자인 토큰 — 피그마 "대한동물병원 업무시스템 - 디자인"(밝고 깔끔한 모던)의 Tokens 컬렉션과 1:1.
+   피그마 변수 이름 color/accent ↔ --accent 처럼 code syntax로 연결해 두었다. */
 :root {
-  --bg: #f5f6fa;
+  --bg: #f8fafc;
   --bg-card: #ffffff;
-  --bg-sidebar: #1e2d40;
-  --bg-sidebar-hover: #2a3f58;
-  --bg-sidebar-active: #2e6da4;
-  --text-primary: #1a2332;
-  --text-secondary: #5a6a7e;
-  --text-muted: #8fa0b3;
-  --text-sidebar: #b8cce0;
-  --text-sidebar-active: #ffffff;
-  --border: #e0e6ef;
-  --border-focus: #2e6da4;
-  --accent: #2e6da4;
-  --accent-light: #e8f2fc;
-  --accent-dark: #1e4f82;
-  --green: #1a8754;
-  --green-bg: #e8f7ef;
-  --red: #c0392b;
-  --red-bg: #fdecea;
-  --amber: #b86a00;
-  --amber-bg: #fff3e0;
-  --purple: #6b3fa0;
-  --purple-bg: #f2ecfb;
-  --teal: #0e6b5e;
-  --teal-bg: #e0f4f1;
-  --radius: 10px;
-  --radius-sm: 6px;
-  --shadow: 0 1px 4px rgba(0,0,0,0.07);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+  --bg-sidebar: #ffffff;
+  --bg-sidebar-hover: #f1f5f9;
+  --bg-sidebar-active: #eff4ff;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #8190a5;
+  --text-sidebar: #475569;
+  --text-sidebar-active: #1d4ed8;
+  --text-sidebar-label: #64748b;
+  --on-accent: #ffffff;
+  --border: #e2e8f0;
+  --border-focus: #2563eb;
+  --accent: #2563eb;
+  --accent-light: #eff4ff;
+  --accent-dark: #1d4ed8;
+  --green: #059669;
+  --green-bg: #ecfdf5;
+  --red: #dc2626;
+  --red-bg: #fef2f2;
+  --amber: #b45309;
+  --amber-bg: #fffbeb;
+  --purple: #7c3aed;
+  --purple-bg: #f5f3ff;
+  --teal: #0f766e;
+  --teal-bg: #f0fdfa;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --shadow: 0 1px 2px rgba(15,23,42,0.04), 0 1px 3px rgba(15,23,42,0.06);
+  --shadow-md: 0 8px 24px rgba(15,23,42,0.12);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; background: var(--bg); color: var(--text-primary); display: flex; height: 100vh; overflow: hidden; font-size: 14px; }
@@ -35,16 +41,17 @@ body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; backgrou
 /* 사이드바 */
 #sidebar {
   width: 220px; min-width: 220px; background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
   display: flex; flex-direction: column; height: 100vh; overflow-y: auto;
 }
 .sidebar-logo {
   padding: 20px 18px 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid var(--border);
 }
-.sidebar-logo h1 { font-size: 15px; font-weight: 700; color: #fff; line-height: 1.3; }
-.sidebar-logo span { font-size: 11px; color: var(--text-sidebar); margin-top: 2px; display: block; }
+.sidebar-logo h1 { font-size: 15px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
+.sidebar-logo span { font-size: 11px; color: var(--text-muted); margin-top: 2px; display: block; }
 .sidebar-section { padding: 14px 12px 6px; }
-.sidebar-section-label { font-size: 14px; font-weight: 700; color: #6a88a8; letter-spacing: 0.03em; text-transform: uppercase; padding: 0 6px; margin-bottom: 4px; }
+.sidebar-section-label { font-size: 14px; font-weight: 700; color: var(--text-sidebar-label); letter-spacing: 0.03em; text-transform: uppercase; padding: 0 6px; margin-bottom: 4px; }
 /* 자주 안 쓰는 묶음은 접어둔다. 라벨을 button으로 만들어 키보드로도 펼칠 수 있게 하고,
    버튼 기본 스타일(배경·테두리·폰트)을 지워 기존 라벨과 같아 보이게 맞춘다. */
 .sidebar-section-label.toggle {
@@ -52,7 +59,7 @@ body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; backgrou
   background: none; border: none; font-family: inherit; text-align: left;
   cursor: pointer; padding: 4px 6px; margin-bottom: 2px; border-radius: var(--radius-sm);
 }
-.sidebar-section-label.toggle:hover { background: var(--bg-sidebar-hover); color: #9fbcd8; }
+.sidebar-section-label.toggle:hover { background: var(--bg-sidebar-hover); color: var(--text-primary); }
 .sidebar-section-label.toggle .chevron { font-size: 11px; transition: transform 0.15s; display: inline-block; }
 .sidebar-section-label.toggle[aria-expanded="true"] .chevron { transform: rotate(90deg); }
 .sidebar-section-items { display: none; }
@@ -64,11 +71,11 @@ body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; backgrou
   font-size: 13px; font-weight: 500; transition: all 0.15s;
   margin-bottom: 2px;
 }
-.sidebar-item:hover { background: var(--bg-sidebar-hover); color: #fff; }
-.sidebar-item.active { background: var(--bg-sidebar-active); color: #fff; }
+.sidebar-item:hover { background: var(--bg-sidebar-hover); color: var(--text-primary); }
+.sidebar-item.active { background: var(--bg-sidebar-active); color: var(--text-sidebar-active); }
 .sidebar-item .icon { font-size: 16px; opacity: 0.85; }
-.sidebar-footer { margin-top: auto; padding: 12px; border-top: 1px solid rgba(255,255,255,0.08); }
-.sidebar-user-email { font-size: 11px; color: var(--text-sidebar); padding: 0 6px 8px; word-break: break-all; }
+.sidebar-footer { margin-top: auto; padding: 12px; border-top: 1px solid var(--border); }
+.sidebar-user-email { font-size: 11px; color: var(--text-secondary); padding: 0 6px 8px; word-break: break-all; }
 
 /* 메인 */
 #main { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -77,25 +84,26 @@ body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; backgrou
   padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
   min-height: 54px; flex-wrap: wrap; row-gap: 8px;
 }
-.topbar-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.topbar-title { font-size: 18px; font-weight: 700; color: var(--text-primary); }
 .topbar-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .content { flex: 1; overflow-y: auto; padding: 24px; }
 
 /* 버튼 */
 .btn {
   padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
-  cursor: pointer; border: 1.5px solid transparent; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
+  cursor: pointer; border: 1px solid transparent; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
   white-space: nowrap; flex-shrink: 0;
 }
-.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
-.btn-outline { background: transparent; color: var(--accent); border-color: var(--accent); }
+/* 외곽선 버튼은 테두리를 옅게(35%) 둔다. color-mix를 모르는 오래된 브라우저는 앞 줄의 진한 테두리를 그대로 쓴다. */
+.btn-outline { background: transparent; color: var(--accent); border-color: var(--accent); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
 .btn-outline:hover { background: var(--accent-light); }
-.btn-danger { background: transparent; color: var(--red); border-color: var(--red); }
+.btn-danger { background: transparent; color: var(--red); border-color: var(--red); border-color: color-mix(in srgb, var(--red) 35%, transparent); }
 .btn-danger:hover { background: var(--red-bg); }
 .btn-sm { padding: 5px 10px; font-size: 12px; }
-.btn-green { background: var(--green); color: #fff; border-color: var(--green); }
-.btn-green:hover { background: #14704a; border-color: #14704a; }
+.btn-green { background: var(--green); color: var(--on-accent); border-color: var(--green); }
+.btn-green:hover { background: #047857; border-color: #047857; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* 카드 */
@@ -104,7 +112,7 @@ body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; backgrou
   box-shadow: var(--shadow); padding: 20px;
 }
 .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; row-gap: 8px; }
-.card-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.card-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
 
 /* 그리드 */
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -121,6 +129,8 @@ body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; backgrou
 }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
   outline: none; border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-light);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 .form-group textarea { resize: vertical; min-height: 70px; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -146,11 +156,11 @@ table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-
    이동승인서 인쇄 표처럼 사방 테두리가 있는 표까지 맨 아래 줄의 가로선만
    지워버린다(마지막 줄만 셀 border-bottom이 없는 것처럼 보이는 원인이었다). */
 .tbl-wrap table tr:last-child td { border-bottom: none; }
-table tr:hover td { background: #f9fbff; }
+table tr:hover td { background: var(--bg); }
 
 /* 배지 */
 .badge {
-  display: inline-block; padding: 2px 8px; border-radius: 20px;
+  display: inline-block; padding: 2px 8px; border-radius: var(--radius-pill);
   font-size: 11px; font-weight: 600; white-space: nowrap;
 }
 .badge-blue { background: var(--accent-light); color: var(--accent-dark); }
@@ -163,17 +173,17 @@ table tr:hover td { background: #f9fbff; }
 /* 모달 */
 .modal-bg {
   display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(20, 30, 48, 0.45); z-index: 1000; align-items: center; justify-content: center;
+  background: rgba(15, 23, 42, 0.45); z-index: 1000; align-items: center; justify-content: center;
 }
 .modal-bg.open { display: flex; }
 .modal {
-  background: var(--bg-card); border-radius: var(--radius); padding: 28px 28px 24px;
+  background: var(--bg-card); border-radius: var(--radius-lg); padding: 28px 28px 24px;
   width: 680px; max-width: 95vw; max-height: 90vh; overflow-y: auto;
   box-shadow: var(--shadow-md);
 }
 .modal-wide { width: 900px; }
 .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-.modal-title { font-size: 16px; font-weight: 700; }
+.modal-title { font-size: 17px; font-weight: 700; }
 .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); padding: 4px; line-height: 1; }
 .modal-close:hover { color: var(--red); }
 .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
@@ -208,15 +218,19 @@ table tr:hover td { background: #f9fbff; }
   flex: 1; padding: 8px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
   font-size: 13px; font-family: inherit;
 }
-.search-input:focus { outline: none; border-color: var(--border-focus); }
+.search-input:focus {
+  outline: none; border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-light);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
 
 /* 대시보드 통계 카드 */
 .stat-card {
   background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 16px 18px; box-shadow: var(--shadow);
+  padding: 20px; box-shadow: var(--shadow);
 }
-.stat-label { font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; }
-.stat-value { font-size: 26px; font-weight: 700; color: var(--text-primary); }
+.stat-label { font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; }
+.stat-value { font-size: 28px; font-weight: 700; color: var(--text-primary); }
 .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
 /* 투약일정 뷰 */

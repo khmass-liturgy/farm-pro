@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20261015a">
 <link rel="icon" href="img/favicon.ico?v=20261015a">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20261015a">
-<link rel="stylesheet" href="css/styles.css?v=20261031a">
+<link rel="stylesheet" href="css/styles.css?v=20261031b">
 </head>
 <body>
 
@@ -188,7 +188,7 @@
     <div id="page-clinical" class="page">
       <div class="search-bar">
         <input class="search-input" id="ca-search" placeholder="🔍  농장명, 개체 ID 검색..." oninput="renderClinicalAssessments()">
-        <select id="ca-filter-farm" onchange="renderClinicalAssessments()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);"></select>
+        <select id="ca-filter-farm" onchange="renderClinicalAssessments()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);"></select>
       </div>
       <div class="card">
         <div class="tbl-wrap">
@@ -217,7 +217,7 @@
     <div id="page-rodent" class="page">
       <div class="search-bar">
         <input class="search-input" id="rc-search" placeholder="🔍  농장명 검색..." oninput="renderRodentAssessments()">
-        <select id="rc-filter-farm" onchange="renderRodentAssessments()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);"></select>
+        <select id="rc-filter-farm" onchange="renderRodentAssessments()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);"></select>
       </div>
       <div class="card">
         <div class="tbl-wrap">
@@ -247,7 +247,7 @@
     <div id="page-farms" class="page">
       <div class="search-bar">
         <input class="search-input" id="farm-search" placeholder="🔍  농장명, 주소, 농장주 검색..." oninput="renderFarms()">
-        <select id="farm-filter-type" onchange="renderFarms()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+        <select id="farm-filter-type" onchange="renderFarms()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);">
           <option value="">전체 축종</option>
           <option value="육계">육계</option>
           <option value="산란계">산란계</option>
@@ -277,7 +277,7 @@
     <div id="page-programs" class="page">
       <div class="search-bar">
         <input class="search-input" id="prog-search" placeholder="🔍  프로그램명, 농장명 검색..." oninput="renderPrograms()">
-        <select id="prog-filter-farm" onchange="renderPrograms()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+        <select id="prog-filter-farm" onchange="renderPrograms()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);">
           <option value="">전체 농장</option>
         </select>
       </div>
@@ -319,10 +319,10 @@
     <!-- 투약상담 및 처방 -->
     <div id="page-medconsult" class="page">
       <div class="search-bar">
-        <select id="mc-farm-filter" onchange="onConsultFarmFilterChange()" style="padding:8px 14px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card); flex:1;">
+        <select id="mc-farm-filter" onchange="onConsultFarmFilterChange()" style="padding:8px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card); flex:1;">
           <option value="">전체 농장</option>
         </select>
-        <select id="mc-batch-filter" onchange="renderConsultLogPage()" style="padding:8px 14px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card); flex:1;">
+        <select id="mc-batch-filter" onchange="renderConsultLogPage()" style="padding:8px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card); flex:1;">
           <option value="">전체 입추</option>
         </select>
       </div>
@@ -356,7 +356,7 @@
     <div id="page-preshipment" class="page">
       <div class="search-bar">
         <input class="search-input" id="ps-search" placeholder="🔍  농장명, 축주명 검색..." oninput="renderPreShipments()">
-        <select id="ps-filter-farm" onchange="renderPreShipments()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);"></select>
+        <select id="ps-filter-farm" onchange="renderPreShipments()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);"></select>
       </div>
       <div class="card">
         <div class="card-header">
@@ -394,7 +394,7 @@
     <div id="page-movepermit" class="page">
       <div class="search-bar">
         <input class="search-input" id="mp-search" placeholder="🔍  농장명, 운송인, 차량번호, 출하처 검색..." oninput="renderMovePermits()">
-        <select id="mp-filter-farm" onchange="renderMovePermits()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);"></select>
+        <select id="mp-filter-farm" onchange="renderMovePermits()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);"></select>
       </div>
       <div class="card">
         <div class="card-header">
@@ -437,7 +437,7 @@
     <div id="page-henshipment" class="page">
       <div class="search-bar">
         <input class="search-input" id="hs-search" placeholder="🔍  농장명, 농장주 검색..." oninput="renderHenShipments()">
-        <select id="hs-filter-farm" onchange="renderHenShipments()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);"></select>
+        <select id="hs-filter-farm" onchange="renderHenShipments()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);"></select>
       </div>
       <div class="card">
         <div class="card-header">
@@ -473,7 +473,7 @@
     <!-- 공수의 보고서: 입력대장 (방문 기록 — 다른 보고서의 원본 데이터) -->
     <div id="page-vet-entries" class="page">
       <div class="search-bar">
-        <input type="month" id="vetentry-month" onchange="renderVetEntries()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+        <input type="month" id="vetentry-month" onchange="renderVetEntries()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);">
         <input class="search-input" id="vetentry-search" placeholder="🔍  농장명, 농장주 검색..." oninput="renderVetEntries()">
       </div>
       <div class="card">
@@ -511,7 +511,7 @@
         <div class="card-header">
           <div class="card-title">근무상황보고서</div>
           <div class="flex-gap">
-            <input type="month" id="vetwork-month" onchange="renderVetWorkReportSummary()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+            <input type="month" id="vetwork-month" onchange="renderVetWorkReportSummary()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);">
             <button class="btn btn-primary btn-sm" onclick="printVetWorkReport()">🖨️ 인쇄</button>
           </div>
         </div>
@@ -528,7 +528,7 @@
         <div class="card-header">
           <div class="card-title">여비청구서 / 활동수당 청구서</div>
           <div class="flex-gap">
-            <input type="month" id="vetinvoice-month" onchange="renderVetInvoiceSummary()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+            <input type="month" id="vetinvoice-month" onchange="renderVetInvoiceSummary()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);">
             <button class="btn btn-primary btn-sm" onclick="printVetInvoice('both')" title="여비·활동수당 두 장을 한 번에">🖨️ 둘 다 인쇄</button>
             <button class="btn btn-outline btn-sm" onclick="printVetInvoice('travel')">🖨️ 여비 청구서</button>
             <button class="btn btn-outline btn-sm" onclick="printVetInvoice('activity')">🖨️ 활동수당 청구서</button>
@@ -545,7 +545,7 @@
         <div class="card-header">
           <div class="card-title">예찰내역</div>
           <div class="flex-gap">
-            <input type="month" id="vetpatrol-month" onchange="renderVetPatrolSummary()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+            <input type="month" id="vetpatrol-month" onchange="renderVetPatrolSummary()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);">
             <button class="btn btn-primary btn-sm" onclick="printVetPatrol()">🖨️ 인쇄</button>
           </div>
         </div>
@@ -557,7 +557,7 @@
     <!-- 공수의 보고서: 예찰일지 -->
     <div id="page-vet-diary" class="page">
       <div class="search-bar">
-        <input type="month" id="vetdiary-month" onchange="renderVetDiaryList()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+        <input type="month" id="vetdiary-month" onchange="renderVetDiaryList()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);">
       </div>
       <div class="card">
         <div class="card-header">
@@ -591,7 +591,7 @@
         <div class="card-header">
           <div class="card-title">출장일지</div>
           <div class="flex-gap">
-            <input type="month" id="vettrip-month" onchange="renderVetTripSummary()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+            <input type="month" id="vettrip-month" onchange="renderVetTripSummary()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);">
             <button class="btn btn-primary btn-sm" onclick="printVetTrip()">🖨️ 인쇄</button>
           </div>
         </div>
@@ -603,7 +603,7 @@
     <!-- 공수의 보고서: 일자별 근무내용 (날짜별 한 장 + 관련자료 사진) -->
     <div id="page-vet-daily" class="page">
       <div class="search-bar">
-        <input type="month" id="vetdaily-month" onchange="renderVetDaily()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+        <input type="month" id="vetdaily-month" onchange="renderVetDaily()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);">
       </div>
       <div class="card">
         <div class="card-header">
@@ -636,7 +636,7 @@
     <div id="page-prescriptions" class="page">
       <div class="search-bar">
         <input class="search-input" id="rx-search" placeholder="🔍  농장명, 제품명 검색..." oninput="renderPrescriptions()">
-        <select id="rx-filter-farm" onchange="renderPrescriptions()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+        <select id="rx-filter-farm" onchange="renderPrescriptions()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);">
           <option value="">전체 농장</option>
         </select>
       </div>
@@ -671,10 +671,10 @@
     <div id="page-schedule" class="page">
       <div id="schedule-alerts"></div>
       <div class="search-bar">
-        <select id="sched-farm-select" onchange="loadScheduleForFarm()" style="padding:8px 14px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card); flex:1;">
+        <select id="sched-farm-select" onchange="loadScheduleForFarm()" style="padding:8px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card); flex:1;">
           <option value="">농장을 선택하세요</option>
         </select>
-        <select id="sched-prog-select" onchange="renderScheduleView()" style="padding:8px 14px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card); flex:1;">
+        <select id="sched-prog-select" onchange="renderScheduleView()" style="padding:8px 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card); flex:1;">
           <option value="">투약 프로그램 선택</option>
         </select>
       </div>
@@ -704,7 +704,7 @@
     <div id="page-drugs" class="page">
       <div class="search-bar">
         <input class="search-input" id="drug-search" placeholder="🔍  약품명, 성분명 검색..." oninput="renderDrugs()">
-        <select id="drug-filter-type" onchange="renderDrugs()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+        <select id="drug-filter-type" onchange="renderDrugs()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);">
           <option value="">전체 분류</option>
           <option value="항생제">항생제</option>
           <option value="콕시듐제">콕시듐제</option>
@@ -761,7 +761,7 @@
     <div id="page-vaccines" class="page">
       <div class="search-bar">
         <input class="search-input" id="vacc-search" placeholder="🔍  백신명, 대상질병 검색..." oninput="renderVaccines()">
-        <select id="vacc-filter-species" onchange="renderVaccines()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+        <select id="vacc-filter-species" onchange="renderVaccines()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);">
           <option value="">전체 축종</option>
           <option value="육계">육계</option>
           <option value="산란계">산란계</option>
@@ -790,7 +790,7 @@
     <div id="page-feeds" class="page">
       <div class="search-bar">
         <input class="search-input" id="feed-search" placeholder="🔍  제품명, 성분 검색..." oninput="renderFeeds()">
-        <select id="feed-filter-type" onchange="renderFeeds()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-card);">
+        <select id="feed-filter-type" onchange="renderFeeds()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);">
           <option value="">전체 분류</option>
           <option value="영양제·비타민">영양제·비타민</option>
           <option value="성장촉진제">성장촉진제</option>
