@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20261015a">
 <link rel="icon" href="img/favicon.ico?v=20261015a">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20261015a">
-<link rel="stylesheet" href="css/styles.css?v=20261031c">
+<link rel="stylesheet" href="css/styles.css?v=20261031e">
 </head>
 <body>
 
@@ -17,7 +17,7 @@
   <div class="sidebar-logo">
     <h1>🐔 대한동물병원 업무시스템</h1>
   </div>
-  <div class="sidebar-section">
+  <div class="sidebar-section" data-group="main">
     <div class="sidebar-section-label">메인</div>
     <div class="sidebar-item active" onclick="showPage('dashboard')">
       <span class="icon">📊</span> 대시보드
@@ -26,7 +26,7 @@
       <span class="icon">💬</span> 문자 발송
     </div>
   </div>
-  <div class="sidebar-section">
+  <div class="sidebar-section" data-group="consult">
     <button class="sidebar-section-label toggle" onclick="toggleSidebarSection('consult')" aria-expanded="false" aria-controls="sidebar-items-consult">
       <span class="chevron" id="sidebar-chevron-consult">▸</span> 가금컨설팅
     </button>
@@ -44,7 +44,7 @@
       </div>
     </div>
   </div>
-  <div class="sidebar-section">
+  <div class="sidebar-section" data-group="vet">
     <div class="sidebar-section-label">공수의 업무</div>
     <div class="sidebar-item" onclick="showPage('preshipment')">
       <span class="icon">🔬</span> 출하전검사
@@ -82,7 +82,7 @@
       </div>
     </div>
   </div>
-  <div class="sidebar-section">
+  <div class="sidebar-section" data-group="farm">
     <div class="sidebar-section-label">농장 관리</div>
     <div class="sidebar-item" onclick="showPage('farms')">
       <span class="icon">🏘️</span> 농장 등록/관리
@@ -103,7 +103,7 @@
       <span class="icon">📅</span> 투약 일정
     </div>
   </div>
-  <div class="sidebar-section">
+  <div class="sidebar-section" data-group="links">
     <div class="sidebar-section-label">바로가기</div>
     <!-- 이 앱과 별개로 배포된 대한가축약품 사이트(daehan 저장소)로 나간다.
          이 SPA 안의 화면이 아니라 완전히 다른 사이트라 showPage()로 전환하지 않고
@@ -112,7 +112,7 @@
       <span class="icon">🌐</span> 대한가축약품 ↗
     </div>
   </div>
-  <div class="sidebar-section">
+  <div class="sidebar-section" data-group="data">
     <button class="sidebar-section-label toggle" onclick="toggleSidebarSection('data')" aria-expanded="false" aria-controls="sidebar-items-data">
       <span class="chevron" id="sidebar-chevron-data">▸</span> 데이터
     </button>
@@ -137,7 +137,7 @@
       </div>
     </div>
   </div>
-  <div class="sidebar-section">
+  <div class="sidebar-section" data-group="system">
     <button class="sidebar-section-label toggle" onclick="toggleSidebarSection('system')" aria-expanded="false" aria-controls="sidebar-items-system">
       <span class="chevron" id="sidebar-chevron-system">▸</span> 시스템
     </button>
