@@ -37,40 +37,61 @@ function computeDueSoonAlerts(horizonDays = DUE_SOON_HORIZON_DAYS, startOffset =
   return alerts;
 }
 
-// 활성 입추 배치 중, 오늘을 포함해 horizonDays일간(2면 오늘·내일) 투약/백신 계획이 있는 항목 전체
-// (기록 여부 상관없이) — "다가오는 일정" 목록용. computeDueSoonAlerts는 미기록 건만
-// 골라 경고 문구로 보여주는 반면, 이건 며칠치 계획을 날짜순으로 그대로 보여준다.
-const UPCOMING_SCHEDULE_HORIZON_DAYS = 2;
-function computeUpcomingSchedule(horizonDays = UPCOMING_SCHEDULE_HORIZON_DAYS) {
-  const batches = load('batches').filter(b => b.status === 'active');
+// 사육중인 입추 배치의 오늘 일령을 농장별로 — 대시보드 "농장별 일령" 카드용. 일령이 많은 순으로 정렬한다.
+// 육계는 BROILER_STANDARD_MAX_AGE(35일령, 아래에서 선언)까지만 넣는다. 그 이후는 출하완료로 보고
+// (computeBatchDisplayStatus와 같은 기준) 목록에서 뺀다. 빠진 개수는 hiddenBroilers로 돌려줘서
+// 화면에 "왜 안 보이는지"를 남긴다. 산란계·삼계 등은 출하 개념이 없어 상한 없이 모두 보여준다.
+// 입추의 축종은 비워 둘 수 있어서, 비어 있으면 농장의 축종(필수 항목)을 대신 쓴다.
+function computeFarmDayAges() {
   const farms = load('farms');
-  const programs = load('programs');
-  const logs = load('medicationLogs');
   const items = [];
-  batches.forEach(b => {
-    if (!b.programId) return;
-    const prog = programs.find(p => p.id === b.programId);
-    if (!prog) return;
+  let hiddenBroilers = 0;
+  load('batches').filter(b => b.status === 'active').forEach(b => {
     const dayAge = computeDayAge(b.placementDate);
+    if (!(dayAge >= 1)) return; // 입추 예정(아직 일령이 없음)이거나 입추일이 비정상
     const farm = farms.find(f => f.id === b.farmId);
-    for (let offset = 0; offset < horizonDays; offset++) {
-      const day = dayAge + offset;
-      if (day < 1 || day > prog.duration) continue;
-      const d = prog.days.find(x => x.day === day);
-      const hasPlan = d && ((d.drugs && d.drugs.length) || d.vaccine);
-      if (!hasPlan) continue;
-      items.push({
-        date: programDayDate(b.placementDate, day),
-        farmName: farm?.name || '', batchId: b.id, day, offset,
-        drugLabel: dayDrugLabel(d), vaccineLabel: dayVaccineLabel(d),
-        // 실제 투약한 건만 "기록완료"로 본다. 안 하기로 한 날(미투약)은 따로 표시한다.
-        logged: logs.some(l => l.batchId === b.id && l.programDay === day && l.administered !== false),
-        skipped: logs.some(l => l.batchId === b.id && l.programDay === day && l.administered === false),
-      });
-    }
+    const species = b.species || farm?.type || '';
+    if (species === '육계' && dayAge > BROILER_STANDARD_MAX_AGE) { hiddenBroilers++; return; }
+    items.push({
+      batchId: b.id, farmName: farm?.name || '', house: b.house || '',
+      species, placementDate: b.placementDate, dayAge,
+    });
   });
-  items.sort((a, b) => a.date.localeCompare(b.date) || a.farmName.localeCompare(b.farmName));
-  return items;
+  items.sort((a, b) => b.dayAge - a.dayAge
+    || a.farmName.localeCompare(b.farmName, 'ko')
+    || a.house.localeCompare(b.house, 'ko', { numeric: true }));
+  return { items, hiddenBroilers };
+}
+
+const SPECIES_BADGE = { '육계': 'badge-blue', '삼계': 'badge-green', '산란계': 'badge-red', '토종닭': 'badge-amber', '오리': 'badge-teal', '기타': 'badge-purple' };
+
+function renderFarmDayAgeCard() {
+  const el = document.getElementById('dash-farm-age');
+  if (!el) return;
+  const { items, hiddenBroilers } = computeFarmDayAges();
+  const hiddenNote = hiddenBroilers
+    ? `<p class="text-muted mt-16">${BROILER_STANDARD_MAX_AGE}일령을 넘은 육계 ${hiddenBroilers}개 배치는 출하완료로 보고 목록에서 뺐습니다.</p>` : '';
+  let body;
+  if (!items.length) {
+    body = '<p class="text-muted">표시할 사육중 입추가 없습니다. 「입추(사육배치) 관리」에서 입추를 등록하면 농장별 일령이 여기에 표시됩니다.</p>';
+  } else {
+    // 폰에서는 표가 옆으로 스크롤되므로, 핵심인 "농장(동)"과 "일령"을 앞의 두 열에 둔다.
+    const rows = items.map(it => `
+      <tr onclick="openBatchDetail('${it.batchId}')" style="cursor:pointer">
+        <td><strong>${it.farmName || '-'}</strong>${it.house ? ` <span class="text-muted">${it.house}</span>` : ''}</td>
+        <td><strong>${it.dayAge}일령</strong>${it.species === '산란계' ? ` <span class="text-muted">(${Math.ceil(it.dayAge / 7)}주령)</span>` : ''}</td>
+        <td>${it.species ? `<span class="badge ${SPECIES_BADGE[it.species] || 'badge-purple'}">${it.species}</span>` : '-'}</td>
+        <td>${it.placementDate}</td>
+      </tr>`).join('');
+    body = `<div class="tbl-wrap"><table><thead><tr><th>농장</th><th>일령</th><th>축종</th><th>입추일</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+  el.innerHTML = `<div class="card mb-16">
+    <div class="card-header">
+      <div class="card-title">🐣 농장별 일령</div>
+      <span class="text-muted">일령 많은 순 · 육계는 ${BROILER_STANDARD_MAX_AGE}일령까지</span>
+    </div>
+    ${body}${hiddenNote}
+  </div>`;
 }
 
 function renderDashboard() {
@@ -87,27 +108,7 @@ function renderDashboard() {
     `<div class="stat-card"><div class="stat-label">이번달 투약 기록</div><div class="stat-value">${logsThisMonth}</div><div class="stat-sub">건</div></div>`,
   ].join('');
 
-  const upcoming = computeUpcomingSchedule();
-  const upcomingEl = document.getElementById('dash-upcoming');
-  if (!upcoming.length) {
-    upcomingEl.innerHTML = '';
-  } else {
-    const upcomingRows = upcoming.map(it => `
-      <tr onclick="openBatchDetail('${it.batchId}')" style="cursor:pointer">
-        <td>${it.date}${it.offset === 0 ? ' <span class="badge badge-red">오늘</span>' : ''}</td>
-        <td><strong>${it.farmName}</strong></td>
-        <td>${it.day}일령</td>
-        <td>${it.drugLabel ? `<span class="drug-pill">${it.drugLabel}</span>` : '-'}</td>
-        <td>${it.vaccineLabel ? `<span class="vaccine-pill">💉 ${it.vaccineLabel}</span>` : '-'}</td>
-        <td>${it.logged ? '<span class="badge badge-green">투약</span>'
-          : it.skipped ? '<span class="badge badge-amber">미투약</span>'
-          : '<span class="badge badge-amber">예정</span>'}</td>
-      </tr>`).join('');
-    upcomingEl.innerHTML = `<div class="card mb-16">
-      <div class="card-header"><div class="card-title">📅 다가오는 ${UPCOMING_SCHEDULE_HORIZON_DAYS}일 투약 일정</div></div>
-      <div class="tbl-wrap"><table><thead><tr><th>날짜</th><th>농장</th><th>일령</th><th>약품</th><th>백신</th><th>상태</th></tr></thead><tbody>${upcomingRows}</tbody></table></div>
-    </div>`;
-  }
+  renderFarmDayAgeCard();
 
   renderBreedSummaryCard();
 
