@@ -37,30 +37,49 @@ function computeDueSoonAlerts(horizonDays = DUE_SOON_HORIZON_DAYS, startOffset =
   return alerts;
 }
 
-// 사육중인 입추 배치의 오늘 일령을 농장별로 — 대시보드 "농장별 일령" 카드용. 일령이 많은 순으로 정렬한다.
-// 육계는 BROILER_STANDARD_MAX_AGE(35일령, 아래에서 선언)까지만 넣는다. 그 이후는 출하완료로 보고
-// (computeBatchDisplayStatus와 같은 기준) 목록에서 뺀다. 빠진 개수는 hiddenBroilers로 돌려줘서
-// 화면에 "왜 안 보이는지"를 남긴다. 산란계·삼계 등은 출하 개념이 없어 상한 없이 모두 보여준다.
-// 입추의 축종은 비워 둘 수 있어서, 비어 있으면 농장의 축종(필수 항목)을 대신 쓴다.
+// 사육중인 입추 배치의 오늘 일령을 "농장당 한 줄"로, 육계·산란계(·그 외) 구역으로 나눠서 —
+// 대시보드 "농장별 일령" 카드용. 구역마다 일령이 많은 순으로 정렬한다.
+//  · 같은 농장은 한 줄: 이름·농장주가 같으면 같은 농장으로 본다(같은 농장이 두 번 등록돼 있어도 합쳐진다).
+//    한 농장에 사육중 배치가 여러 개(동별·회차별)면 일령이 가장 많은 배치를 보여주고 배치 수를 알린다.
+//  · 육계는 BROILER_STANDARD_MAX_AGE(35일령, 아래에서 선언)까지만 넣는다. 그 이후는 출하완료로 보고
+//    (computeBatchDisplayStatus와 같은 기준) 뺀다. 빠진 배치 수는 hiddenBroilers로 돌려줘서 화면에
+//    "왜 안 보이는지"를 남긴다. 산란계·삼계 등은 출하 개념이 없어 상한 없이 모두 보여준다.
+//  · 입추의 축종은 비워 둘 수 있어서, 비어 있으면 농장의 축종(필수 항목)을 대신 쓴다.
+//  · 육계·산란계가 아닌 축종(삼계·토종닭 등)은 사라지지 않게 "그 외" 구역에 둔다.
+const FARM_DAY_AGE_SECTIONS = [
+  { key: 'broiler', icon: '🐔', label: '육계' },
+  { key: 'layer', icon: '🥚', label: '산란계' },
+  { key: 'other', icon: '🐥', label: '그 외' },
+];
 function computeFarmDayAges() {
   const farms = load('farms');
-  const items = [];
+  const byKey = Object.fromEntries(FARM_DAY_AGE_SECTIONS.map(s => [s.key, new Map()]));
+  const seenBatch = new Set();
   let hiddenBroilers = 0;
   load('batches').filter(b => b.status === 'active').forEach(b => {
+    if (seenBatch.has(b.id)) return; // 같은 배치가 중복으로 들어와도 한 번만 센다
+    seenBatch.add(b.id);
     const dayAge = computeDayAge(b.placementDate);
     if (!(dayAge >= 1)) return; // 입추 예정(아직 일령이 없음)이거나 입추일이 비정상
     const farm = farms.find(f => f.id === b.farmId);
     const species = b.species || farm?.type || '';
     if (species === '육계' && dayAge > BROILER_STANDARD_MAX_AGE) { hiddenBroilers++; return; }
-    items.push({
-      batchId: b.id, farmName: farm?.name || '', house: b.house || '',
-      species, placementDate: b.placementDate, dayAge,
-    });
+    const sectionKey = species === '육계' ? 'broiler' : species === '산란계' ? 'layer' : 'other';
+    const farmKey = farm ? `${(farm.name || '').trim()}\u0000${(farm.owner || '').trim()}` : `없는 농장:${b.farmId}`;
+    const key = sectionKey === 'other' ? `${farmKey}\u0000${species}` : farmKey; // 그 외는 축종이 다르면 다른 줄
+    const map = byKey[sectionKey];
+    if (!map.has(key)) map.set(key, { farmName: farm?.name || '', species, batches: [] });
+    map.get(key).batches.push({ batchId: b.id, house: b.house || '', placementDate: b.placementDate, dayAge });
   });
-  items.sort((a, b) => b.dayAge - a.dayAge
-    || a.farmName.localeCompare(b.farmName, 'ko')
-    || a.house.localeCompare(b.house, 'ko', { numeric: true }));
-  return { items, hiddenBroilers };
+  const sections = FARM_DAY_AGE_SECTIONS.map(sec => {
+    const rows = [...byKey[sec.key].values()].map(g => {
+      g.batches.sort((a, b) => b.dayAge - a.dayAge || a.house.localeCompare(b.house, 'ko', { numeric: true }));
+      return { ...g.batches[0], farmName: g.farmName, species: g.species, batchCount: g.batches.length };
+    });
+    rows.sort((a, b) => b.dayAge - a.dayAge || a.farmName.localeCompare(b.farmName, 'ko'));
+    return { ...sec, rows };
+  });
+  return { sections, hiddenBroilers };
 }
 
 const SPECIES_BADGE = { '육계': 'badge-blue', '삼계': 'badge-green', '산란계': 'badge-red', '토종닭': 'badge-amber', '오리': 'badge-teal', '기타': 'badge-purple' };
@@ -68,29 +87,42 @@ const SPECIES_BADGE = { '육계': 'badge-blue', '삼계': 'badge-green', '산란
 function renderFarmDayAgeCard() {
   const el = document.getElementById('dash-farm-age');
   if (!el) return;
-  const { items, hiddenBroilers } = computeFarmDayAges();
-  const hiddenNote = hiddenBroilers
-    ? `<p class="text-muted mt-16">${BROILER_STANDARD_MAX_AGE}일령을 넘은 육계 ${hiddenBroilers}개 배치는 출하완료로 보고 목록에서 뺐습니다.</p>` : '';
-  let body;
-  if (!items.length) {
-    body = '<p class="text-muted">표시할 사육중 입추가 없습니다. 「입추(사육배치) 관리」에서 입추를 등록하면 농장별 일령이 여기에 표시됩니다.</p>';
-  } else {
-    // 폰에서는 표가 옆으로 스크롤되므로, 핵심인 "농장(동)"과 "일령"을 앞의 두 열에 둔다.
-    const rows = items.map(it => `
-      <tr onclick="openBatchDetail('${it.batchId}')" style="cursor:pointer">
-        <td><strong>${it.farmName || '-'}</strong>${it.house ? ` <span class="text-muted">${it.house}</span>` : ''}</td>
-        <td><strong>${it.dayAge}일령</strong>${it.species === '산란계' ? ` <span class="text-muted">(${Math.ceil(it.dayAge / 7)}주령)</span>` : ''}</td>
-        <td>${it.species ? `<span class="badge ${SPECIES_BADGE[it.species] || 'badge-purple'}">${it.species}</span>` : '-'}</td>
-        <td>${it.placementDate}</td>
-      </tr>`).join('');
-    body = `<div class="tbl-wrap"><table><thead><tr><th>농장</th><th>일령</th><th>축종</th><th>입추일</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  }
+  const { sections, hiddenBroilers } = computeFarmDayAges();
+  // 표는 구역마다 같은 3열(농장·일령·입추일). 폰에서는 표가 옆으로 스크롤되므로 핵심인 "농장"과 "일령"이 앞에 온다.
+  // "그 외" 구역은 축종이 섞여 있어서 농장 이름 옆 배지로 축종을 보여준다.
+  const rowHtml = (it, showSpecies) => `
+    <tr onclick="openBatchDetail('${it.batchId}')" style="cursor:pointer">
+      <td><strong>${it.farmName || '-'}</strong>${showSpecies && it.species ? ` <span class="badge ${SPECIES_BADGE[it.species] || 'badge-purple'}">${it.species}</span>` : ''}${it.batchCount > 1
+        ? ` <span class="text-muted" title="이 농장의 사육중 배치 ${it.batchCount}개 중 일령이 가장 많은 배치를 보여줍니다">배치 ${it.batchCount}개</span>`
+        : it.house ? ` <span class="text-muted">${it.house}</span>` : ''}</td>
+      <td><strong>${it.dayAge}일령</strong>${it.species === '산란계' ? ` <span class="text-muted">(${Math.ceil(it.dayAge / 7)}주령)</span>` : ''}</td>
+      <td>${it.placementDate}</td>
+    </tr>`;
+  const hiddenNote = `<p class="text-muted" style="margin-top:8px">${BROILER_STANDARD_MAX_AGE}일령을 넘은 육계 ${hiddenBroilers}개 배치는 출하완료로 보고 뺐습니다.</p>`;
+  // 빈 구역은 건너뛰되, 육계는 전부 35일령을 넘어 빠진 경우에도 구역을 남겨 이유를 보여준다.
+  // min-width:0은 grid 칸이 표 폭만큼 늘어나지 않고 표(.tbl-wrap) 안에서 스크롤되게 하려는 것.
+  const parts = sections.filter(sec => sec.rows.length || (sec.key === 'broiler' && hiddenBroilers)).map(sec => {
+    const table = sec.rows.length
+      ? `<div class="tbl-wrap"><table><thead><tr><th>농장</th><th>일령</th><th>입추일</th></tr></thead><tbody>${sec.rows.map(r => rowHtml(r, sec.key === 'other')).join('')}</tbody></table></div>`
+      : '<p class="text-muted">표시할 육계가 없습니다.</p>';
+    return `<div style="min-width:0">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <strong>${sec.icon} ${sec.label}</strong>
+        <span class="text-muted">${sec.rows.length}개 농장${sec.key === 'broiler' ? ` · ${BROILER_STANDARD_MAX_AGE}일령까지` : ''}</span>
+      </div>
+      ${table}${sec.key === 'broiler' && hiddenBroilers ? hiddenNote : ''}
+    </div>`;
+  });
+  // 구역은 화면이 넓으면 나란히, 좁으면(폰) 위아래로 쌓인다.
+  const body = parts.length
+    ? `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:20px">${parts.join('')}</div>`
+    : '<p class="text-muted">표시할 사육중 입추가 없습니다. 「입추(사육배치) 관리」에서 입추를 등록하면 농장별 일령이 여기에 표시됩니다.</p>';
   el.innerHTML = `<div class="card mb-16">
     <div class="card-header">
       <div class="card-title">🐣 농장별 일령</div>
-      <span class="text-muted">일령 많은 순 · 육계는 ${BROILER_STANDARD_MAX_AGE}일령까지</span>
+      <span class="text-muted">농장당 1줄 · 일령 많은 순</span>
     </div>
-    ${body}${hiddenNote}
+    ${body}
   </div>`;
 }
 
