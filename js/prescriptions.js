@@ -247,12 +247,14 @@ function renderPrescriptions() {
   }
   empty.style.display = 'none';
   if (checkAll) checkAll.checked = list.every(p => rxSelectedIds.has(p.id));
+  // 줄을 누르면 바로 편집 화면을 연다(row-click = 손가락 커서). 체크박스 칸은 클릭이 줄로
+  // 번지지 않게 막아서, 인쇄·삭제할 건을 체크할 때 편집창이 열리지 않게 한다.
   tbody.innerHTML = list.map(p => {
     const items = p.items || [];
     const productLabel = items.map(it => it.productName).join(', ') || '-';
     return `
-    <tr>
-      <td style="text-align:center"><input type="checkbox" ${rxSelectedIds.has(p.id) ? 'checked' : ''} onchange="toggleRxSelect('${p.id}', this.checked)"></td>
+    <tr class="row-click" onclick="openRxPrescriptionModal('${p.id}')">
+      <td style="text-align:center" onclick="event.stopPropagation()"><input type="checkbox" ${rxSelectedIds.has(p.id) ? 'checked' : ''} onchange="toggleRxSelect('${p.id}', this.checked)"></td>
       <td>${p.issueNo != null ? '#' + p.issueNo : '-'}</td>
       <td>${p.issueDate}</td>
       <td><strong>${p.farmName}</strong></td>

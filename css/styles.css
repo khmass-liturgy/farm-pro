@@ -200,6 +200,9 @@ table tr:hover td { background: var(--bg); }
 .tbl-wrap table tbody tr:hover td,
 .schedule-table tbody tr:hover td,
 .drug-result-table tbody tr:hover td { background: var(--row-hover); }
+/* 줄을 눌러 바로 편집하는 목록(출하전검사·이동승인서·산란성계 출하대장·입력대장·처방전; 줄에 class="row-click").
+   마우스를 올린 줄의 색은 바로 위 :hover 규칙이 이미 주므로 여기서는 손가락 커서만 더한다. */
+.tbl-wrap table tbody tr.row-click { cursor: pointer; }
 
 /* 배지 */
 .badge {

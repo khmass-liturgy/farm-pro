@@ -8,7 +8,7 @@
 <link rel="icon" href="img/favicon.ico?v=20261031c">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20261031b">
 <link rel="manifest" href="manifest.webmanifest?v=20261031b">
-<link rel="stylesheet" href="css/styles.css?v=20261031e">
+<link rel="stylesheet" href="css/styles.css?v=20261104a">
 </head>
 <body>
 
@@ -360,7 +360,7 @@
       </div>
       <div class="card">
         <div class="card-header">
-          <div class="card-title">출하전검사 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 체크박스로 골라 인쇄·편집·삭제하세요(인쇄·삭제는 여러 건, 편집은 한 건)</span></div>
+          <div class="card-title">출하전검사 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 줄을 누르면 바로 편집합니다. 인쇄·삭제는 체크박스로 골라 하세요(여러 건 가능)</span></div>
           <div class="flex-gap">
             <button class="btn btn-outline btn-sm" onclick="openPsExcelModal()" title="채취일 구간을 정해 시료채취 결과 기록대장(서식 1) 엑셀로 저장">📊 엑셀 출력</button>
             <button class="btn btn-primary btn-sm" id="ps-print-btn" onclick="printSelectedPreShipments()" disabled>🖨️ 인쇄</button>
@@ -398,7 +398,7 @@
       </div>
       <div class="card">
         <div class="card-header">
-          <div class="card-title">이동승인서 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 체크박스로 골라 인쇄·삭제하세요(여러 건 가능), 복제·편집은 한 건만 고르세요</span></div>
+          <div class="card-title">이동승인서 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 줄을 누르면 바로 편집합니다. 인쇄·삭제는 체크박스로 골라 하세요(여러 건 가능), 복제는 한 건만 고르세요</span></div>
           <div class="flex-gap">
             <button class="btn btn-outline btn-sm" onclick="downloadMpTemplate()" title="일괄 발급용 엑셀 양식 내려받기">📋 양식 다운로드</button>
             <button class="btn btn-outline btn-sm" id="mp-bulk-btn" onclick="document.getElementById('mp-bulk-file').click()" title="양식에 맞춘 엑셀 명단을 올려 한꺼번에 발급">📥 엑셀 일괄 발급</button>
@@ -441,7 +441,7 @@
       </div>
       <div class="card">
         <div class="card-header">
-          <div class="card-title">산란성계 출하대장 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 체크박스로 골라 인쇄·편집·삭제하세요(인쇄·삭제는 여러 건, 편집은 한 건)</span></div>
+          <div class="card-title">산란성계 출하대장 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 줄을 누르면 바로 편집합니다. 인쇄·삭제는 체크박스로 골라 하세요(여러 건 가능)</span></div>
           <div class="flex-gap">
             <button class="btn btn-primary btn-sm" id="hs-print-btn" onclick="printSelectedHenShipments()" disabled>🖨️ 인쇄</button>
             <button class="btn btn-outline btn-sm" id="hs-edit-btn" onclick="editSelectedHenShipment()" disabled>편집</button>
@@ -478,7 +478,7 @@
       </div>
       <div class="card">
         <div class="card-header">
-          <div class="card-title">입력대장 <span class="text-muted" style="font-weight:400;font-size:12px">— 여기서 등록한 방문 기록이 근무상황보고서·청구서·예찰내역·예찰일지·출장일지에 모두 쓰입니다</span></div>
+          <div class="card-title">입력대장 <span class="text-muted" style="font-weight:400;font-size:12px">— 줄을 누르면 바로 편집합니다. 여기서 등록한 방문 기록이 근무상황보고서·청구서·예찰내역·예찰일지·출장일지에 모두 쓰입니다</span></div>
           <div class="flex-gap">
             <button class="btn btn-outline btn-sm" onclick="downloadVetEntryTemplate()" title="입력대장 형식의 엑셀 양식 내려받기">📋 양식 다운로드</button>
             <button class="btn btn-outline btn-sm" onclick="document.getElementById('vetentry-file').click()" title="입력대장 엑셀을 올려 한꺼번에 등록">📥 엑셀 업로드</button>
@@ -642,7 +642,7 @@
       </div>
       <div class="card">
         <div class="card-header">
-          <div class="card-title">처방전 발급 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 체크박스로 골라 인쇄·편집·삭제하세요(인쇄·삭제는 여러 건, 편집은 한 건)</span></div>
+          <div class="card-title">처방전 발급 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 줄을 누르면 바로 편집합니다. 인쇄·삭제는 체크박스로 골라 하세요(여러 건 가능)</span></div>
           <div class="flex-gap">
             <button class="btn btn-primary btn-sm" id="rx-print-btn" onclick="printSelectedRxPrescriptions()" disabled>🖨️ 인쇄</button>
             <button class="btn btn-outline btn-sm" id="rx-edit-btn" onclick="editSelectedRxPrescription()" disabled>편집</button>
@@ -1957,12 +1957,12 @@
 <script src="js/programs.js?v=20261028b"></script>
 <script src="js/batches.js?v=20261028b"></script>
 <script src="js/medicationLog.js?v=20261021a"></script>
-<script src="js/prescriptions.js?v=20261012a"></script>
-<script src="js/preShipment.js?v=20261027c"></script>
-<script src="js/movePermit.js?v=20261016a"></script>
+<script src="js/prescriptions.js?v=20261104a"></script>
+<script src="js/preShipment.js?v=20261104a"></script>
+<script src="js/movePermit.js?v=20261104a"></script>
 <script src="js/movePermitBulk.js?v=20261030g"></script>
-<script src="js/henShipment.js?v=20261012a"></script>
-<script src="js/vetReport.js?v=20261023b"></script>
+<script src="js/henShipment.js?v=20261104a"></script>
+<script src="js/vetReport.js?v=20261104a"></script>
 <script src="js/clinicalAssessment.js?v=20261015a"></script>
 <script src="js/rodentControl.js?v=20261015a"></script>
 <script src="js/schedule.js?v=20261015a"></script>

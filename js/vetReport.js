@@ -100,9 +100,11 @@ function renderVetEntries() {
   }
   empty.style.display = 'none';
   if (checkAll) checkAll.checked = list.every(e => vetEntrySelectedIds.has(e.id));
+  // 줄을 누르면 바로 편집 화면을 연다(row-click = 손가락 커서). 체크박스 칸은 클릭이 줄로
+  // 번지지 않게 막아서, 삭제할 건을 체크할 때 편집창이 열리지 않게 한다.
   tbody.innerHTML = list.map(e => `
-    <tr>
-      <td style="text-align:center"><input type="checkbox" ${vetEntrySelectedIds.has(e.id) ? 'checked' : ''} onchange="toggleVetEntrySelect('${e.id}', this.checked)"></td>
+    <tr class="row-click" onclick="openVetEntryModal('${e.id}')">
+      <td style="text-align:center" onclick="event.stopPropagation()"><input type="checkbox" ${vetEntrySelectedIds.has(e.id) ? 'checked' : ''} onchange="toggleVetEntrySelect('${e.id}', this.checked)"></td>
       <td>${e.visitDate}</td>
       <td><strong>${e.owner || '-'}</strong></td>
       <td>${e.farmName || '(삭제된 농장)'}</td>

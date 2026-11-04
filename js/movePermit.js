@@ -85,9 +85,11 @@ function renderMovePermits() {
   }
   empty.style.display = 'none';
   if (checkAll) checkAll.checked = list.every(m => mpSelectedIds.has(m.id));
+  // 줄을 누르면 바로 편집 화면을 연다(row-click = 손가락 커서). 체크박스 칸은 클릭이 줄로
+  // 번지지 않게 막아서, 인쇄·PDF·이메일·삭제할 건을 체크할 때 편집창이 열리지 않게 한다.
   tbody.innerHTML = list.map(m => `
-    <tr>
-      <td style="text-align:center"><input type="checkbox" ${mpSelectedIds.has(m.id) ? 'checked' : ''} onchange="toggleMpSelect('${m.id}', this.checked)"></td>
+    <tr class="row-click" onclick="openMovePermitModal('${m.id}')">
+      <td style="text-align:center" onclick="event.stopPropagation()"><input type="checkbox" ${mpSelectedIds.has(m.id) ? 'checked' : ''} onchange="toggleMpSelect('${m.id}', this.checked)"></td>
       <td>${m.issueDate}</td>
       <td>${mpDocNo(m)}</td>
       <td><span class="badge ${m.formType === 'breeder' ? 'badge-purple' : 'badge-blue'}">${m.formType === 'breeder' ? '종계장' : '일반'}</span></td>
