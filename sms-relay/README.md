@@ -196,10 +196,25 @@ pb(polcon.cc) 저장소의 GitHub Actions가 농식품부 「배합사료 생산
 받을 수 없다. 그래서 국내 리전인 이 서버가 대신 받아 그대로 돌려준다.
 
 - 인증: 문자 발송과 같은 `Authorization: Bearer <RELAY_SECRET>`
-- 허용 주소: `https://www.mafra.go.kr/bbs/home/789/`(배합사료)와 `bbs/FMD-AI2/851/`(고병원성 AI 발생·검출 현황, pb의 AI 발생지도용) 의 목록(`artclList.do`)·글
+- 허용 주소: `https://www.mafra.go.kr/bbs/home/789/`(배합사료), `bbs/FMD-AI2/851/`(고병원성 AI 발생·검출 현황, pb의 AI 발생지도용),
+  `bbs/FMD-AI2/393/`(가축전염병 보도자료 — 발생 당일 중수본 보도자료, pb의 AI 「보도 기준」 빠른 집계용) 의 목록(`artclList.do`)·글
   (`{id}/artclView.do`)·첨부(`{id}/download.do`)만. 다른 호스트·경로·http·리다이렉트로
   다른 호스트로 넘어가는 경우는 모두 거부(403/502)해서 열린 프록시가 되지 않는다.
 - 사용 예: `GET /fetch-mafra?url=https%3A%2F%2Fwww.mafra.go.kr%2Fbbs%2Fhome%2F789%2FartclList.do`
+- **코드 반영**: 서버의 `/opt/sms-relay/server.js`를 이 저장소 최신으로 바꾸고 `sudo systemctl restart sms-relay`.
+  허용 목록 한 줄만 바꿀 때는 VM에서:
+  ```bash
+  sudo cp /opt/sms-relay/server.js /opt/sms-relay/server.js.bak
+  sudo sed -i 's#(home\\/789|FMD-AI2\\/851)#(home\\/789|FMD-AI2\\/851|FMD-AI2\\/393)#' /opt/sms-relay/server.js
+  grep -n "MAFRA_ALLOWED_PATH =" /opt/sms-relay/server.js        # FMD-AI2\/393 이 들어갔는지 확인
+  node --check /opt/sms-relay/server.js && sudo systemctl restart sms-relay
+  ```
+- 확인(VM 안에서, 200이면 성공·403이면 허용 목록 미반영):
+  ```bash
+  SECRET=$(sudo grep '^RELAY_SECRET=' /etc/sms-relay.env | cut -d= -f2-)
+  curl -s -o /dev/null -w "%{http_code}\n" -H "Authorization: Bearer $SECRET" \
+    "http://localhost:8080/fetch-mafra?url=https%3A%2F%2Fwww.mafra.go.kr%2Fbbs%2FFMD-AI2%2F393%2FartclList.do"
+  ```
 - 문자 발송(`POST /send-sms`)과는 독립적이라, 이 경로가 실패해도 문자 발송에는 영향이 없다.
 
 ## 추가 경로: `GET /fetch-customs` (pb 저장소용)
