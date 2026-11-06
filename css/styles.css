@@ -136,6 +136,9 @@ body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; backgrou
 .btn-sm { padding: 5px 10px; font-size: 12px; }
 .btn-green { background: var(--green); color: var(--on-accent); border-color: var(--green); }
 .btn-green:hover { background: #047857; border-color: #047857; }
+/* 카카오톡 발송 버튼 — 카카오 노랑(#fee500) + 갈색 글자. daehan의 "카톡전송" 버튼과 같은 색이다. */
+.btn-kakao { background: #fee500; color: #3c1e1e; border-color: #fee500; }
+.btn-kakao:hover { background: #f5dc00; border-color: #f5dc00; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* 카드 */

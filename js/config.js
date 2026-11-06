@@ -14,3 +14,9 @@ window.SUPABASE_ANON_KEY = 'sb_publishable_evs0gXiGRdQbYqVDMTie-w_EulUQUYf';
 // 있었던 것으로 보임) 이 기능 전용 클라이언트를 새로 발급받았다.
 window.GOOGLE_DRIVE_CLIENT_ID = '356503598433-8p8sl9fj1te19etlrrhk64kq01fbpp7r.apps.googleusercontent.com';
 window.GOOGLE_DRIVE_FOLDER_ID = '1ol2X9FiViU3zZ6vGtd0HSrTWjAlv_eaU';
+
+// 카카오톡 발송(js/kakao.js)에 쓰는 카카오 JavaScript 키. daehan 저장소의 "카카오톡 전송"과 같은 카카오 앱이다.
+// JavaScript 키는 브라우저에 노출되도록 만들어진 공개 값이고, 카카오 개발자 콘솔 [플랫폼 → Web]에 등록한
+// 도메인에서만 동작한다. 등록 도메인이 https://khmass-liturgy.github.io 라서 이 앱(/farm-pro/)도 같은 도메인이므로
+// 따로 등록할 것이 없다. 단, 로컬(localhost)에서는 도메인 불일치로 전송이 거부된다.
+window.KAKAO_JS_KEY = "671da3fb68e72269f3c3dbadabdf8c0f";

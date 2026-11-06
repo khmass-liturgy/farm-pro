@@ -8,7 +8,7 @@
 <link rel="icon" href="img/favicon.ico?v=20261031c">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20261031b">
 <link rel="manifest" href="manifest.webmanifest?v=20261031b">
-<link rel="stylesheet" href="css/styles.css?v=20261104a">
+<link rel="stylesheet" href="css/styles.css?v=20261106a">
 </head>
 <body>
 
@@ -24,6 +24,9 @@
     </div>
     <div class="sidebar-item" onclick="openSmsModal()">
       <span class="icon">💬</span> 문자 발송
+    </div>
+    <div class="sidebar-item" onclick="openKakaoModal()">
+      <span class="icon">💛</span> 카카오톡 발송
     </div>
   </div>
   <div class="sidebar-section" data-group="consult">
@@ -915,6 +918,40 @@
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-sms')">취소</button>
       <button class="btn btn-primary" id="sms-send-btn" onclick="sendSms()">발송</button>
+    </div>
+  </div>
+</div>
+
+<!-- 모달: 카카오톡 발송 (카카오 공유 SDK, js/kakao.js — 문자와 같은 틀이지만 받는 사람은 카카오톡 창에서 고른다) -->
+<div class="modal-bg" id="modal-kakao">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title">카카오톡 발송</div>
+      <button class="modal-close" onclick="closeModal('modal-kakao')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>받는 사람</label>
+      <div style="font-size:12px; line-height:1.7; color:var(--text-secondary); background:var(--accent-light); border-radius:var(--radius-sm); padding:10px 12px;">
+        아래 <strong>카카오톡으로 보내기</strong>를 누르면 카카오톡 창이 열립니다. 거기서 받을 <strong>친구·채팅방을 고르면</strong> 내용이 카드로 전송됩니다.
+        문자처럼 등록된 농장 번호로 한꺼번에 보내는 방식은 아닙니다 — 카카오 공유는 받는 사람을 이 화면에서 지정할 수 없습니다.
+      </div>
+    </div>
+    <div class="form-group">
+      <label>투약 프로그램 불러오기 <span class="text-muted">(선택하면 아래 내용을 자동으로 채웁니다 — 채운 뒤에도 자유롭게 고쳐 보낼 수 있습니다)</span></label>
+      <div class="flex-gap">
+        <select id="kakao-program-select" style="flex:1"><option value="">프로그램 선택...</option></select>
+        <button type="button" class="btn btn-outline btn-sm" onclick="fillKakaoFromProgram()">내용 채우기</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>내용 *</label>
+      <textarea id="kakao-content" rows="6" placeholder="카카오톡으로 보낼 내용을 입력하세요" oninput="updateKakaoCount()"></textarea>
+      <div class="text-muted mt-8" id="kakao-count">0자 (최대 2,000자)</div>
+      <div class="text-muted mt-8" style="font-size:11px">내용은 이미지로 만들어 카카오 서버에 올려 보냅니다. 받는 사람이 카드의 "내용 크게 보기"를 누르면 크게 볼 수 있습니다.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-kakao')">취소</button>
+      <button class="btn btn-kakao" id="kakao-send-btn" onclick="sendKakao()">카카오톡으로 보내기</button>
     </div>
   </div>
 </div>
@@ -1944,13 +1981,14 @@
      async defer라 이 스크립트가 늦게 끝나도 페이지 로드를 막지 않는다 — 실제로
      쓰는 시점(사진 저장·이메일 발송)엔 이미 다 로드돼 있다. -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="js/config.js?v=20261015a"></script>
+<script src="js/config.js?v=20261106a"></script>
 <script src="js/supabaseClient.js?v=20261023b"></script>
 <script src="js/auth.js?v=20261015a"></script>
 <script src="js/googleDrive.js?v=20261030e"></script>
 <script src="js/breedStandards.js?v=20261028b"></script>
 <script src="js/farms.js?v=20261015a"></script>
 <script src="js/sms.js?v=20261015a"></script>
+<script src="js/kakao.js?v=20261106a"></script>
 <script src="js/masterdata.js?v=20261015a"></script>
 <script src="js/rxProducts.js?v=20261015a"></script>
 <script src="js/drugSearch.js?v=20261009c"></script>
