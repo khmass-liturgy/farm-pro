@@ -161,9 +161,11 @@ function renderPreShipments() {
   psSelectedIds.forEach(id => { if (!liveIds.has(id)) psSelectedIds.delete(id); });
 
   const printBtn = document.getElementById('ps-print-btn');
+  const kakaoBtn = document.getElementById('ps-kakao-btn');
   const editBtn = document.getElementById('ps-edit-btn');
   const deleteBtn = document.getElementById('ps-delete-btn');
   if (printBtn) printBtn.disabled = psSelectedIds.size === 0;
+  if (kakaoBtn) kakaoBtn.disabled = psSelectedIds.size === 0;
   if (editBtn) editBtn.disabled = psSelectedIds.size !== 1;
   if (deleteBtn) deleteBtn.disabled = psSelectedIds.size === 0;
 
@@ -535,6 +537,20 @@ function printSelectedPreShipments() {
   if (!list.length) { alert('인쇄할 항목을 먼저 체크해주세요.'); return; }
   document.getElementById('print-area').innerHTML = list.map(buildPreShipmentHtml).join('');
   setTimeout(() => window.print(), 200);
+}
+
+// 체크한 서식을 출력(인쇄) 모양 그대로 이미지로 만들어 카카오톡으로 보낸다. 인쇄와 같은 buildPreShipmentHtml을
+// 쓰고, 이미지 만들기·카카오 전송은 js/kakao.js의 kakaoSendPrintPages가 맡는다.
+function kakaoSendSelectedPreShipments() {
+  const list = load('preShipments').filter(p => psSelectedIds.has(p.id));
+  if (!list.length) { alert('카카오톡으로 보낼 항목을 먼저 체크해주세요.'); return; }
+  const first = list[0].farmName || '';
+  return kakaoSendPrintPages({
+    htmls: list.map(buildPreShipmentHtml),
+    title: list.length === 1 ? `${first} 출하전검사` : `${first} 외 ${list.length - 1}건 출하전검사`,
+    btn: document.getElementById('ps-kakao-btn'),
+    isEnabled: () => psSelectedIds.size > 0,
+  });
 }
 
 // ─── 엑셀 출력: AI 검사를 위한 현장 시료채취 결과 기록대장 (<서식 1>) ─────────

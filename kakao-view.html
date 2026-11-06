@@ -12,35 +12,75 @@
   html,body{margin:0;background:#fff;color:#111;font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif}
   .bar{position:sticky;top:0;background:#0f766e;color:#fff;padding:10px 14px;font-size:15px;display:flex;justify-content:space-between;align-items:center;z-index:2}
   .bar a{color:#fff;font-size:13px}
+  #box{max-width:960px;margin:0 auto}
   img{display:block;width:100%;height:auto}
   .msg{padding:40px 20px;text-align:center;color:#666}
+  .pg{border-bottom:10px solid #e5e7eb}
+  .pn{background:#f3f4f6;color:#555;font-size:12px;padding:6px 14px}
 </style>
 </head>
 <body>
 <!-- 카카오톡 발송(js/kakao.js)의 카드를 누르면 열리는 페이지. 로그인 없이 열려야 해서(받는 사람은 이 앱의 계정이 없다)
-     인증 스크립트를 싣지 않고, 카카오 서버에 올린 이미지(?img=…)만 보여준다. daehan 저장소의 view.html과 같은 방식이다. -->
+     인증 스크립트를 싣지 않고, 카카오 서버에 올린 이미지(?img=…, 여러 장이면 img를 반복)만 보여준다.
+     daehan 저장소의 view.html과 같은 방식이다. -->
 <div class="bar"><span>대한동물병원 안내</span><a id="orig" href="#" target="_blank" rel="noopener">원본 열기</a></div>
 <div id="box"><p class="msg">불러오는 중...</p></div>
 <script>
 (function () {
   var box = document.getElementById('box');
-  var raw = new URLSearchParams(location.search).get('img') || '';
-  var ok = false;
-  try {
-    var u = new URL(raw);
-    // 카카오 서버에 올린 이미지만 표시한다(아무 주소나 띄우는 페이지가 되지 않게). 카카오는 http:// 주소를 주는데,
-    // https 페이지에서는 막히므로 https로 바꾼다.
-    ok = (u.protocol === 'https:' || u.protocol === 'http:') && /(^|\.)(kakaocdn\.net|kakao\.com)$/.test(u.hostname);
-    if (ok) { u.protocol = 'https:'; raw = u.href; }
-  } catch (e) {}
-  if (!ok) { box.innerHTML = '<p class="msg">이미지 주소가 올바르지 않습니다.</p>'; return; }
-  var im = new Image();
-  im.alt = '안내문';
-  im.referrerPolicy = 'no-referrer';   // 외부 사이트에서 불러올 때 막히지 않도록 출처 정보를 보내지 않는다
-  im.onload = function () { box.innerHTML = ''; box.appendChild(im); };
-  im.onerror = function () { box.innerHTML = '<p class="msg">이미지를 불러오지 못했습니다. 보낸 지 오래되어 만료되었을 수 있습니다.</p>'; };
-  im.src = raw;
-  document.getElementById('orig').href = raw;
+  var orig = document.getElementById('orig');
+
+  // 카카오 서버에 올린 이미지만 표시한다(아무 주소나 띄우는 페이지가 되지 않게). 카카오는 http:// 주소를 주는데,
+  // https 페이지에서는 막히므로 https로 바꾼다.
+  function kakaoImage(raw) {
+    try {
+      var u = new URL(raw);
+      if ((u.protocol === 'https:' || u.protocol === 'http:') && /(^|\.)(kakaocdn\.net|kakao\.com)$/.test(u.hostname)) {
+        u.protocol = 'https:';
+        return u.href;
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  var urls = new URLSearchParams(location.search).getAll('img').map(kakaoImage);
+  // 하나라도 올바르지 않으면 주소를 고친 링크로 보고 아무것도 띄우지 않는다.
+  if (!urls.length || urls.some(function (u) { return !u; })) {
+    box.innerHTML = '<p class="msg">이미지 주소가 올바르지 않습니다.</p>';
+    return;
+  }
+
+  function show(url, slot) {
+    var im = new Image();
+    im.alt = '안내문';
+    im.referrerPolicy = 'no-referrer';   // 외부 사이트에서 불러올 때 막히지 않도록 출처 정보를 보내지 않는다
+    im.onload = function () { slot.innerHTML = ''; slot.appendChild(im); };
+    im.onerror = function () { slot.innerHTML = '<p class="msg">이미지를 불러오지 못했습니다. 보낸 지 오래되어 만료되었을 수 있습니다.</p>'; };
+    im.src = url;
+  }
+
+  if (urls.length === 1) {
+    show(urls[0], box);
+    orig.href = urls[0];
+    return;
+  }
+
+  // 여러 장(서식 여러 건을 한 번에 보낸 경우): 위에서 아래로 이어서 보여준다. "원본 열기"가 가리킬 한 장이 없어 숨긴다.
+  orig.style.display = 'none';
+  box.innerHTML = '';
+  urls.forEach(function (url, i) {
+    var pg = document.createElement('div');
+    pg.className = 'pg';
+    var pn = document.createElement('div');
+    pn.className = 'pn';
+    pn.textContent = (i + 1) + ' / ' + urls.length;
+    var slot = document.createElement('div');
+    slot.innerHTML = '<p class="msg">불러오는 중...</p>';
+    pg.appendChild(pn);
+    pg.appendChild(slot);
+    box.appendChild(pg);
+    show(url, slot);
+  });
 })();
 </script>
 </body>

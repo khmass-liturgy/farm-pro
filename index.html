@@ -363,10 +363,11 @@
       </div>
       <div class="card">
         <div class="card-header">
-          <div class="card-title">출하전검사 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 줄을 누르면 바로 편집합니다. 인쇄·삭제는 체크박스로 골라 하세요(여러 건 가능)</span></div>
+          <div class="card-title">출하전검사 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 줄을 누르면 바로 편집합니다. 인쇄·카톡 발송·삭제는 체크박스로 골라 하세요(여러 건 가능)</span></div>
           <div class="flex-gap">
             <button class="btn btn-outline btn-sm" onclick="openPsExcelModal()" title="채취일 구간을 정해 시료채취 결과 기록대장(서식 1) 엑셀로 저장">📊 엑셀 출력</button>
             <button class="btn btn-primary btn-sm" id="ps-print-btn" onclick="printSelectedPreShipments()" disabled>🖨️ 인쇄</button>
+            <button class="btn btn-kakao btn-sm" id="ps-kakao-btn" onclick="kakaoSendSelectedPreShipments()" title="체크한 서식을 출력(인쇄) 모양 그대로 이미지로 만들어 카카오톡으로 보냅니다" disabled>💛 카톡 발송</button>
             <button class="btn btn-outline btn-sm" id="ps-edit-btn" onclick="editSelectedPreShipment()" disabled>편집</button>
             <button class="btn btn-danger btn-sm" id="ps-delete-btn" onclick="deleteSelectedPreShipments()" disabled>삭제</button>
           </div>
@@ -444,9 +445,10 @@
       </div>
       <div class="card">
         <div class="card-header">
-          <div class="card-title">산란성계 출하대장 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 줄을 누르면 바로 편집합니다. 인쇄·삭제는 체크박스로 골라 하세요(여러 건 가능)</span></div>
+          <div class="card-title">산란성계 출하대장 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 줄을 누르면 바로 편집합니다. 인쇄·카톡 발송·삭제는 체크박스로 골라 하세요(여러 건 가능)</span></div>
           <div class="flex-gap">
             <button class="btn btn-primary btn-sm" id="hs-print-btn" onclick="printSelectedHenShipments()" disabled>🖨️ 인쇄</button>
+            <button class="btn btn-kakao btn-sm" id="hs-kakao-btn" onclick="kakaoSendSelectedHenShipments()" title="체크한 출하대장을 출력(인쇄) 모양 그대로 이미지로 만들어 카카오톡으로 보냅니다" disabled>💛 카톡 발송</button>
             <button class="btn btn-outline btn-sm" id="hs-edit-btn" onclick="editSelectedHenShipment()" disabled>편집</button>
             <button class="btn btn-danger btn-sm" id="hs-delete-btn" onclick="deleteSelectedHenShipments()" disabled>삭제</button>
           </div>
@@ -952,6 +954,23 @@
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-kakao')">취소</button>
       <button class="btn btn-kakao" id="kakao-send-btn" onclick="sendKakao()">카카오톡으로 보내기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 모달: 서식 이미지 미리보기 + 카카오톡 창 열기 (출하전검사·산란성계 출하대장의 "카톡 발송", js/kakao.js의 kakaoSendPrintPages).
+     이미지를 만드는 데 몇 초 걸려서, 브라우저가 카카오톡 창(팝업)을 막지 않게 마지막 단계는 이 버튼을 직접 눌러 연다. -->
+<div class="modal-bg" id="modal-kakao-ready">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <div class="modal-title" id="kakao-ready-title">카카오톡으로 보내기</div>
+      <button class="modal-close" onclick="closeKakaoReady()">✕</button>
+    </div>
+    <div style="font-size:12px; line-height:1.7; color:var(--text-secondary); background:var(--accent-light); border-radius:var(--radius-sm); padding:10px 12px;" id="kakao-ready-desc"></div>
+    <div id="kakao-ready-thumbs" style="display:flex; gap:10px; overflow-x:auto; padding:12px 2px;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeKakaoReady()">닫기</button>
+      <button class="btn btn-kakao" id="kakao-ready-btn" onclick="openKakaoShare()">카카오톡 창 열기</button>
     </div>
   </div>
 </div>
@@ -1988,7 +2007,7 @@
 <script src="js/breedStandards.js?v=20261028b"></script>
 <script src="js/farms.js?v=20261015a"></script>
 <script src="js/sms.js?v=20261015a"></script>
-<script src="js/kakao.js?v=20261106a"></script>
+<script src="js/kakao.js?v=20261106b"></script>
 <script src="js/masterdata.js?v=20261015a"></script>
 <script src="js/rxProducts.js?v=20261015a"></script>
 <script src="js/drugSearch.js?v=20261009c"></script>
@@ -1996,10 +2015,10 @@
 <script src="js/batches.js?v=20261028b"></script>
 <script src="js/medicationLog.js?v=20261021a"></script>
 <script src="js/prescriptions.js?v=20261104a"></script>
-<script src="js/preShipment.js?v=20261104a"></script>
+<script src="js/preShipment.js?v=20261106b"></script>
 <script src="js/movePermit.js?v=20261104a"></script>
 <script src="js/movePermitBulk.js?v=20261030g"></script>
-<script src="js/henShipment.js?v=20261104a"></script>
+<script src="js/henShipment.js?v=20261106b"></script>
 <script src="js/vetReport.js?v=20261104a"></script>
 <script src="js/clinicalAssessment.js?v=20261015a"></script>
 <script src="js/rodentControl.js?v=20261015a"></script>

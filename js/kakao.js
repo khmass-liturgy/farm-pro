@@ -231,6 +231,29 @@ function kakaoErrorMessage(e) {
   try { return JSON.stringify(e); } catch (_) { return String(e); }
 }
 
+// PNG 한 장을 카카오 서버에 올리고 { url, width, height, … }를 돌려준다.
+async function kakaoUploadPng(Kakao, blob, name) {
+  const res = await Kakao.Share.uploadImage({ file: [new File([blob], name, { type: 'image/png' })] });
+  return res.infos.original;
+}
+
+// 카드 링크 = 이 앱의 보기 페이지(kakao-view.html) + 카카오 서버 이미지 주소(여러 장이면 img를 반복).
+// 카카오가 돌려주는 http:// 주소는 https로 바꿔 넘긴다.
+function kakaoViewUrl(imageUrls) {
+  const query = imageUrls.map(u => 'img=' + encodeURIComponent(String(u).replace(/^http:\/\//i, 'https://'))).join('&');
+  return new URL(KAKAO_VIEW_PAGE, location.href).href + '?' + query;
+}
+
+// 카카오 "feed" 링크 카드: 표지 이미지 + 제목·설명 + 보기 페이지로 가는 버튼.
+function kakaoFeedPayload({ title, description, cover, viewUrl, buttonTitle }) {
+  const link = { mobileWebUrl: viewUrl, webUrl: viewUrl };
+  return {
+    objectType: 'feed',
+    content: { title, description, imageUrl: cover.url, imageWidth: cover.width, imageHeight: cover.height, link },
+    buttons: [{ title: buttonTitle, link }],
+  };
+}
+
 async function sendKakao() {
   const text = kakaoNormalizeText(document.getElementById('kakao-content').value);
   if (!text) { alert('내용을 입력해주세요.'); return; }
@@ -250,29 +273,166 @@ async function sendKakao() {
     const today = kakaoToday();
     const [body, cover] = await Promise.all([makeKakaoContentImage(text, today), makeKakaoCover(title, today)]);
     const Kakao = await loadKakaoSdk();
-    const [up, upCover] = await Promise.all([
-      Kakao.Share.uploadImage({ file: [new File([body], 'notice.png', { type: 'image/png' })] }),
-      Kakao.Share.uploadImage({ file: [new File([cover], 'cover.png', { type: 'image/png' })] }),
-    ]);
-    const img = up.infos.original, cv = upCover.infos.original;
-    const imgUrl = String(img.url).replace(/^http:\/\//i, 'https://');
-    const viewUrl = new URL(KAKAO_VIEW_PAGE, location.href).href + '?img=' + encodeURIComponent(imgUrl);
+    const [img, cv] = await Promise.all([kakaoUploadPng(Kakao, body, 'notice.png'), kakaoUploadPng(Kakao, cover, 'cover.png')]);
     // 카카오톡 친구·채팅방 선택 창이 열린다. 실제로 보냈는지는 알 수 없어서(창에서 취소할 수 있다)
     // 모달은 닫지 않는다 — 내용을 고쳐 다시 보낼 수 있게.
-    Kakao.Share.sendDefault({
-      objectType: 'feed',
-      content: {
-        title,
-        description: `${today} · 대한동물병원`,
-        imageUrl: cv.url, imageWidth: cv.width, imageHeight: cv.height,
-        link: { mobileWebUrl: viewUrl, webUrl: viewUrl },
-      },
-      buttons: [{ title: '내용 크게 보기', link: { mobileWebUrl: viewUrl, webUrl: viewUrl } }],
-    });
+    Kakao.Share.sendDefault(kakaoFeedPayload({
+      title, description: `${today} · 대한동물병원`, cover: cv, viewUrl: kakaoViewUrl([img.url]), buttonTitle: '내용 크게 보기',
+    }));
   } catch (e) {
     alert('카카오톡 전송에 실패했습니다: ' + kakaoErrorMessage(e));
   } finally {
     btn.disabled = false;
     btn.textContent = label;
+  }
+}
+
+// ─── 서식(출력 화면)을 이미지로 만들어 카카오톡으로 보내기 ───────────────────────────
+// 출하전검사·산란성계 출하대장 목록에서 체크한 건을 "출력모드"(인쇄 서식) 그대로 이미지로 만들어 보낸다.
+// 서식 HTML은 인쇄 때 쓰는 buildXxxHtml()을 그대로 쓰고, 이미지로 만드는 방법은 js/movePermitBulk.js의
+// PDF 저장과 같다: 서식 CSS는 전부 css/styles.css의 @media print 안에 있어서 화면에는 적용되지 않으므로
+// "@media print"를 "@media all"로 바꾼 CSS를 넣은 보이지 않는 iframe에서 서식을 그리고 html2canvas로 캡처한다.
+// 여러 건이면 건마다 한 장씩 이미지로 만들어 올리고, 카드 링크(kakao-view.html)가 그 이미지들을 이어서
+// 보여준다(daehan 원본은 카드 하나에 이미지 한 장만 걸어서 "첫 장만 보낼까요?"로 물었다).
+//
+// 이미지를 만들고 올리는 데 몇 초가 걸리는 동안 클릭의 "사용자 동작" 효력(브라우저가 팝업·앱 전환을 허용하는
+// 시간 — 크롬은 5초 안팎, 사파리는 1초 안팎)이 지나서 카카오톡 창이 조용히 막힐 수 있다. 그래서 준비가
+// 끝나면 이미지 미리보기와 함께 "카카오톡 창 열기" 버튼을 한 번 더 보여주고, 그 버튼을 누르는 순간 공유창을
+// 연다. 서식이 제대로 나왔는지 보내기 전에 눈으로 확인하는 효과도 있다.
+const KAKAO_HTML2CANVAS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+// daehan 저장소가 같은 파일에 쓰는 SRI 해시 — 파일 내용이 다르면 브라우저가 실행하지 않는다.
+const KAKAO_HTML2CANVAS_SRI = 'sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==';
+const KAKAO_MAX_DOC_PAGES = 10;       // 한 번에 보낼 수 있는 서식 건수 — 이미지 업로드 수와 카드 링크 길이를 지킨다
+const KAKAO_MAX_LINK_LENGTH = 1900;   // 카드 링크 길이 상한(너무 긴 링크가 거부되지 않게 2,000자 아래로)
+
+// html2canvas는 필요할 때만 불러온다. 이동승인서 PDF 저장이 먼저 불러놨으면 그것을 그대로 쓴다.
+let kakaoH2cPromise = null;
+function loadHtml2canvas() {
+  if (window.html2canvas) return Promise.resolve(window.html2canvas);
+  if (!kakaoH2cPromise) {
+    kakaoH2cPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = KAKAO_HTML2CANVAS_URL; s.integrity = KAKAO_HTML2CANVAS_SRI;
+      s.crossOrigin = 'anonymous'; s.referrerPolicy = 'no-referrer';
+      s.onload = () => window.html2canvas ? resolve(window.html2canvas) : reject(new Error('이미지 모듈을 불러오지 못했습니다.'));
+      s.onerror = () => reject(new Error('이미지 모듈을 불러오지 못했습니다. 인터넷 연결을 확인해주세요.'));
+      document.head.appendChild(s);
+    }).catch(e => { kakaoH2cPromise = null; throw e; });
+  }
+  return kakaoH2cPromise;
+}
+
+// 인쇄용 규칙을 화면에서도 적용되게 바꾼 CSS(앱 화면 자체에는 새지 않게 iframe 안에서만 쓴다).
+let kakaoPrintCssPromise = null;
+function kakaoPrintCss() {
+  if (!kakaoPrintCssPromise) {
+    const href = document.querySelector('link[rel="stylesheet"][href*="styles.css"]')?.href;
+    kakaoPrintCssPromise = fetch(href)
+      .then(r => { if (!r.ok) throw new Error('서식 스타일을 불러오지 못했습니다.'); return r.text(); })
+      .then(t => t.replace(/@media print/g, '@media all'))
+      .catch(e => { kakaoPrintCssPromise = null; throw e; });
+  }
+  return kakaoPrintCssPromise;
+}
+
+// 서식 HTML(.print-page 한 개짜리 문자열)들을 한 건당 PNG 한 장으로 만든다. onProgress(지금 몇 번째, 전체).
+async function kakaoRenderPrintPages(htmlList, onProgress) {
+  const [html2canvas, css] = await Promise.all([loadHtml2canvas(), kakaoPrintCss()]);
+  const frame = document.createElement('iframe');
+  frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:830px;height:1200px;border:0;';
+  document.body.appendChild(frame);
+  const blobs = [];
+  try {
+    const doc = frame.contentDocument;
+    doc.open();
+    doc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><base href="${document.baseURI}"><style>${css}</style></head><body><div id="print-area"></div></body></html>`);
+    doc.close();
+    const area = doc.getElementById('print-area');
+    // 인쇄 용지처럼: A4 폭(210mm) 안에 인쇄 여백(10mm)을 두고 서식(190mm)을 앉힌다. 맨 아래는 도장·서명이
+    // 서식 밖으로 조금 삐져나올 수 있어 여백을 더 둔다.
+    area.style.cssText = 'width:210mm;max-width:none;margin:0;padding:10mm 10mm 14mm;background:#fff;box-sizing:border-box';
+    for (let i = 0; i < htmlList.length; i++) {
+      if (onProgress) onProgress(i + 1, htmlList.length);
+      area.innerHTML = htmlList[i];
+      await Promise.all([...area.querySelectorAll('img')].map(img => img.complete ? null : new Promise(res => { img.onload = img.onerror = res; })));
+      const canvas = await html2canvas(area, { scale: 2, backgroundColor: '#fff', useCORS: true });
+      blobs.push(await new Promise(res => canvas.toBlob(res, 'image/png')));
+    }
+  } finally { frame.remove(); }
+  return blobs;
+}
+
+let kakaoReady = null;   // 준비를 마치고 "카카오톡 창 열기"를 기다리는 전송: { payload, thumbUrls }
+
+function showKakaoReady({ title, count, thumbUrls, payload }) {
+  closeKakaoReady();   // 앞에 열려 있던 것이 있으면 정리
+  kakaoReady = { payload, thumbUrls };
+  document.getElementById('kakao-ready-title').textContent = title;
+  document.getElementById('kakao-ready-desc').textContent =
+    `서식 ${count}장을 인쇄 모양 그대로 이미지로 만들어 카카오 서버에 올렸습니다. 아래 "카카오톡 창 열기"를 누르면 카카오톡 창이 열리니 ` +
+    '거기서 받을 친구·채팅방을 고르세요. 이미지를 누르면 크게 볼 수 있습니다.';
+  document.getElementById('kakao-ready-thumbs').innerHTML = thumbUrls.map((u, i) =>
+    `<a href="${u}" target="_blank" rel="noopener" title="${i + 1}번째 서식 크게 보기"><img src="${u}" alt="${i + 1}번째 서식" style="height:220px;width:auto;display:block;border:1px solid var(--border);border-radius:4px;box-shadow:var(--shadow)"></a>`).join('');
+  openModal('modal-kakao-ready');
+}
+
+// 반드시 버튼 클릭 처리 안에서 바로 불러야 한다(브라우저는 사용자 동작 직후의 팝업·앱 전환만 허용한다).
+// 열고 나서도 모달은 닫지 않는다 — 카카오톡 창에서 취소했을 때 다시 누를 수 있게.
+function openKakaoShare() {
+  if (!kakaoReady) return;
+  try { window.Kakao.Share.sendDefault(kakaoReady.payload); }
+  catch (e) { alert('카카오톡 창을 열지 못했습니다: ' + kakaoErrorMessage(e)); }
+}
+
+function closeKakaoReady() {
+  closeModal('modal-kakao-ready');
+  if (kakaoReady) kakaoReady.thumbUrls.forEach(u => URL.revokeObjectURL(u));
+  kakaoReady = null;
+  const thumbs = document.getElementById('kakao-ready-thumbs');
+  if (thumbs) thumbs.innerHTML = '';
+}
+
+let kakaoDocBusy = false;
+
+// htmls: 서식 한 건당 .print-page HTML 하나(인쇄 때 쓰는 buildXxxHtml의 결과). title: 카드 제목.
+// btn: 누른 버튼(진행 상황을 그 글자로 보여준다). isEnabled: 끝난 뒤 버튼을 다시 켤지(체크한 건이 남아 있는지).
+async function kakaoSendPrintPages({ htmls, title, btn, isEnabled }) {
+  if (kakaoDocBusy) return;
+  if (htmls.length > KAKAO_MAX_DOC_PAGES) {
+    alert(`한 번에 최대 ${KAKAO_MAX_DOC_PAGES}건까지 보낼 수 있습니다. (현재 ${htmls.length}건)`);
+    return;
+  }
+  if (!window.KAKAO_JS_KEY) { alert('카카오 앱 키가 설정되지 않았습니다. js/config.js의 KAKAO_JS_KEY를 확인하세요.'); return; }
+  kakaoDocBusy = true;
+  const label = btn.textContent;
+  btn.disabled = true;
+  try {
+    title = kakaoCardTitle(title);
+    btn.textContent = '이미지 만드는 중...';
+    // 이미지 만들기와 SDK 불러오기를 동시에 시작해 기다리는 시간을 줄인다.
+    const [pages, Kakao] = await Promise.all([
+      kakaoRenderPrintPages(htmls, (i, n) => { btn.textContent = `이미지 만드는 중 ${i}/${n}`; }),
+      loadKakaoSdk(),
+    ]);
+    const today = kakaoToday();
+    const cover = await makeKakaoCover(title, `${htmls.length}건 · ${today}`);
+    btn.textContent = '카카오에 올리는 중...';
+    const [imgs, cv] = await Promise.all([
+      Promise.all(pages.map((b, i) => kakaoUploadPng(Kakao, b, `page${i + 1}.png`))),
+      kakaoUploadPng(Kakao, cover, 'cover.png'),
+    ]);
+    const viewUrl = kakaoViewUrl(imgs.map(x => x.url));
+    if (viewUrl.length > KAKAO_MAX_LINK_LENGTH) throw new Error('보낼 서식이 많아 카드 링크가 너무 길어졌습니다. 건수를 줄여 보내주세요.');
+    showKakaoReady({
+      title, count: pages.length,
+      thumbUrls: pages.map(b => URL.createObjectURL(b)),
+      payload: kakaoFeedPayload({ title, description: `서식 ${pages.length}장 · ${today} · 대한동물병원`, cover: cv, viewUrl, buttonTitle: '서식 크게 보기' }),
+    });
+  } catch (e) {
+    alert('카카오톡 전송 준비에 실패했습니다: ' + kakaoErrorMessage(e));
+  } finally {
+    kakaoDocBusy = false;
+    btn.textContent = label;
+    btn.disabled = !isEnabled();
   }
 }

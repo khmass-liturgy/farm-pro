@@ -88,9 +88,11 @@ function renderHenShipments() {
   hsSelectedIds.forEach(id => { if (!liveIds.has(id)) hsSelectedIds.delete(id); });
 
   const printBtn = document.getElementById('hs-print-btn');
+  const kakaoBtn = document.getElementById('hs-kakao-btn');
   const editBtn = document.getElementById('hs-edit-btn');
   const deleteBtn = document.getElementById('hs-delete-btn');
   if (printBtn) printBtn.disabled = hsSelectedIds.size === 0;
+  if (kakaoBtn) kakaoBtn.disabled = hsSelectedIds.size === 0;
   if (editBtn) editBtn.disabled = hsSelectedIds.size !== 1;
   if (deleteBtn) deleteBtn.disabled = hsSelectedIds.size === 0;
 
@@ -237,4 +239,18 @@ function printSelectedHenShipments() {
   if (!list.length) { alert('인쇄할 항목을 먼저 체크해주세요.'); return; }
   document.getElementById('print-area').innerHTML = list.map(buildHenShipmentHtml).join('');
   setTimeout(() => window.print(), 200);
+}
+
+// 체크한 출하대장을 출력(인쇄) 모양 그대로 이미지로 만들어 카카오톡으로 보낸다. 인쇄와 같은 buildHenShipmentHtml을
+// 쓰고, 이미지 만들기·카카오 전송은 js/kakao.js의 kakaoSendPrintPages가 맡는다.
+function kakaoSendSelectedHenShipments() {
+  const list = load('henShipments').filter(h => hsSelectedIds.has(h.id));
+  if (!list.length) { alert('카카오톡으로 보낼 항목을 먼저 체크해주세요.'); return; }
+  const first = list[0].farmName || '';
+  return kakaoSendPrintPages({
+    htmls: list.map(buildHenShipmentHtml),
+    title: list.length === 1 ? `${first} 산란성계 출하대장` : `${first} 외 ${list.length - 1}건 산란성계 출하대장`,
+    btn: document.getElementById('hs-kakao-btn'),
+    isEnabled: () => hsSelectedIds.size > 0,
+  });
 }
