@@ -14,8 +14,8 @@ function populateScheduleSelects() {
 // 에반트는 입추 당일(1일령)에 놓아야 해서 날짜를 놓치면 다시 할 수 없다. 그래서 투약 프로그램의
 // 1일령 백신이 에반트(또는 백신 등록에서 대상 질병이 콕시듐인 백신)인 계군을 따로 모아 보여준다.
 //  · 사육중인 입추(배치)가 그 프로그램을 쓰면 배치의 입추일로, 배치가 없으면 프로그램에 적힌 입추일로 본다.
-//  · 보여주는 것: 입추 예정·오늘인 곳 + 지났는데 1일령 실적 기록이 없는 곳(EVANT_SHOW_PAST_DAYS일까지).
-//    1일령 실적이 기록된 곳은 끝난 것으로 보고 뺀다. 입추일이 없는 프로그램은 "입추일 미정"으로 맨 아래에.
+//  · 보여주는 것: 입추 예정·오늘인 곳 + 입추일이 지난 지 EVANT_SHOW_PAST_DAYS일 이내인 곳(놓쳤는지 확인용).
+//    혹시 1일령 실적이 기록된 곳은 끝난 것으로 보고 뺀다. 입추일이 없는 프로그램은 "입추일 미정"으로 맨 아래에.
 const EVANT_SHOW_PAST_DAYS = 7;
 
 function isCoccidiosisVaccine(v) {
@@ -48,7 +48,7 @@ function computeEvantTargets() {
         farmName: farm?.name || p.farmName || '(삭제된 농장)', owner: farm?.owner || '' });
     });
   });
-  // 날짜가 있는 것은 입추일이 이른 순(지난 미기록 → 오늘 → 가까운 예정), 입추일 미정은 맨 뒤
+  // 날짜가 있는 것은 입추일이 이른 순(지난 곳 → 오늘 → 가까운 예정), 입추일 미정은 맨 뒤
   targets.sort((a, b) => (a.placementDate ? 0 : 1) - (b.placementDate ? 0 : 1) || (a.placementDate || '').localeCompare(b.placementDate || ''));
   return { targets, programCount: programs.length };
 }
@@ -63,14 +63,14 @@ function renderEvantCard() {
     return;
   }
   if (!targets.length) {
-    el.innerHTML = `<div class="card mb-16">${head}<p class="text-muted" style="font-size:12px">지금 에반트를 놓아야 할 농장은 없습니다. (에반트가 들어간 프로그램 ${programCount}개 — 입추 예정·오늘이거나 지났는데 1일령 실적이 없는 계군만 보여줍니다)</p></div>`;
+    el.innerHTML = `<div class="card mb-16">${head}<p class="text-muted" style="font-size:12px">지금 에반트를 놓아야 할 농장은 없습니다. (에반트가 들어간 프로그램 ${programCount}개 — 입추 예정·오늘이거나 입추일이 지난 지 ${EVANT_SHOW_PAST_DAYS}일 이내인 계군만 보여줍니다)</p></div>`;
     return;
   }
   const status = t => {
     if (t.dayAge == null) return '<span class="badge badge-purple">입추일 미정</span>';
     if (t.dayAge < 1) return `<span class="badge badge-amber">입추 D-${1 - t.dayAge}</span>`;
     if (t.dayAge === 1) return '<span class="badge badge-red">오늘 접종</span>';
-    return `<span class="badge badge-red">${t.dayAge - 1}일 지남 · 미기록</span>`;
+    return `<span class="badge badge-red">${t.dayAge - 1}일 지남</span>`;
   };
   el.innerHTML = `<div class="card mb-16">${head}
     <div class="tbl-wrap"><table>
@@ -139,21 +139,8 @@ function renderScheduleView() {
   // (투약 프로그램 목록·상세·인쇄와 같은 기준: js/programs.js의 programHasEnv/programEnvFor).
   const showEnv = programHasEnv(prog);
 
-  // 사육중인 계군이 연결돼 있으면 그 계군의 실적(투약/미투약)을 함께 보여준다.
-  // 계군이 없으면 실적이랄 게 없으므로 상태 칸 자체를 띄우지 않는다.
-  const showStatus = !!activeBatch;
-  const batchLogs = activeBatch ? load('medicationLogs').filter(l => l.batchId === activeBatch.id) : [];
-  const envCls = (showEnv ? ' with-env' : '') + (showStatus ? ' with-status' : '');
-
-  function dayStatusHtml(day, hasPlan) {
-    if (!hasPlan) return '<span class="text-muted">-</span>';
-    const forDay = batchLogs.filter(l => l.programDay === day);
-    if (forDay.some(l => l.administered !== false)) return '<span class="badge badge-green">투약</span>';
-    const skipped = forDay.find(l => l.administered === false);
-    if (skipped) return '<span class="badge badge-amber">미투약</span>';
-    if (dayAge != null && day <= dayAge) return '<span class="badge badge-red">미기록</span>';
-    return '<span class="text-muted">예정</span>';
-  }
+  // 실적(투약/미투약) 칸은 쓰지 않아 뺐다 — 계획(약품·백신·온습도·중요사항)만 보여준다.
+  const envCls = showEnv ? ' with-env' : '';
 
   let rows = '';
   for (let i = 1; i <= prog.duration; i++) {
@@ -171,7 +158,6 @@ function renderScheduleView() {
         <span style="color:var(--accent);font-weight:700">${env ? env.tRange : '-'}</span><br>
         <span style="color:var(--text-secondary)">${env ? env.rhRange : '-'}</span>
       </div>` : ''}
-      ${showStatus ? `<div class="program-cell" style="text-align:center">${dayStatusHtml(i, !!(d && ((d.drugs && d.drugs.length) || d.vaccine)))}</div>` : ''}
       <div class="program-cell" style="color:var(--text-secondary);font-size:11px">${d?.note||''}</div>
       <div class="program-cell" style="text-align:center">
         <button class="btn btn-outline btn-sm" onclick="openDayPlanModal('${prog.id}',${i},'${refPlacementDate || ''}')" title="${i}일령의 투약 프로그램 계획을 고칩니다">변경</button>
@@ -196,7 +182,6 @@ function renderScheduleView() {
           <div class="program-cell head">💊 약품투약</div>
           <div class="program-cell head">💉 백신사항</div>
           ${showEnv ? `<div class="program-cell head" style="text-align:center">🌡️ 온·습도</div>` : ''}
-          ${showStatus ? `<div class="program-cell head" style="text-align:center">실적</div>` : ''}
           <div class="program-cell head">⚠️ 중요사항</div>
           <div class="program-cell head" style="text-align:center">계획</div>
         </div>
