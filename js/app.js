@@ -109,14 +109,16 @@ function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
   // pb 메뉴는 page-pb(iframe)를 쓴다.
-  document.getElementById(PB_TABS[name] ? 'page-pb' : 'page-' + name).classList.add('active');
+  // pbpm-*(가금컨설팅 › 유료서비스 분류)는 한 화면(page-pbpm)을 분류만 바꿔 같이 쓴다(js/pbPremium.js).
+  const pbpmCat = pbpmCategoryOf(name);
+  document.getElementById(PB_TABS[name] ? 'page-pb' : pbpmCat ? 'page-pbpm' : 'page-' + name).classList.add('active');
   document.querySelectorAll('.sidebar-item').forEach(i => {
     if (i.getAttribute('onclick') && i.getAttribute('onclick').includes("'" + name + "'")) {
       i.classList.add('active');
       revealSectionOfActiveItem(i);
     }
   });
-  document.getElementById('topbar-title').textContent = PAGE_TITLES[name] || name;
+  document.getElementById('topbar-title').textContent = PAGE_TITLES[name] || (pbpmCat ? '유료서비스 · ' + pbpmCat.name : name);
   document.getElementById('topbar-actions').innerHTML = PAGE_ACTIONS[name] || '';
   if (name === 'dashboard') renderDashboard();
   if (name === 'farms') renderFarms();
@@ -145,6 +147,7 @@ function showPage(name) {
   if (name === 'feeds') renderFeeds();
   if (name === 'drugsearch') renderDsearch();
   if (PB_TABS[name]) showPbTab(PB_TABS[name]);
+  if (pbpmCat) renderPbPremiumPage(name);
 }
 
 // ─── 농장동물 컨설팅 = polcon.cc 임베드 ─────────────────────────────────────

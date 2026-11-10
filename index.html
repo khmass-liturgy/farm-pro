@@ -8,7 +8,7 @@
 <link rel="icon" href="img/favicon.ico?v=20261031c">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20261031b">
 <link rel="manifest" href="manifest.webmanifest?v=20261031b">
-<link rel="stylesheet" href="css/styles.css?v=20261110a">
+<link rel="stylesheet" href="css/styles.css?v=20261110b">
 </head>
 <body>
 
@@ -38,6 +38,35 @@
            메뉴를 하나로 합쳐 그 사이트를 이 화면 안에 띄운다(js/app.js의 showPbTab). -->
       <div class="sidebar-item" onclick="showPage('pb-polcon')">
         <span class="icon">🌤️</span> 가금컨설팅
+      </div>
+      <!-- 유료서비스(polcon.cc) 카드를 분류별로 — js/pbPremium.js. 카드를 누르면 위 가금컨설팅 화면의 유료서비스 탭으로 간다. -->
+      <div class="sidebar-sublabel">💼 유료서비스</div>
+      <div class="sidebar-item sidebar-sub" onclick="showPage('pbpm-academy')">
+        <span class="icon">🎓</span> 최꼬 아카데미
+      </div>
+      <div class="sidebar-item sidebar-sub" onclick="showPage('pbpm-game')">
+        <span class="icon">🎮</span> 체험·게임
+      </div>
+      <div class="sidebar-item sidebar-sub" onclick="showPage('pbpm-drug')">
+        <span class="icon">💊</span> 약품·투약·소독
+      </div>
+      <div class="sidebar-item sidebar-sub" onclick="showPage('pbpm-vaccine')">
+        <span class="icon">🛡️</span> 백신·약품관리
+      </div>
+      <div class="sidebar-item sidebar-sub" onclick="showPage('pbpm-husbandry')">
+        <span class="icon">🌡️</span> 사양관리
+      </div>
+      <div class="sidebar-item sidebar-sub" onclick="showPage('pbpm-market')">
+        <span class="icon">📈</span> 시세 예측·분석
+      </div>
+      <div class="sidebar-item sidebar-sub" onclick="showPage('pbpm-diagnosis')">
+        <span class="icon">🩺</span> 진단
+      </div>
+      <div class="sidebar-item sidebar-sub" onclick="showPage('pbpm-study')">
+        <span class="icon">📚</span> 질문·학습·교육
+      </div>
+      <div class="sidebar-item sidebar-sub" onclick="showPage('pbpm-board')">
+        <span class="icon">📌</span> 게시판·기타
       </div>
       <div class="sidebar-item" onclick="showPage('clinical')">
         <span class="icon">🩺</span> 계군 임상평가
@@ -183,6 +212,11 @@
 
     <!-- 농장동물 컨설팅 — polcon.cc(날씨·환기가이드·육계/산란계 컨설팅·양계질병·AI 발생예측통계 등)를
          그대로 띄운다. src는 비워 두고 처음 들어갈 때 채운다 — 앱을 켤 때마다 미리 받지 않도록. -->
+    <!-- 가금컨설팅 › 유료서비스 분류별 카드 (사이드바의 pbpm-* 항목이 함께 쓰는 한 화면, js/pbPremium.js) -->
+    <div id="page-pbpm" class="page">
+      <div id="pbpm-body"></div>
+    </div>
+
     <div id="page-pb" class="page">
       <iframe id="pb-frame" title="가금컨설팅(polcon.cc)" style="width:100%; height:calc(100vh - 140px); border:1px solid var(--border); border-radius:var(--radius); background:#fff;"></iframe>
     </div>
@@ -2009,6 +2043,7 @@
 <script src="js/farms.js?v=20261015a"></script>
 <script src="js/sms.js?v=20261015a"></script>
 <script src="js/kakao.js?v=20261106b"></script>
+<script src="js/pbPremium.js?v=20261110a"></script>
 <script src="js/masterdata.js?v=20261015a"></script>
 <script src="js/rxProducts.js?v=20261015a"></script>
 <script src="js/drugSearch.js?v=20261009c"></script>
@@ -2028,6 +2063,6 @@
 <script src="js/reports.js?v=20261015a"></script>
 <script src="js/print.js?v=20261028a"></script>
 <script src="js/backup.js?v=20261014a"></script>
-<script src="js/app.js?v=20261030c"></script>
+<script src="js/app.js?v=20261110a"></script>
 </body>
 </html>
