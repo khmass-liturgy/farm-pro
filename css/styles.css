@@ -96,6 +96,11 @@ body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; backgrou
 .sidebar-item .icon { font-size: 16px; opacity: 0.85; }
 /* 가금컨설팅 › 유료서비스 분류(js/pbPremium.js) — 한 단계 안쪽 항목처럼 들여쓰고 조금 작게 */
 .sidebar-sublabel { font-size: 11px; font-weight: 700; color: var(--text-sidebar-label); padding: 8px 12px 2px 18px; opacity: 0.9; }
+/* 유료서비스 묶음은 눌러서 접고 펼친다(js/app.js COLLAPSIBLE_SECTIONS의 pbpm) — 버튼 기본 모양을 지워 글자처럼 */
+.sidebar-sublabel.toggle { display: flex; align-items: center; gap: 5px; width: 100%; background: none; border: none; font-family: inherit; text-align: left; cursor: pointer; border-radius: var(--radius-sm); margin: 4px 0 2px; padding: 6px 12px 6px 18px; }
+.sidebar-sublabel.toggle:hover { background: var(--bg-sidebar-hover); color: var(--text-sidebar-active); opacity: 1; }
+.sidebar-sublabel.toggle .chevron { font-size: 10px; transition: transform 0.15s; display: inline-block; }
+.sidebar-sublabel.toggle[aria-expanded="true"] .chevron { transform: rotate(90deg); }
 .sidebar-item.sidebar-sub { padding: 7px 12px 7px 24px; font-size: 12.5px; }
 .sidebar-item.sidebar-sub .icon { font-size: 14px; }
 .sidebar-footer { margin-top: auto; padding: 12px; border-top: 1px solid var(--border-sidebar); }

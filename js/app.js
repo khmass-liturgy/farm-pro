@@ -53,7 +53,8 @@ let currentPage = 'dashboard';
 // ─── 사이드바 접기/펼치기 ────────────────────────────────────────────────
 // 가금컨설팅·데이터·시스템은 매일 들어가는 곳이 아니라 기본으로 접어둔다.
 // 펼침 상태는 브라우저에 남겨 다음 방문에도 그대로 유지한다.
-const COLLAPSIBLE_SECTIONS = ['consult', 'vetreport', 'data', 'system'];
+// pbpm = 가금컨설팅 안의 「💼 유료서비스」 분류 묶음(그 안에서 한 번 더 접힌다).
+const COLLAPSIBLE_SECTIONS = ['consult', 'pbpm', 'vetreport', 'data', 'system'];
 const SIDEBAR_STATE_KEY = 'sidebar_open_sections';
 
 function loadOpenSections() {
@@ -90,10 +91,11 @@ function initSidebarSections() {
 // 접힌 묶음 안의 메뉴로 이동하면 그 묶음을 펼쳐 어디에 있는지 보이게 한다.
 // (저장된 펼침 상태는 건드리지 않는다 — 사용자가 직접 접어둔 선택을 덮지 않기 위해.)
 function revealSectionOfActiveItem(activeItem) {
-  const items = activeItem?.closest('.sidebar-section-items');
-  if (items && !items.classList.contains('open')) {
-    const key = items.id.replace('sidebar-items-', '');
-    setSidebarSection(key, true);
+  // 유료서비스처럼 접히는 묶음 안에 또 접히는 묶음이 있으므로 바깥쪽까지 모두 펼친다.
+  let items = activeItem?.closest('.sidebar-section-items');
+  while (items) {
+    if (!items.classList.contains('open')) setSidebarSection(items.id.replace('sidebar-items-', ''), true);
+    items = items.parentElement?.closest('.sidebar-section-items');
   }
 }
 
