@@ -438,7 +438,7 @@ async function kakaoSendPrintPages({ htmls, title, btn, isEnabled }) {
 }
 
 // ─── 농장 정보를 카카오톡으로 보내기 (농장 등록/관리 목록의 💛 카톡) ──────────────────────
-// 농장 정보는 짧아서 이미지가 아니라 카카오 "text" 템플릿(글자 그대로)으로 보낸다 — 받는 사람이
+// 담당 수의사는 농장 등록/관리에서 뺀 항목이라 보내지 않는다. 농장 정보는 짧아서 이미지가 아니라 카카오 "text" 템플릿(글자 그대로)으로 보낸다 — 받는 사람이
 // 주소·전화번호를 길게 눌러 복사하거나 바로 걸 수 있게. text 칸은 200자까지라 넘으면 줄여 끝에 …를 붙인다.
 // 카카오 카드에는 링크가 꼭 있어야 하고 등록 도메인만 허용돼서, 이 앱의 farm-map.html(주소로 카카오맵 검색을
 // 여는 작은 페이지)을 "지도 보기" 버튼으로 건다.
@@ -452,7 +452,6 @@ function kakaoFarmText(f) {
   add('주소', f.address);
   const scale = [f.type, f.count ? `${Number(f.count).toLocaleString()}수` : '', f.houses ? `${f.houses}동` : ''].filter(Boolean).join(' · ');
   add('사육', scale);
-  add('담당 수의사', [f.vet || DEFAULT_VET_NAME, f.vet_phone || DEFAULT_VET_PHONE].filter(Boolean).join(' '));
   const chars = Array.from(lines.join('\n'));
   return chars.length > KAKAO_TEXT_LIMIT ? chars.slice(0, KAKAO_TEXT_LIMIT - 1).join('') + '…' : chars.join('');
 }
