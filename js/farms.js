@@ -83,6 +83,7 @@ function renderFarms() {
       <td>${f.count ? Number(f.count).toLocaleString()+'수' : '-'}</td>
       <td>${f.vet || DEFAULT_VET_NAME}</td>
       <td><div class="flex-gap">
+        <button class="btn btn-kakao btn-sm" onclick="kakaoSendFarm('${f.id}')" title="농장명·농장주·연락처·주소 등을 카카오톡으로 보냅니다">💛 카톡</button>
         <button class="btn btn-outline btn-sm" onclick="openFarmModal('${f.id}')">편집</button>
         <button class="btn btn-danger btn-sm" onclick="deleteFarm('${f.id}')">삭제</button>
       </div></td>

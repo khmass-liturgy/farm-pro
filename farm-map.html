@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>농장 위치 · 대한동물병원</title>
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png?v=20261031c">
+<style>
+  body{margin:0;font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;color:#111;text-align:center;padding:48px 20px}
+  a{display:inline-block;margin-top:14px;background:#fee500;color:#3c1e1e;font-weight:700;padding:12px 20px;border-radius:10px;text-decoration:none}
+  .q{color:#555;font-size:14px;margin-top:8px;word-break:keep-all}
+</style>
+</head>
+<body>
+<!-- 카카오톡으로 보낸 "농장 정보"(js/kakao.js의 kakaoSendFarm) 카드의 "지도 보기" 버튼이 여는 페이지.
+     카카오 카드 링크는 등록한 도메인만 허용돼서, 이 페이지가 받은 주소(?q=)로 카카오맵 검색을 대신 연다.
+     로그인 없이 열리고, 주소 글자만 검색어로 넘긴다. -->
+<div>카카오맵에서 농장 위치를 엽니다…</div>
+<div class="q" id="q"></div>
+<a id="go" href="https://map.kakao.com/">카카오맵에서 보기</a>
+<script>
+(function () {
+  var q = (new URLSearchParams(location.search).get('q') || '').trim().slice(0, 200);
+  document.getElementById('q').textContent = q;
+  var url = 'https://map.kakao.com/link/search/' + encodeURIComponent(q);
+  document.getElementById('go').href = q ? url : 'https://map.kakao.com/';
+  if (q) location.replace(url);
+})();
+</script>
+</body>
+</html>

@@ -436,3 +436,41 @@ async function kakaoSendPrintPages({ htmls, title, btn, isEnabled }) {
     btn.disabled = !isEnabled();
   }
 }
+
+// ─── 농장 정보를 카카오톡으로 보내기 (농장 등록/관리 목록의 💛 카톡) ──────────────────────
+// 농장 정보는 짧아서 이미지가 아니라 카카오 "text" 템플릿(글자 그대로)으로 보낸다 — 받는 사람이
+// 주소·전화번호를 길게 눌러 복사하거나 바로 걸 수 있게. text 칸은 200자까지라 넘으면 줄여 끝에 …를 붙인다.
+// 카카오 카드에는 링크가 꼭 있어야 하고 등록 도메인만 허용돼서, 이 앱의 farm-map.html(주소로 카카오맵 검색을
+// 여는 작은 페이지)을 "지도 보기" 버튼으로 건다.
+const KAKAO_TEXT_LIMIT = 200;
+
+function kakaoFarmText(f) {
+  const lines = [`[농장 정보] ${f.name || ''}`];
+  const add = (label, v) => { if (v != null && String(v).trim() !== '') lines.push(`${label}: ${String(v).trim()}`); };
+  add('농장주', f.owner);
+  add('연락처', f.phone);
+  add('주소', f.address);
+  const scale = [f.type, f.count ? `${Number(f.count).toLocaleString()}수` : '', f.houses ? `${f.houses}동` : ''].filter(Boolean).join(' · ');
+  add('사육', scale);
+  add('담당 수의사', [f.vet || DEFAULT_VET_NAME, f.vet_phone || DEFAULT_VET_PHONE].filter(Boolean).join(' '));
+  const chars = Array.from(lines.join('\n'));
+  return chars.length > KAKAO_TEXT_LIMIT ? chars.slice(0, KAKAO_TEXT_LIMIT - 1).join('') + '…' : chars.join('');
+}
+
+async function kakaoSendFarm(farmId) {
+  const f = load('farms').find(x => x.id === farmId);
+  if (!f) { alert('농장을 찾을 수 없습니다.'); return; }
+  if (!window.KAKAO_JS_KEY) { alert('카카오 앱 키가 설정되지 않았습니다. js/config.js의 KAKAO_JS_KEY를 확인하세요.'); return; }
+  try {
+    const Kakao = await loadKakaoSdk();
+    const mapUrl = new URL('farm-map.html', location.href).href + '?q=' + encodeURIComponent(f.address || f.name || '');
+    Kakao.Share.sendDefault({
+      objectType: 'text',
+      text: kakaoFarmText(f),
+      link: { mobileWebUrl: mapUrl, webUrl: mapUrl },
+      buttonTitle: f.address ? '지도 보기' : '농장 찾기',
+    });
+  } catch (e) {
+    alert('카카오톡 전송에 실패했습니다: ' + kakaoErrorMessage(e));
+  }
+}
