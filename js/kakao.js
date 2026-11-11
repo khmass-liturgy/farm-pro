@@ -364,11 +364,11 @@ async function kakaoRenderPrintPages(htmlList, onProgress) {
 
 let kakaoReady = null;   // 준비를 마치고 "카카오톡 창 열기"를 기다리는 전송: { payload, thumbUrls }
 
-function showKakaoReady({ title, count, thumbUrls, payload }) {
+function showKakaoReady({ title, count, thumbUrls, payload, desc }) {
   closeKakaoReady();   // 앞에 열려 있던 것이 있으면 정리
   kakaoReady = { payload, thumbUrls };
   document.getElementById('kakao-ready-title').textContent = title;
-  document.getElementById('kakao-ready-desc').textContent =
+  document.getElementById('kakao-ready-desc').textContent = desc ||
     `서식 ${count}장을 인쇄 모양 그대로 이미지로 만들어 카카오 서버에 올렸습니다. 아래 "카카오톡 창 열기"를 누르면 카카오톡 창이 열리니 ` +
     '거기서 받을 친구·채팅방을 고르세요. 이미지를 누르면 크게 볼 수 있습니다.';
   document.getElementById('kakao-ready-thumbs').innerHTML = thumbUrls.map((u, i) =>
@@ -444,7 +444,7 @@ async function kakaoSendPrintPages({ htmls, title, btn, isEnabled }) {
 // 여는 작은 페이지)을 "지도 보기" 버튼으로 건다.
 const KAKAO_TEXT_LIMIT = 200;
 
-function kakaoFarmText(f) {
+function kakaoFarmLines(f) {
   const lines = [`[농장 정보] ${f.name || ''}`];
   const add = (label, v) => { if (v != null && String(v).trim() !== '') lines.push(`${label}: ${String(v).trim()}`); };
   add('농장주', f.owner);
@@ -452,7 +452,11 @@ function kakaoFarmText(f) {
   add('주소', f.address);
   const scale = [f.type, f.count ? `${Number(f.count).toLocaleString()}수` : '', f.houses ? `${f.houses}동` : ''].filter(Boolean).join(' · ');
   add('사육', scale);
-  const chars = Array.from(lines.join('\n'));
+  return lines;
+}
+
+function kakaoFarmText(f) {
+  const chars = Array.from(kakaoFarmLines(f).join('\n'));
   return chars.length > KAKAO_TEXT_LIMIT ? chars.slice(0, KAKAO_TEXT_LIMIT - 1).join('') + '…' : chars.join('');
 }
 
@@ -471,5 +475,47 @@ async function kakaoSendFarm(farmId) {
     });
   } catch (e) {
     alert('카카오톡 전송에 실패했습니다: ' + kakaoErrorMessage(e));
+  }
+}
+
+// ─── 농장 목록에서 체크한 여러 곳을 한 번에 (농장 등록/관리 도구줄의 💛 카톡 발송) ──────────────
+// 한 곳: 위 kakaoSendFarm과 같이 글자 그대로(text 템플릿, 주소·번호 복사 가능).
+// 여러 곳: text 템플릿은 200자라 다 들어가지 않아서, 공지 보내기와 같은 방법으로 농장 정보를 한 장의
+// 이미지로 만들어 카드로 보낸다(카드를 누르면 kakao-view.html에서 크게 보임). 이미지를 만들고 올리는 데
+// 시간이 걸려 서식 카톡 발송과 같이 미리보기 + 「카카오톡 창 열기」 단계를 거친다(팝업 차단 방지).
+const KAKAO_MAX_FARMS = 15;   // 한 장 이미지에 들어가는 양(이미지 높이 상한 안쪽)
+
+async function kakaoSendFarms(farms, btn) {
+  if (!farms.length) { alert('카카오톡으로 보낼 농장을 먼저 체크해주세요.'); return; }
+  if (farms.length === 1) return kakaoSendFarm(farms[0].id);
+  if (farms.length > KAKAO_MAX_FARMS) { alert(`한 번에 최대 ${KAKAO_MAX_FARMS}곳까지 보낼 수 있습니다. (현재 ${farms.length}곳)`); return; }
+  if (!window.KAKAO_JS_KEY) { alert('카카오 앱 키가 설정되지 않았습니다. js/config.js의 KAKAO_JS_KEY를 확인하세요.'); return; }
+  if (kakaoDocBusy) return;
+  kakaoDocBusy = true;
+  const label = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '준비 중...'; }
+  try {
+    const title = `농장 정보 ${farms.length}곳`;
+    // 첫 줄은 이미지의 굵은 제목, 농장마다 빈 줄로 나누고 농장 이름 줄은 ■로 시작한다.
+    const text = [title, ...farms.map(f => {
+      const [head, ...rest] = kakaoFarmLines(f);
+      return ['', head.replace('[농장 정보] ', '■ '), ...rest].join('\n');
+    })].join('\n');
+    const today = kakaoToday();
+    const [body, cover] = await Promise.all([makeKakaoContentImage(text, today), makeKakaoCover(title, today)]);
+    const Kakao = await loadKakaoSdk();
+    if (btn) btn.textContent = '카카오에 올리는 중...';
+    const [img, cv] = await Promise.all([kakaoUploadPng(Kakao, body, 'farms.png'), kakaoUploadPng(Kakao, cover, 'cover.png')]);
+    showKakaoReady({
+      title, count: 1, thumbUrls: [URL.createObjectURL(body)],
+      desc: `체크한 농장 ${farms.length}곳의 정보를 한 장의 이미지로 만들어 카카오 서버에 올렸습니다. 아래 "카카오톡 창 열기"를 누르면 ` +
+        '카카오톡 창이 열리니 거기서 받을 친구·채팅방을 고르세요. 이미지를 누르면 크게 볼 수 있습니다.',
+      payload: kakaoFeedPayload({ title, description: `${farms.map(f => f.name).join(', ').slice(0, 60)} · ${today}`, cover: cv, viewUrl: kakaoViewUrl([img.url]), buttonTitle: '농장 정보 크게 보기' }),
+    });
+  } catch (e) {
+    alert('카카오톡 전송 준비에 실패했습니다: ' + kakaoErrorMessage(e));
+  } finally {
+    kakaoDocBusy = false;
+    if (btn) btn.textContent = label;
   }
 }

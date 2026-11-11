@@ -293,10 +293,17 @@
         </select>
       </div>
       <div class="card">
+        <div class="card-header">
+          <div class="card-title">농장 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 체크박스로 골라 카톡으로 보내세요(여러 곳 가능) <span id="farm-selected-count"></span></span></div>
+          <div class="flex-gap">
+            <button class="btn btn-kakao btn-sm" id="farm-kakao-btn" onclick="kakaoSendSelectedFarms()" title="체크한 농장의 농장명·농장주·연락처·주소·사육 정보를 카카오톡으로 보냅니다" disabled>💛 카톡 발송</button>
+          </div>
+        </div>
         <div class="tbl-wrap">
           <table>
             <thead>
               <tr>
+                <th style="text-align:center"><input type="checkbox" id="farm-check-all" onchange="toggleFarmSelectAll(this.checked)" title="전체 선택"></th>
                 <th>농장명</th><th>농장주</th><th>축종</th><th>주소</th><th>연락처</th><th>입추수수</th><th>관리</th>
               </tr>
             </thead>
@@ -2036,9 +2043,9 @@
 <script src="js/auth.js?v=20261015a"></script>
 <script src="js/googleDrive.js?v=20261030e"></script>
 <script src="js/breedStandards.js?v=20261028b"></script>
-<script src="js/farms.js?v=20261111b"></script>
+<script src="js/farms.js?v=20261111c"></script>
 <script src="js/sms.js?v=20261015a"></script>
-<script src="js/kakao.js?v=20261111b"></script>
+<script src="js/kakao.js?v=20261111c"></script>
 <script src="js/pbPremium.js?v=20261110a"></script>
 <script src="js/masterdata.js?v=20261015a"></script>
 <script src="js/rxProducts.js?v=20261015a"></script>

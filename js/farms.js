@@ -66,15 +66,41 @@ function filteredFarms() {
   );
 }
 
+// 목록 왼쪽 체크박스로 고른 농장을 도구줄 「💛 카톡 발송」으로 한꺼번에 보낸다(출하전검사 등 목록과 같은 방식).
+let farmSelectedIds = new Set();
+function toggleFarmSelectAll(checked) {
+  const ids = filteredFarms().map(f => f.id);
+  ids.forEach(id => checked ? farmSelectedIds.add(id) : farmSelectedIds.delete(id));
+  renderFarms();
+}
+function toggleFarmSelect(id, checked) {
+  if (checked) farmSelectedIds.add(id); else farmSelectedIds.delete(id);
+  renderFarms();
+}
+function kakaoSendSelectedFarms() {
+  const farms = load('farms').filter(f => farmSelectedIds.has(f.id));
+  const btn = document.getElementById('farm-kakao-btn');
+  return kakaoSendFarms(farms, btn).finally(() => { if (btn) btn.disabled = farmSelectedIds.size === 0; });
+}
+
 function renderFarms() {
+  const liveIds = new Set(load('farms').map(f => f.id));
+  farmSelectedIds.forEach(id => { if (!liveIds.has(id)) farmSelectedIds.delete(id); });
+  const kakaoBtn = document.getElementById('farm-kakao-btn');
+  if (kakaoBtn && !kakaoDocBusy) kakaoBtn.disabled = farmSelectedIds.size === 0;
+  const countEl = document.getElementById('farm-selected-count');
+  if (countEl) countEl.textContent = farmSelectedIds.size ? `${farmSelectedIds.size}곳 선택` : '';
   let farms = filteredFarms();
   const badgeMap = { '육계':'badge-blue', '삼계':'badge-green', '산란계':'badge-red', '토종닭':'badge-amber', '오리':'badge-teal', '기타':'badge-purple' };
   const tbody = document.getElementById('farm-tbody');
   const empty = document.getElementById('farm-empty');
-  if (!farms.length) { tbody.innerHTML=''; empty.style.display=''; return; }
+  const checkAll = document.getElementById('farm-check-all');
+  if (!farms.length) { tbody.innerHTML=''; empty.style.display=''; if (checkAll) checkAll.checked = false; return; }
   empty.style.display='none';
+  if (checkAll) checkAll.checked = farms.every(f => farmSelectedIds.has(f.id));
   tbody.innerHTML = farms.map(f => `
     <tr>
+      <td style="text-align:center"><input type="checkbox" ${farmSelectedIds.has(f.id) ? 'checked' : ''} onchange="toggleFarmSelect('${f.id}', this.checked)"></td>
       <td><strong>${f.name}</strong></td>
       <td>${f.owner}</td>
       <td><span class="badge ${badgeMap[f.type]||'badge-blue'}">${f.type}</span></td>
@@ -82,7 +108,6 @@ function renderFarms() {
       <td>${f.phone||'-'}</td>
       <td>${f.count ? Number(f.count).toLocaleString()+'수' : '-'}</td>
       <td><div class="flex-gap">
-        <button class="btn btn-kakao btn-sm" onclick="kakaoSendFarm('${f.id}')" title="농장명·농장주·연락처·주소 등을 카카오톡으로 보냅니다">💛 카톡</button>
         <button class="btn btn-outline btn-sm" onclick="openFarmModal('${f.id}')">편집</button>
         <button class="btn btn-danger btn-sm" onclick="deleteFarm('${f.id}')">삭제</button>
       </div></td>
