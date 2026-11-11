@@ -45,6 +45,13 @@ async function fitPrintHtmlToOnePage(html) {
 async function printProgram(id) {
   const prog = load('programs').find(p => p.id === id);
   if (!prog) return;
+  document.getElementById('print-area').innerHTML = await fitPrintHtmlToOnePage(buildProgramPrintHtml(prog));
+  closeModal('modal-prog-view');
+  setTimeout(() => window.print(), 200);
+}
+
+// 투약 프로그램 인쇄 서식(.print-page 한 장) — 인쇄와 카톡 발송(서식 이미지)이 같이 쓴다.
+function buildProgramPrintHtml(prog) {
   const farm = load('farms').find(f => f.id === prog.farmId);
   const today = new Date().toLocaleDateString('ko-KR');
 
@@ -143,8 +150,5 @@ async function printProgram(id) {
       ※ 본 프로그램은 기본 프로그램으로 질병 상황에 따라 수의사와 상의 후 조정될 수 있습니다.
     </div>
   </div>`;
-
-  document.getElementById('print-area').innerHTML = await fitPrintHtmlToOnePage(html);
-  closeModal('modal-prog-view');
-  setTimeout(() => window.print(), 200);
+  return html;
 }

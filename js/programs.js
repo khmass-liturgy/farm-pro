@@ -1052,6 +1052,38 @@ async function saveDayPlan() {
   if (document.getElementById('page-schedule')?.classList.contains('active')) renderScheduleView();
 }
 
+// 프로그램 카드 왼쪽 위 체크박스로 고른 것을 목록 위 「💛 카톡 발송」으로 한꺼번에 보낸다(농장 등록/관리와 같은 방식).
+// 보내는 내용은 인쇄와 같은 서식(buildProgramPrintHtml, js/print.js)을 이미지로 만든 것 — 한 프로그램 = 한 장.
+let progSelectedIds = new Set();
+function toggleProgSelect(id, checked) {
+  if (checked) progSelectedIds.add(id); else progSelectedIds.delete(id);
+  renderPrograms();
+}
+function toggleProgSelectAll(checked) {
+  filteredPrograms().forEach(p => checked ? progSelectedIds.add(p.id) : progSelectedIds.delete(p.id));
+  renderPrograms();
+}
+function kakaoSendSelectedPrograms() {
+  const list = filteredPrograms().filter(p => progSelectedIds.has(p.id));
+  if (!list.length) { alert('카카오톡으로 보낼 투약 프로그램을 먼저 체크해주세요.'); return; }
+  const first = list[0];
+  return kakaoSendPrintPages({
+    htmls: list.map(buildProgramPrintHtml),
+    title: list.length === 1 ? `${first.farmName || ''} 투약 프로그램` : `${first.farmName || ''} 외 ${list.length - 1}건 투약 프로그램`,
+    btn: document.getElementById('prog-kakao-btn'),
+    isEnabled: () => progSelectedIds.size > 0,
+  });
+}
+
+function filteredPrograms() {
+  const q = (document.getElementById('prog-search')?.value||'').toLowerCase();
+  const ff = document.getElementById('prog-filter-farm')?.value||'';
+  return load('programs').filter(p =>
+    (!q || p.name.toLowerCase().includes(q) || (p.farmName||'').toLowerCase().includes(q)) &&
+    (!ff || p.farmId === ff)
+  ).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+}
+
 function renderPrograms() {
   const q = (document.getElementById('prog-search')?.value||'').toLowerCase();
   const ff = document.getElementById('prog-filter-farm')?.value||'';
@@ -1064,6 +1096,14 @@ function renderPrograms() {
   // filter()가 새 배열을 돌려주므로 여기서 정렬해도 STORE 원본 순서는 건드리지 않는다.
   // created_at이 없는 데이터(구버전 백업 복원분 등)는 맨 뒤로 보낸다.
   progs.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  const liveIds = new Set(load('programs').map(p => p.id));
+  progSelectedIds.forEach(id => { if (!liveIds.has(id)) progSelectedIds.delete(id); });
+  const kakaoBtn = document.getElementById('prog-kakao-btn');
+  if (kakaoBtn && !kakaoDocBusy) kakaoBtn.disabled = progSelectedIds.size === 0;
+  const countEl = document.getElementById('prog-selected-count');
+  if (countEl) countEl.textContent = progSelectedIds.size ? `${progSelectedIds.size}개 선택` : '';
+  const checkAll = document.getElementById('prog-check-all');
+  if (checkAll) checkAll.checked = progs.length > 0 && progs.every(p => progSelectedIds.has(p.id));
   const container = document.getElementById('prog-list');
   if (!progs.length) {
     container.innerHTML = `<div class="empty-state"><div class="icon-big">📋</div><p>등록된 투약 프로그램이 없습니다. 프로그램을 추가해주세요.</p></div>`;
@@ -1076,10 +1116,13 @@ function renderPrograms() {
     return `
     <div class="card mb-16">
       <div class="card-header">
-        <div>
-          <div class="card-title">${p.name}</div>
-          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">🏘️ ${p.farmName}${p.focus?' · '+p.focus:''}</div>
-        </div>
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+          <input type="checkbox" style="width:auto;margin-top:3px" ${progSelectedIds.has(p.id) ? 'checked' : ''} onchange="toggleProgSelect('${p.id}', this.checked)" title="카톡 발송할 프로그램으로 선택">
+          <div>
+            <div class="card-title">${p.name}</div>
+            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">🏘️ ${p.farmName}${p.focus?' · '+p.focus:''}</div>
+          </div>
+        </label>
         <div class="flex-gap">
           <button class="btn btn-outline btn-sm" onclick="viewProgram('${p.id}')">📋 상세보기</button>
           <button class="btn btn-primary btn-sm" onclick="printProgram('${p.id}')">🖨️ 인쇄</button>

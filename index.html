@@ -329,6 +329,12 @@
           <option value="">전체 농장</option>
         </select>
       </div>
+      <!-- 공통 도구줄: 카드 체크박스로 고른 프로그램을 인쇄 서식 이미지로 카톡 발송(js/programs.js kakaoSendSelectedPrograms) -->
+      <div class="flex-gap" style="margin-bottom:14px;align-items:center;flex-wrap:wrap">
+        <label style="display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="prog-check-all" style="width:auto" onchange="toggleProgSelectAll(this.checked)"> 전체 선택</label>
+        <button class="btn btn-kakao btn-sm" id="prog-kakao-btn" onclick="kakaoSendSelectedPrograms()" title="체크한 투약 프로그램을 인쇄 모양 그대로 이미지로 만들어 카카오톡으로 보냅니다" disabled>💛 카톡 발송</button>
+        <span class="text-muted" style="font-size:12px">프로그램 카드 왼쪽 위 체크박스로 골라 보내세요(여러 개 가능) <span id="prog-selected-count"></span></span>
+      </div>
       <div id="prog-list"></div>
     </div>
 
@@ -2054,7 +2060,7 @@
 <script src="js/masterdata.js?v=20261015a"></script>
 <script src="js/rxProducts.js?v=20261015a"></script>
 <script src="js/drugSearch.js?v=20261009c"></script>
-<script src="js/programs.js?v=20261028b"></script>
+<script src="js/programs.js?v=20261111b"></script>
 <script src="js/batches.js?v=20261028b"></script>
 <script src="js/medicationLog.js?v=20261021a"></script>
 <script src="js/prescriptions.js?v=20261104a"></script>
@@ -2068,7 +2074,7 @@
 <script src="js/schedule.js?v=20261110b"></script>
 <script src="js/dashboard.js?v=20261103b"></script>
 <script src="js/reports.js?v=20261015a"></script>
-<script src="js/print.js?v=20261028a"></script>
+<script src="js/print.js?v=20261111b"></script>
 <script src="js/backup.js?v=20261014a"></script>
 <script src="js/app.js?v=20261111a"></script>
 </body>
