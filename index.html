@@ -8,7 +8,7 @@
 <link rel="icon" href="img/favicon.ico?v=20261031c">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20261031b">
 <link rel="manifest" href="manifest.webmanifest?v=20261031b">
-<link rel="stylesheet" href="css/styles.css?v=20261111a">
+<link rel="stylesheet" href="css/styles.css?v=20261111b">
 </head>
 <body>
 
@@ -81,62 +81,70 @@
     </div>
   </div>
   <div class="sidebar-section" data-group="vet">
-    <div class="sidebar-section-label">공수의 업무</div>
-    <div class="sidebar-item" onclick="showPage('preshipment')">
-      <span class="icon">🔬</span> 출하전검사
-    </div>
-    <div class="sidebar-item" onclick="showPage('movepermit')">
-      <span class="icon">🚚</span> 이동승인서 발급
-    </div>
-    <div class="sidebar-item" onclick="showPage('henshipment')">
-      <span class="icon">🥚</span> 산란성계 출하대장
-    </div>
-    <button class="sidebar-section-label toggle" onclick="toggleSidebarSection('vetreport')" aria-expanded="false" aria-controls="sidebar-items-vetreport">
-      <span class="chevron" id="sidebar-chevron-vetreport">▸</span> 공수의 보고서
+    <button class="sidebar-section-label toggle" onclick="toggleSidebarSection('vet')" aria-expanded="true" aria-controls="sidebar-items-vet">
+      <span class="chevron" id="sidebar-chevron-vet">▸</span> 공수의 업무
     </button>
-    <div class="sidebar-section-items" id="sidebar-items-vetreport">
-      <div class="sidebar-item" onclick="showPage('vet-entries')">
-        <span class="icon">📒</span> 입력대장
+    <div class="sidebar-section-items open" id="sidebar-items-vet">
+      <div class="sidebar-item" onclick="showPage('preshipment')">
+        <span class="icon">🔬</span> 출하전검사
       </div>
-      <div class="sidebar-item" onclick="showPage('vet-workreport')">
-        <span class="icon">📋</span> 근무상황보고서
+      <div class="sidebar-item" onclick="showPage('movepermit')">
+        <span class="icon">🚚</span> 이동승인서 발급
       </div>
-      <div class="sidebar-item" onclick="showPage('vet-invoice')">
-        <span class="icon">💰</span> 여비청구서/활동수당 청구서
+      <div class="sidebar-item" onclick="showPage('henshipment')">
+        <span class="icon">🥚</span> 산란성계 출하대장
       </div>
-      <div class="sidebar-item" onclick="showPage('vet-patrol')">
-        <span class="icon">🩺</span> 예찰내역
-      </div>
-      <div class="sidebar-item" onclick="showPage('vet-diary')">
-        <span class="icon">📔</span> 예찰일지
-      </div>
-      <div class="sidebar-item" onclick="showPage('vet-trip')">
-        <span class="icon">🚗</span> 출장일지
-      </div>
-      <div class="sidebar-item" onclick="showPage('vet-daily')">
-        <span class="icon">🗓️</span> 일자별 근무내용
+      <button class="sidebar-section-label toggle" onclick="toggleSidebarSection('vetreport')" aria-expanded="false" aria-controls="sidebar-items-vetreport">
+        <span class="chevron" id="sidebar-chevron-vetreport">▸</span> 공수의 보고서
+      </button>
+      <div class="sidebar-section-items" id="sidebar-items-vetreport">
+        <div class="sidebar-item" onclick="showPage('vet-entries')">
+          <span class="icon">📒</span> 입력대장
+        </div>
+        <div class="sidebar-item" onclick="showPage('vet-workreport')">
+          <span class="icon">📋</span> 근무상황보고서
+        </div>
+        <div class="sidebar-item" onclick="showPage('vet-invoice')">
+          <span class="icon">💰</span> 여비청구서/활동수당 청구서
+        </div>
+        <div class="sidebar-item" onclick="showPage('vet-patrol')">
+          <span class="icon">🩺</span> 예찰내역
+        </div>
+        <div class="sidebar-item" onclick="showPage('vet-diary')">
+          <span class="icon">📔</span> 예찰일지
+        </div>
+        <div class="sidebar-item" onclick="showPage('vet-trip')">
+          <span class="icon">🚗</span> 출장일지
+        </div>
+        <div class="sidebar-item" onclick="showPage('vet-daily')">
+          <span class="icon">🗓️</span> 일자별 근무내용
+        </div>
       </div>
     </div>
   </div>
   <div class="sidebar-section" data-group="farm">
-    <div class="sidebar-section-label">농장 관리</div>
-    <div class="sidebar-item" onclick="showPage('farms')">
-      <span class="icon">🏘️</span> 농장 등록/관리
-    </div>
-    <div class="sidebar-item" onclick="showPage('programs')">
-      <span class="icon">📋</span> 투약 프로그램
-    </div>
-    <div class="sidebar-item" onclick="showPage('batches')">
-      <span class="icon">🐣</span> 입추(사육배치) 관리
-    </div>
-    <div class="sidebar-item" onclick="showPage('medconsult')">
-      <span class="icon">🩺</span> 투약상담 및 처방
-    </div>
-    <div class="sidebar-item" onclick="showPage('prescriptions')">
-      <span class="icon">🧾</span> 처방전 발급
-    </div>
-    <div class="sidebar-item" onclick="showPage('schedule')">
-      <span class="icon">📅</span> 투약 일정
+    <button class="sidebar-section-label toggle" onclick="toggleSidebarSection('farm')" aria-expanded="true" aria-controls="sidebar-items-farm">
+      <span class="chevron" id="sidebar-chevron-farm">▸</span> 농장 관리
+    </button>
+    <div class="sidebar-section-items open" id="sidebar-items-farm">
+      <div class="sidebar-item" onclick="showPage('farms')">
+        <span class="icon">🏘️</span> 농장 등록/관리
+      </div>
+      <div class="sidebar-item" onclick="showPage('programs')">
+        <span class="icon">📋</span> 투약 프로그램
+      </div>
+      <div class="sidebar-item" onclick="showPage('batches')">
+        <span class="icon">🐣</span> 입추(사육배치) 관리
+      </div>
+      <div class="sidebar-item" onclick="showPage('medconsult')">
+        <span class="icon">🩺</span> 투약상담 및 처방
+      </div>
+      <div class="sidebar-item" onclick="showPage('prescriptions')">
+        <span class="icon">🧾</span> 처방전 발급
+      </div>
+      <div class="sidebar-item" onclick="showPage('schedule')">
+        <span class="icon">📅</span> 투약 일정
+      </div>
     </div>
   </div>
   <div class="sidebar-section" data-group="links">
@@ -2076,6 +2084,6 @@
 <script src="js/reports.js?v=20261015a"></script>
 <script src="js/print.js?v=20261111b"></script>
 <script src="js/backup.js?v=20261014a"></script>
-<script src="js/app.js?v=20261111a"></script>
+<script src="js/app.js?v=20261111b"></script>
 </body>
 </html>

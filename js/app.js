@@ -54,7 +54,11 @@ let currentPage = 'dashboard';
 // 가금컨설팅·데이터·시스템은 매일 들어가는 곳이 아니라 기본으로 접어둔다.
 // 펼침 상태는 브라우저에 남겨 다음 방문에도 그대로 유지한다.
 // pbpm = 가금컨설팅 안의 「💼 유료서비스」 분류 묶음(그 안에서 한 번 더 접힌다).
-const COLLAPSIBLE_SECTIONS = ['consult', 'pbpm', 'vetreport', 'data', 'system'];
+const COLLAPSIBLE_SECTIONS = ['consult', 'pbpm', 'vet', 'vetreport', 'farm', 'data', 'system'];
+// 공수의 업무·농장 관리는 매일 쓰는 묶음이라 처음엔 펼쳐 두고, 사용자가 접은 것만 따로 기억한다
+// (예전부터 저장된 "펼친 묶음" 목록에는 이 둘이 없으므로 같은 목록을 쓰면 다들 접힌 채로 보이게 된다).
+const DEFAULT_OPEN_SECTIONS = ['vet', 'farm'];
+const SIDEBAR_CLOSED_KEY = 'sidebar_closed_sections';
 const SIDEBAR_STATE_KEY = 'sidebar_open_sections';
 
 function loadOpenSections() {
@@ -73,19 +77,25 @@ function setSidebarSection(key, open) {
   chevron?.closest('button')?.setAttribute('aria-expanded', String(open));
 }
 
+function loadClosedSections() {
+  try { const s = localStorage.getItem(SIDEBAR_CLOSED_KEY); if (s) return new Set(JSON.parse(s)); } catch (e) { /* 기본값 */ }
+  return new Set();
+}
+
 function toggleSidebarSection(key) {
   const items = document.getElementById('sidebar-items-' + key);
   if (!items) return;
   const open = !items.classList.contains('open');
   setSidebarSection(key, open);
-  const set = loadOpenSections();
-  open ? set.add(key) : set.delete(key);
-  try { localStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify([...set])); } catch (e) { /* 저장 실패해도 동작엔 지장 없음 */ }
+  const defaultOpen = DEFAULT_OPEN_SECTIONS.includes(key);
+  const set = defaultOpen ? loadClosedSections() : loadOpenSections();
+  (open !== defaultOpen) ? set.add(key) : set.delete(key);
+  try { localStorage.setItem(defaultOpen ? SIDEBAR_CLOSED_KEY : SIDEBAR_STATE_KEY, JSON.stringify([...set])); } catch (e) { /* 저장 실패해도 동작엔 지장 없음 */ }
 }
 
 function initSidebarSections() {
-  const open = loadOpenSections();
-  COLLAPSIBLE_SECTIONS.forEach(k => setSidebarSection(k, open.has(k)));
+  const open = loadOpenSections(), closed = loadClosedSections();
+  COLLAPSIBLE_SECTIONS.forEach(k => setSidebarSection(k, DEFAULT_OPEN_SECTIONS.includes(k) ? !closed.has(k) : open.has(k)));
 }
 
 // 접힌 묶음 안의 메뉴로 이동하면 그 묶음을 펼쳐 어디에 있는지 보이게 한다.
