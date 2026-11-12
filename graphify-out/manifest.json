@@ -7,8 +7,8 @@
     "ast_empty": true
   },
   ".claude/settings.json": {
-    "mtime": 1794457325.117274,
-    "seen": 1794457325.9163423,
+    "mtime": 1794459902.4496522,
+    "seen": 1794459921.1589656,
     "ast_hash": "19080d5f4ee96262f0c28ba6615d4c05",
     "semantic_hash": ""
   },
@@ -217,8 +217,8 @@
     "semantic_hash": "f177fadbf1a9f006580f005a254582e9"
   },
   "CLAUDE.md": {
-    "mtime": 1794457325.1176224,
-    "seen": 1794457325.9173226,
+    "mtime": 1794459902.4499872,
+    "seen": 1794459921.1601706,
     "ast_hash": "a56fb37ee33522ca45c835d34e1197ff",
     "semantic_hash": ""
   },
