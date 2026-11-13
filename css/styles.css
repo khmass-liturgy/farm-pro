@@ -644,9 +644,9 @@ body { display: block !important; height: auto !important; overflow: visible !im
    맨 아래 발급자 줄에 대한동물병원 직인을 "(인)" 글자 위에 겹쳐 찍는다(이동승인서와 같은 방식).
    굵은 외곽선은 mp-frame과 같은 이유로 표가 아니라 감싸는 div(nc-frame)에 준다. */
 .nc-frame { border: 2pt solid #000; padding: 14pt 12pt 16pt; }
-.nc-head { position: relative; margin-bottom: 12pt; }
+.nc-head { margin-bottom: 6pt; }
 .nc-title { font-size: 20pt; font-weight: 900; text-align: center; letter-spacing: 3pt; }
-.nc-docno { position: absolute; right: 0; bottom: -2pt; font-size: 10pt; }
+.nc-docno { text-align: right; font-size: 10pt; margin-top: 4pt; }
 .nc-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 11.5pt; }
 .nc-table td { border: 1pt solid #333; padding: 7pt 8pt; vertical-align: middle; line-height: 1.55; word-break: keep-all; overflow-wrap: anywhere; }
 .nc-table td.num { text-align: center; font-weight: 700; padding: 7pt 2pt; }
@@ -656,11 +656,12 @@ body { display: block !important; height: auto !important; overflow: visible !im
 .nc-table tr.nc-long td.num, .nc-table tr.nc-long td.lbl { vertical-align: middle; }
 .nc-foot { margin-top: 16pt; padding: 0 6pt; display: flex; justify-content: space-between; align-items: flex-start; }
 .nc-issue-date { font-size: 13pt; font-weight: 700; padding-top: 2pt; }
-/* 발급자: 원본처럼 병원명·직함·수의사 세 줄 오른쪽 끝에 직인이 걸치게 찍고, 그 아래에 면허번호·연락처를 적는다.
-   직인 그림은 가장자리가 투명 여백(도장 자체는 그림 폭의 절반쯤)이라 그림을 38mm로 두면 도장이 약 20mm로 찍힌다. */
-.nc-issuer { position: relative; width: 78mm; }
-.nc-issuer-name { font-size: 14pt; font-weight: 700; line-height: 1.6; }
-.nc-stamp { position: absolute; width: 38mm; height: 38mm; max-width: none; left: 22mm; top: -6mm; opacity: 0.9; pointer-events: none; }
+/* 발급자: 병원명·직함·수의사 세 줄 바로 오른쪽에 직인을 찍는다. 도장 높이는 세 줄 높이(14pt × 1.5 × 3줄 = 63pt)와 같다.
+   직인 그림(256×261)은 가장자리가 투명 여백이고 도장은 그 안 (61,62)~(198,202) 자리라, 도장이 63pt가 되도록
+   그림을 117.5pt 높이로 키우고 여백만큼 위·왼쪽으로 당겨 도장 윗변을 첫 줄 윗변에 맞춘다. */
+.nc-issuer { width: 80mm; }
+.nc-issuer-name { position: relative; display: inline-block; font-size: 14pt; font-weight: 700; line-height: 1.5; }
+.nc-stamp { position: absolute; height: 117.5pt; width: 115.2pt; max-width: none; top: -27.9pt; left: calc(100% - 27.5pt + 3pt); opacity: 0.92; pointer-events: none; }
 .nc-issuer-info { margin-top: 8pt; font-size: 9.5pt; line-height: 1.65; color: #222; }
 
 /* 공수의 업무 3 — 산란성계 출하대장(AI노계출하.xlsx 「검사의뢰서」).

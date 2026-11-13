@@ -5,10 +5,10 @@
 // 여기서는 농장 등록/관리의 정보를 불러와 채우고, 그때 발급한 내용이 나중에 농장 정보가
 // 바뀌어도 그대로 남도록 스냅샷으로 저장한다(출하전검사·이동승인서와 같은 방식).
 //
-// 병원명·수의사명·면허번호·전화는 처방전과 같은 RX_CLINIC(js/prescriptions.js)을 쓴다.
-// 서식 맨 아래의 병원 주소·팩스·이메일은 이 저장소가 퍼블릭이라 소스에 적지 않고,
-// 발급할 때 한 번 적으면 건마다 함께 저장해 다음 발급 때 그대로 불러온다.
+// 병원명·수의사명·면허번호·전화는 처방전과 같은 RX_CLINIC(js/prescriptions.js)을 쓰고,
+// 서식 맨 아래의 병원 주소·팩스·이메일은 모든 소견서에 같은 값으로 고정해 찍는다.
 const NC_ISSUER_TITLE = '양계컨설턴트';
+const NC_ISSUER = { address: '경기도 파주시 평화로 37', fax: '05040368844', email: 'trsumun@daum.net' };
 const NC_STAMP_SRC = 'img/rx-stamp-hospital.png';
 
 function ncEsc(v) {
@@ -24,12 +24,25 @@ function ncNextDocNo() {
   return String(max + 1);
 }
 
-// 발급자 정보(주소·팩스·이메일)는 가장 최근에 저장한 건의 값을 기본으로 쓴다.
-function ncLastIssuer() {
-  const last = [...load('necropsyReports')]
-    .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
-    .find(r => r.issuerAddress || r.issuerFax || r.issuerEmail);
-  return { address: last?.issuerAddress || '', fax: last?.issuerFax || '', email: last?.issuerEmail || '' };
+// 서식·목록·엑셀에 찍는 일련번호: 발급일(yyyymmdd)-면허번호-발급번호. 예) 20261113-8433-12
+// 저장하는 값(docNo)은 발급번호뿐이라, 발급일을 고치면 일련번호의 날짜도 따라 바뀐다.
+// 번호 칸에 이미 "-"가 든 값을 직접 적어 둔 건은 그대로 보여준다.
+function ncSerial(r) {
+  const no = String(r.docNo ?? '').trim();
+  if (no.includes('-')) return no;
+  const ymd = (r.issueDate || r.visitDate || '').replace(/-/g, '');
+  return [ymd, RX_CLINIC.licenseNo, no].filter(Boolean).join('-');
+}
+
+// 작성 화면의 번호 칸 아래에 실제로 찍힐 일련번호를 미리 보여준다.
+function updateNcSerialPreview() {
+  const el = document.getElementById('nc-serial-preview');
+  if (!el) return;
+  el.textContent = '서식 표기: No. ' + ncSerial({
+    docNo: document.getElementById('nc-doc-no').value,
+    issueDate: document.getElementById('nc-issue-date').value,
+    visitDate: document.getElementById('nc-visit-date').value,
+  });
 }
 
 function ncSorted(list) {
@@ -86,7 +99,7 @@ function renderNecropsyReports() {
   tbody.innerHTML = list.map(r => `
     <tr class="row-click" onclick="openNecropsyModal('${r.id}')">
       <td style="text-align:center" onclick="event.stopPropagation()"><input type="checkbox" ${ncSelectedIds.has(r.id) ? 'checked' : ''} onchange="toggleNcSelect('${r.id}', this.checked)"></td>
-      <td>${ncEsc(r.docNo || '-')}</td>
+      <td style="white-space:nowrap">${ncEsc(ncSerial(r) || '-')}</td>
       <td>${ncEsc(r.visitDate || '-')}</td>
       <td><strong>${ncEsc(r.farmName)}</strong><div style="font-size:11px;color:var(--text-secondary)">${ncEsc(r.owner || '')}</div></td>
       <td>${ncEsc(r.species || '-')}</td>
@@ -159,7 +172,6 @@ function openNecropsyModal(id) {
     farmSel.insertBefore(opt, farmSel.children[1] || null);
   }
   const today = new Date().toISOString().slice(0, 10);
-  const issuer = ncLastIssuer();
   const setVal = (elId, v) => { document.getElementById(elId).value = v ?? ''; };
   setVal('nc-doc-no', r?.docNo || ncNextDocNo());
   setVal('nc-visit-date', r?.visitDate || today);
@@ -172,11 +184,9 @@ function openNecropsyModal(id) {
   setVal('nc-findings', r?.findings);
   setVal('nc-final-opinion', r?.finalOpinion);
   setVal('nc-prescription', r?.prescription);
-  setVal('nc-issuer-address', r ? r.issuerAddress : issuer.address);
-  setVal('nc-issuer-fax', r ? r.issuerFax : issuer.fax);
-  setVal('nc-issuer-email', r ? r.issuerEmail : issuer.email);
 
   onNcFarmChange(false);
+  updateNcSerialPreview();
   openModal('modal-necropsy');
 }
 
@@ -196,7 +206,6 @@ async function saveNecropsy() {
     owner: val('nc-owner'), phone: val('nc-phone'), address: val('nc-address'), species: val('nc-species'),
     farmStatus: val('nc-farm-status'), findings: val('nc-findings'),
     finalOpinion: val('nc-final-opinion'), prescription: val('nc-prescription'),
-    issuerAddress: val('nc-issuer-address'), issuerFax: val('nc-issuer-fax'), issuerEmail: val('nc-issuer-email'),
     createdByEmail: prev?.createdByEmail || await currentUserEmail(),
   };
   let saved;
@@ -219,10 +228,10 @@ function buildNecropsyHtml(r) {
   const dateKo = d => (d ? rxFormatDateKo(d) : '');
   const contact = [
     `면허번호 : ${RX_CLINIC.licenseNo}`,
-    r.issuerAddress ? ncEsc(r.issuerAddress) : '',
-    [`전화 : ${RX_CLINIC.phone}`, r.issuerFax ? `팩스 : ${ncEsc(r.issuerFax)}` : ''].filter(Boolean).join('　　'),
-    r.issuerEmail ? `이메일 : ${ncEsc(r.issuerEmail)}` : '',
-  ].filter(Boolean);
+    NC_ISSUER.address,
+    `전화 : ${RX_CLINIC.phone}　　팩스 : ${NC_ISSUER.fax}`,
+    `이메일 : ${NC_ISSUER.email}`,
+  ];
   const longRow = (no, label, value) => `
       <tr class="nc-long">
         <td class="num">${no}</td><td class="lbl">${label}</td>
@@ -233,7 +242,7 @@ function buildNecropsyHtml(r) {
     <div class="nc-frame">
       <div class="nc-head">
         <div class="nc-title">부검소견서(검안서)</div>
-        <div class="nc-docno">No. ${ncEsc(r.docNo || '')}</div>
+        <div class="nc-docno">No. ${ncEsc(ncSerial(r))}</div>
       </div>
       <table class="nc-table">
         <colgroup><col style="width:7%"><col style="width:16%"><col style="width:37%"><col style="width:12%"><col style="width:28%"></colgroup>
@@ -263,8 +272,8 @@ function buildNecropsyHtml(r) {
             <div>${RX_CLINIC.name}</div>
             <div>${NC_ISSUER_TITLE}</div>
             <div>${RX_CLINIC.vetName} 수의사</div>
+            <img class="nc-stamp" src="${NC_STAMP_SRC}" alt="">
           </div>
-          <img class="nc-stamp" src="${NC_STAMP_SRC}" alt="">
           <div class="nc-issuer-info">${contact.join('<br>')}</div>
         </div>
       </div>
@@ -416,7 +425,7 @@ async function buildNcExcelFile(list, range) {
   // ── 발급대장 ──
   const ledger = wb.addWorksheet('발급대장');
   const cols = [
-    ['No.', 6, r => (Number.isFinite(parseInt(r.docNo, 10)) ? parseInt(r.docNo, 10) : r.docNo || '')],
+    ['No.', 20, r => ncSerial(r)],
     ['방문일', 12, r => ncXlDate(r.visitDate)],
     ['이름', 10, r => r.owner || ''],
     ['농장명', 16, r => r.farmName || ''],
@@ -450,9 +459,10 @@ async function buildNcExcelFile(list, range) {
       const v = get(r);
       c.value = v; c.font = font(10); c.border = box;
       const isLong = width >= 30;
+      const isNo = i === 0;
       c.alignment = { horizontal: isLong ? 'left' : 'center', vertical: 'middle', wrapText: true };
       if (v instanceof Date) c.numFmt = 'yyyy-mm-dd';
-      if (typeof v === 'string') lines = Math.max(lines, ncXlLines(v, width * 0.95));
+      if (typeof v === 'string' && !isNo) lines = Math.max(lines, ncXlLines(v, width * 0.95));
     });
     ledger.getRow(row).height = Math.max(22, lines * 15);
   });
@@ -485,7 +495,7 @@ async function buildNcExcelFile(list, range) {
     put('A1', '부검소견서(검안서)', 18, { horizontal: 'center' }, true);
     ws.getRow(1).height = 32.4;
     put('A2', 'No.', 10, { horizontal: 'center' });
-    put('B2', r.docNo || '', 10, { horizontal: 'left' });
+    put('B2', ncSerial(r), 10, { horizontal: 'left' });
     ws.getRow(2).height = 21.6;
     ws.getRow(3).height = 17.4;
 
@@ -531,10 +541,10 @@ async function buildNcExcelFile(list, range) {
     put('D23', `${RX_CLINIC.vetName}수의사`, 14);
     [21, 22, 23].forEach(row => { ws.getRow(row).height = 22; });
     put('D25', `면허번호 : ${RX_CLINIC.licenseNo}`, 10);
-    if (r.issuerAddress) put('D26', r.issuerAddress, 10);
+    put('D26', NC_ISSUER.address, 10);
     put('D27', `전화 : ${RX_CLINIC.phone}`, 10);
-    if (r.issuerFax) put('F27', `팩스 : ${r.issuerFax}`, 10);
-    if (r.issuerEmail) put('D28', `이메일 : ${r.issuerEmail}`, 10);
+    put('F27', `팩스 : ${NC_ISSUER.fax}`, 10);
+    put('D28', `이메일 : ${NC_ISSUER.email}`, 10);
     // 직인: 원본과 같은 자리(E~G열, 발급일 줄부터 면허번호 줄까지)에 같은 크기로 얹는다.
     if (stampId != null) ws.addImage(stampId, { tl: { col: 4.25, row: 18.3 }, ext: { width: 186, height: 169 } });
     ws.pageSetup = {

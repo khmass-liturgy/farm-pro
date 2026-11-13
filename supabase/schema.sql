@@ -561,7 +561,7 @@ create trigger trg_hen_shipments_updated_at before update on hen_shipments
 -- 원본 엑셀의 「발급대장」 한 줄 = 이 표의 한 행. 서식의 1~8번 항목
 -- (농장명·축종 / 이름·전화 / 주소 / 방문일 / 농장상황 / 부검소견 / 최종소견 / 처방)과 발급일을 담는다.
 -- 농장 정보는 발급 당시 값을 스냅샷으로 남긴다(농장 등록 정보가 바뀌어도 발급한 서류는 그대로).
--- issuer_* 는 서식 맨 아래 발급자 주소·팩스·이메일 — 저장소가 퍼블릭이라 js 소스에 두지 않고 건마다 저장한다.
+-- issuer_* 는 처음에 발급자 주소·팩스·이메일을 건마다 저장하던 칸으로, 지금은 고정값을 써서 사용하지 않는다(남겨 둬도 무방).
 -- ─────────────────────────────────────────────────────────────────────────
 create table if not exists necropsy_reports (
   id uuid primary key default gen_random_uuid(),

@@ -1,17 +1,17 @@
 # Graph Report - farm-pro  (2026-11-13)
 
 ## Corpus Check
-- 40 files · ~91,604 words
+- 40 files · ~91,548 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 4 file(s) not represented in the graph (top: (none) 1, .css 1, .ico 1)
 
 ## Summary
-- 787 nodes · 1445 edges · 39 communities (34 shown, 5 thin omitted)
+- 789 nodes · 1451 edges · 40 communities (35 shown, 5 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e40ac419`
+- Built from commit: `c2b9e339`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -51,6 +51,7 @@
 - rxProducts.js
 - necropsyReport.js
 - reports.js
+- print.js
 
 ## God Nodes (most connected - your core abstractions)
 1. `vetDefaultYm()` - 15 edges
@@ -71,11 +72,11 @@
 ## Import Cycles
 - None detected.
 
-## Communities (39 total, 5 thin omitted)
+## Communities (40 total, 5 thin omitted)
 
 ### Community 0 - "programs.js"
-Cohesion: 0.06
-Nodes (68): buildProgramPrintHtml(), fitPrintHtmlToOnePage(), printProgram(), addDpDrugSlot(), addDrugSlot(), addFeedSlot(), allowedVaccineSpecies(), applyProgramAutoName() (+60 more)
+Cohesion: 0.07
+Nodes (65): addDpDrugSlot(), addDrugSlot(), addFeedSlot(), allowedVaccineSpecies(), applyProgramAutoName(), applyProgramBreedDefault(), buildFeedSection(), collectDpDrugs() (+57 more)
 
 ### Community 1 - "drugSearch.js"
 Cohesion: 0.08
@@ -207,27 +208,31 @@ Nodes (3): deleteRxProduct(), renderRxProducts(), saveRxProduct()
 
 ### Community 35 - "necropsyReport.js"
 Cohesion: 0.14
-Nodes (27): buildNcExcelFile(), buildNecropsyHtml(), deleteSelectedNecropsies(), editSelectedNecropsy(), kakaoSendSelectedNecropsies(), ncEsc(), ncExcelRange(), ncExcelTargets() (+19 more)
+Nodes (29): buildNcExcelFile(), buildNecropsyHtml(), deleteSelectedNecropsies(), editSelectedNecropsy(), kakaoSendSelectedNecropsies(), NC_ISSUER, ncEsc(), ncExcelRange() (+21 more)
+
+### Community 39 - "print.js"
+Cohesion: 0.83
+Nodes (3): buildProgramPrintHtml(), fitPrintHtmlToOnePage(), printProgram()
 
 ## Knowledge Gaps
 - **3 isolated node(s):** `RFC-2047`, `RFC-2231`, `RFC-822`
-  These have ≤1 connection - possible missing edges. (Counts symbols only; 187 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges. (Counts symbols only; 188 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **5 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
+- **Why does `kakaoSendSelectedPrograms()` connect `programs.js` to `print.js`?**
+  _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **What connects `RFC-2047`, `RFC-2231`, `RFC-822` to the rest of the system?**
   _3 weakly-connected nodes found - possible missing edges._
 - **Should `programs.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.060641627543035995 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06540825285338016 - nodes in this community are weakly interconnected._
+- **Why does `buildProgramPrintHtml()` connect `print.js` to `programs.js`?**
+  _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **Should `drugSearch.js` be split into smaller, more focused modules?**
   _Cohesion score 0.07662337662337662 - nodes in this community are weakly interconnected._
 - **Should `preShipment.js` be split into smaller, more focused modules?**
   _Cohesion score 0.08080808080808081 - nodes in this community are weakly interconnected._
 - **Should `movePermit.js` be split into smaller, more focused modules?**
   _Cohesion score 0.10810810810810811 - nodes in this community are weakly interconnected._
-- **Should `movePermitBulk.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.10634920634920635 - nodes in this community are weakly interconnected._
-- **Should `vetReport.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.07308377896613191 - nodes in this community are weakly interconnected._

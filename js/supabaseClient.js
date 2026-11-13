@@ -306,7 +306,7 @@ const TABLES = {
       };
     },
   },
-  // 부검소견서(검안서). 농장 정보와 발급자 주소·팩스·이메일은 발급 당시 값을 스냅샷으로 남긴다.
+  // 부검소견서(검안서). 농장 정보는 발급 당시 값을 스냅샷으로 남긴다.
   necropsyReports: {
     table: 'necropsy_reports', orderBy: 'visit_date', ascending: false,
     toRow(o) {
@@ -317,7 +317,6 @@ const TABLES = {
         address_snapshot: o.address || null, species: o.species || null,
         farm_status: o.farmStatus || null, findings: o.findings || null,
         final_opinion: o.finalOpinion || null, prescription: o.prescription || null,
-        issuer_address: o.issuerAddress || null, issuer_fax: o.issuerFax || null, issuer_email: o.issuerEmail || null,
         created_by_email: o.createdByEmail || null,
       };
     },
@@ -328,7 +327,6 @@ const TABLES = {
         owner: r.owner_snapshot, phone: r.phone_snapshot, address: r.address_snapshot, species: r.species,
         farmStatus: r.farm_status, findings: r.findings,
         finalOpinion: r.final_opinion, prescription: r.prescription,
-        issuerAddress: r.issuer_address, issuerFax: r.issuer_fax, issuerEmail: r.issuer_email,
         createdByEmail: r.created_by_email, createdAt: r.created_at,
       };
     },

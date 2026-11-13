@@ -8,7 +8,7 @@
 <link rel="icon" href="img/favicon.ico?v=20261031c">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20261031b">
 <link rel="manifest" href="manifest.webmanifest?v=20261031b">
-<link rel="stylesheet" href="css/styles.css?v=20261113a">
+<link rel="stylesheet" href="css/styles.css?v=20261113c">
 </head>
 <body>
 
@@ -1566,9 +1566,9 @@
       <button class="modal-close" onclick="closeModal('modal-necropsy')">✕</button>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>No. <span class="text-muted">(발급번호, 자동으로 이어집니다)</span></label><input id="nc-doc-no"></div>
-      <div class="form-group"><label>방문일 *</label><input id="nc-visit-date" type="date" min="1900-01-01" max="2999-12-31"></div>
-      <div class="form-group"><label>발급일</label><input id="nc-issue-date" type="date" min="1900-01-01" max="2999-12-31"></div>
+      <div class="form-group"><label>No. <span class="text-muted">(발급번호, 자동으로 이어집니다)</span></label><input id="nc-doc-no" oninput="updateNcSerialPreview()"><div class="text-muted" id="nc-serial-preview" style="font-size:12px;margin-top:4px"></div></div>
+      <div class="form-group"><label>방문일 *</label><input id="nc-visit-date" type="date" min="1900-01-01" max="2999-12-31" onchange="updateNcSerialPreview()"></div>
+      <div class="form-group"><label>발급일</label><input id="nc-issue-date" type="date" min="1900-01-01" max="2999-12-31" onchange="updateNcSerialPreview()"></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label>농장명 *</label>
@@ -1586,12 +1586,6 @@
     <div class="form-group"><label>부검소견</label><textarea id="nc-findings" rows="4" placeholder="예) 기낭 혼탁 및 치즈양 삼출물, 간포막염·심낭염, 기관 점막 충혈"></textarea></div>
     <div class="form-group"><label>최종소견</label><textarea id="nc-final-opinion" rows="3" placeholder="예) 대장균증(복합감염 의심)"></textarea></div>
     <div class="form-group"><label>처방</label><textarea id="nc-prescription" rows="3" placeholder="예) 항생제 감수성 검사 후 투약, 환기·깔짚 관리"></textarea></div>
-    <div class="card-title" style="font-size:13px;margin:6px 0 4px">발급자 정보 <span class="text-muted" style="font-weight:400;font-size:12px">— 서식 맨 아래에 인쇄됩니다. 병원명·수의사·면허번호·전화는 자동이고, 아래 세 칸은 한 번 적으면 다음 발급부터 그대로 채워집니다.</span></div>
-    <div class="form-row">
-      <div class="form-group"><label>병원 주소</label><input id="nc-issuer-address"></div>
-      <div class="form-group"><label>팩스</label><input id="nc-issuer-fax"></div>
-      <div class="form-group"><label>이메일</label><input id="nc-issuer-email"></div>
-    </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modal-necropsy')">취소</button>
       <button class="btn btn-primary" onclick="saveNecropsy()">저장</button>
@@ -2163,7 +2157,7 @@
      쓰는 시점(사진 저장·이메일 발송)엔 이미 다 로드돼 있다. -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="js/config.js?v=20261106a"></script>
-<script src="js/supabaseClient.js?v=20261113a"></script>
+<script src="js/supabaseClient.js?v=20261113c"></script>
 <script src="js/auth.js?v=20261015a"></script>
 <script src="js/googleDrive.js?v=20261030e"></script>
 <script src="js/breedStandards.js?v=20261028b"></script>
@@ -2182,7 +2176,7 @@
 <script src="js/movePermit.js?v=20261104a"></script>
 <script src="js/movePermitBulk.js?v=20261030g"></script>
 <script src="js/henShipment.js?v=20261106b"></script>
-<script src="js/necropsyReport.js?v=20261113a"></script>
+<script src="js/necropsyReport.js?v=20261113c"></script>
 <script src="js/vetReport.js?v=20261104a"></script>
 <script src="js/clinicalAssessment.js?v=20261015a"></script>
 <script src="js/rodentControl.js?v=20261015a"></script>
