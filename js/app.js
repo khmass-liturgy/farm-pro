@@ -5,6 +5,7 @@ const PAGE_TITLES = {
   preshipment: '출하전검사',
   movepermit: '이동승인서 발급',
   henshipment: '산란성계 출하대장',
+  necropsy: '부검소견서(검안서)',
   'vet-entries': '입력대장',
   'vet-workreport': '근무상황보고서',
   'vet-invoice': '여비청구서/활동수당 청구서',
@@ -40,6 +41,7 @@ const PAGE_ACTIONS = {
   preshipment: `<button class="btn btn-primary" onclick="openPreShipmentModal()">+ 출하전검사 작성</button>`,
   movepermit: `<button class="btn btn-primary" onclick="openMovePermitModal()">+ 이동승인서 발급</button>`,
   henshipment: `<button class="btn btn-primary" onclick="openHenShipmentModal()">+ 출하대장 작성</button>`,
+  necropsy: `<button class="btn btn-primary" onclick="openNecropsyModal()">+ 부검소견서 작성</button>`,
   'vet-invoice': `<button class="btn btn-outline" onclick="openVetOfficeInfoModal()">⚙️ 사무실 정보</button>`,
   'vet-entries': `<button class="btn btn-outline" onclick="openVetOfficeInfoModal()">⚙️ 사무실 정보</button><button class="btn btn-primary" onclick="openVetEntryModal()">+ 방문 기록 추가</button>`,
   drugs: `<button class="btn btn-primary" onclick="openDrugModal()">+ 약품 추가</button>`,
@@ -144,6 +146,7 @@ function showPage(name) {
   if (name === 'preshipment') { populatePsFarmFilter(); renderPreShipments(); }
   if (name === 'movepermit') { populateMpFarmFilter(); renderMovePermits(); }
   if (name === 'henshipment') { populateHsFarmFilter(); renderHenShipments(); }
+  if (name === 'necropsy') { populateNcFarmFilter(); renderNecropsyReports(); }
   if (name === 'vet-entries') renderVetEntries();
   if (name === 'vet-workreport') renderVetWorkReportSummary();
   if (name === 'vet-invoice') renderVetInvoiceSummary();

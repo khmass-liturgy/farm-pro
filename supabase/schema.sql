@@ -557,6 +557,43 @@ create trigger trg_hen_shipments_updated_at before update on hen_shipments
   for each row execute function set_updated_at();
 
 -- ─────────────────────────────────────────────────────────────────────────
+-- necropsy_reports — 공수의 업무: 부검소견서(검안서).
+-- 원본 엑셀의 「발급대장」 한 줄 = 이 표의 한 행. 서식의 1~8번 항목
+-- (농장명·축종 / 이름·전화 / 주소 / 방문일 / 농장상황 / 부검소견 / 최종소견 / 처방)과 발급일을 담는다.
+-- 농장 정보는 발급 당시 값을 스냅샷으로 남긴다(농장 등록 정보가 바뀌어도 발급한 서류는 그대로).
+-- issuer_* 는 서식 맨 아래 발급자 주소·팩스·이메일 — 저장소가 퍼블릭이라 js 소스에 두지 않고 건마다 저장한다.
+-- ─────────────────────────────────────────────────────────────────────────
+create table if not exists necropsy_reports (
+  id uuid primary key default gen_random_uuid(),
+  doc_no text,
+  visit_date date not null default current_date,
+  issue_date date,
+  farm_id uuid references farms(id) on delete set null,
+  farm_name_snapshot text not null,
+  owner_snapshot text,
+  phone_snapshot text,
+  address_snapshot text,
+  species text,
+  farm_status text,
+  findings text,
+  final_opinion text,
+  prescription text,
+  issuer_address text,
+  issuer_fax text,
+  issuer_email text,
+  created_by_email text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_necropsy_reports_farm_id on necropsy_reports(farm_id);
+create index if not exists idx_necropsy_reports_visit_date on necropsy_reports(visit_date);
+
+drop trigger if exists trg_necropsy_reports_updated_at on necropsy_reports;
+create trigger trg_necropsy_reports_updated_at before update on necropsy_reports
+  for each row execute function set_updated_at();
+
+-- ─────────────────────────────────────────────────────────────────────────
 -- 텔레그램 일령 알림에서 뺄 계군(program) 목록.
 --
 -- scripts/send_daily_age.py가 매일 알림을 보내기 전에, 같은 텔레그램 채팅방으로
@@ -765,7 +802,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['farms','drugs','vaccines','feeds','programs','batches','medication_logs','prescription_products','prescriptions','clinical_assessments','rodent_assessments','pre_shipment_inspections','move_permits','carriers','hen_shipments','vet_report_entries','vet_office_info','vet_saved_reports']
+  foreach t in array array['farms','drugs','vaccines','feeds','programs','batches','medication_logs','prescription_products','prescriptions','clinical_assessments','rodent_assessments','pre_shipment_inspections','move_permits','carriers','hen_shipments','necropsy_reports','vet_report_entries','vet_office_info','vet_saved_reports']
   loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists authenticated_full_access on %I', t);

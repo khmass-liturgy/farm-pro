@@ -8,10 +8,10 @@
 
 const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 
-const STORE = { farms: [], drugs: [], vaccines: [], feeds: [], programs: [], batches: [], medicationLogs: [], rxProducts: [], prescriptions: [], clinicalAssessments: [], rodentAssessments: [], preShipments: [], movePermits: [], carriers: [], henShipments: [], vetReportEntries: [], vetOfficeInfo: [], vetSavedReports: [] };
+const STORE = { farms: [], drugs: [], vaccines: [], feeds: [], programs: [], batches: [], medicationLogs: [], rxProducts: [], prescriptions: [], clinicalAssessments: [], rodentAssessments: [], preShipments: [], movePermits: [], carriers: [], henShipments: [], necropsyReports: [], vetReportEntries: [], vetOfficeInfo: [], vetSavedReports: [] };
 
 // 현재 편집 중인 각 엔티티의 id. 여러 feature 파일이 공유하는 전역 상태라 여기서 한 번만 선언한다.
-const editingId = { farm: null, drug: null, vaccine: null, feed: null, program: null, batch: null, medicationLog: null, rxProduct: null, prescription: null, clinicalAssessment: null, rodentAssessment: null, preShipment: null, movePermit: null, henShipment: null, vetReportEntry: null };
+const editingId = { farm: null, drug: null, vaccine: null, feed: null, program: null, batch: null, medicationLog: null, rxProduct: null, prescription: null, clinicalAssessment: null, rodentAssessment: null, preShipment: null, movePermit: null, henShipment: null, necropsyReport: null, vetReportEntry: null };
 
 // 빈 입력칸("")을 0으로 저장하지 않기 위한 변환. 숫자 칸은 안 적으면 null이어야 한다
 // (0으로 들어가면 "사육수수 0마리"처럼 사실과 다른 값이 서식에 인쇄된다).
@@ -302,6 +302,33 @@ const TABLES = {
         shipDate: r.ship_date, slaughterhouse: r.slaughterhouse,
         reexam: r.reexam,
         appliedAt: r.applied_at, requestOrg: r.request_org,
+        createdByEmail: r.created_by_email, createdAt: r.created_at,
+      };
+    },
+  },
+  // 부검소견서(검안서). 농장 정보와 발급자 주소·팩스·이메일은 발급 당시 값을 스냅샷으로 남긴다.
+  necropsyReports: {
+    table: 'necropsy_reports', orderBy: 'visit_date', ascending: false,
+    toRow(o) {
+      return {
+        doc_no: o.docNo || null, visit_date: o.visitDate, issue_date: o.issueDate || null,
+        farm_id: o.farmId || null, farm_name_snapshot: o.farmName,
+        owner_snapshot: o.owner || null, phone_snapshot: o.phone || null,
+        address_snapshot: o.address || null, species: o.species || null,
+        farm_status: o.farmStatus || null, findings: o.findings || null,
+        final_opinion: o.finalOpinion || null, prescription: o.prescription || null,
+        issuer_address: o.issuerAddress || null, issuer_fax: o.issuerFax || null, issuer_email: o.issuerEmail || null,
+        created_by_email: o.createdByEmail || null,
+      };
+    },
+    fromRow(r) {
+      return {
+        id: r.id, docNo: r.doc_no, visitDate: r.visit_date, issueDate: r.issue_date,
+        farmId: r.farm_id, farmName: r.farm_name_snapshot,
+        owner: r.owner_snapshot, phone: r.phone_snapshot, address: r.address_snapshot, species: r.species,
+        farmStatus: r.farm_status, findings: r.findings,
+        finalOpinion: r.final_opinion, prescription: r.prescription,
+        issuerAddress: r.issuer_address, issuerFax: r.issuer_fax, issuerEmail: r.issuer_email,
         createdByEmail: r.created_by_email, createdAt: r.created_at,
       };
     },
