@@ -82,7 +82,7 @@ function computeFarmDayAges() {
   return { sections, hiddenBroilers };
 }
 
-const SPECIES_BADGE = { '육계': 'badge-blue', '삼계': 'badge-green', '산란계': 'badge-red', '토종닭': 'badge-amber', '오리': 'badge-teal', '기타': 'badge-purple' };
+const SPECIES_BADGE = { '육계': 'badge-blue', '삼계': 'badge-green', '산란계': 'badge-red', '종계': 'badge-teal', '토종닭': 'badge-amber', '오리': 'badge-teal', '기타': 'badge-purple' };
 
 function renderFarmDayAgeCard() {
   const el = document.getElementById('dash-farm-age');
@@ -95,7 +95,7 @@ function renderFarmDayAgeCard() {
       <td><strong>${it.farmName || '-'}</strong>${showSpecies && it.species ? ` <span class="badge ${SPECIES_BADGE[it.species] || 'badge-purple'}">${it.species}</span>` : ''}${it.batchCount > 1
         ? ` <span class="text-muted" title="이 농장의 사육중 배치 ${it.batchCount}개 중 일령이 가장 많은 배치를 보여줍니다">배치 ${it.batchCount}개</span>`
         : it.house ? ` <span class="text-muted">${it.house}</span>` : ''}</td>
-      <td><strong>${it.dayAge}일령</strong>${it.species === '산란계' ? ` <span class="text-muted">(${Math.ceil(it.dayAge / 7)}주령)</span>` : ''}</td>
+      <td><strong>${it.dayAge}일령</strong>${(it.species === '산란계' || it.species === '종계') ? ` <span class="text-muted">(${Math.ceil(it.dayAge / 7)}주령)</span>` : ''}</td>
       <td>${it.placementDate}</td>
     </tr>`;
   const hiddenNote = `<p class="text-muted" style="margin-top:8px">${BROILER_STANDARD_MAX_AGE}일령을 넘은 육계 ${hiddenBroilers}개 배치는 출하완료로 보고 뺐습니다.</p>`;

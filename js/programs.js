@@ -187,7 +187,7 @@ function openProgramModal(id, source) {
   // 프로그램에 저장된 값이 있으면 그것을, 없으면 그 농장 계군에 입력된 품종을 쓴다.
   const farmType = prog?.farmId ? (load('farms').find(f => f.id === prog.farmId)?.type || '') : '';
   const fallback = prog?.farmId ? farmBreedDefault(prog.farmId) : null;
-  // 농장의 축종은 f-type이 필수 항목이라 항상 5가지(육계/산란계/삼계/토종닭/기타) 중
+  // 농장의 축종은 f-type이 필수 항목이라 항상 6가지(육계/산란계/종계/삼계/토종닭/기타) 중
   // 하나다. speciesKeyOf로 육계/산란계만 걸러내면 나머지 세 축종은 농장 정보가 있어도
   // 자동으로 안 채워지는 문제가 있었다 — 표준 매뉴얼(CONSULT_BREEDS)이 없을 뿐 축종
   // 값 자체는 그대로 가져와도 된다.
@@ -238,7 +238,7 @@ function getDrugOptions(selectedId) {
 }
 
 // 농장 축종 → 그 농장에서 고를 수 있는 백신 축종.
-// 백신은 육계/산란계/공통 세 가지로만 구분하므로, 삼계·토종닭·기타처럼 대응하는
+// 백신은 육계/산란계/공통 세 가지로만 구분하므로, 종계·삼계·토종닭·기타처럼 대응하는
 // 구분이 없는 축종은 거르지 않고 전부 보여준다(잘못 감추는 것보다 낫다).
 const VACCINE_SPECIES_BY_FARM_TYPE = { '육계': ['육계', '공통'], '산란계': ['산란계', '공통'] };
 function allowedVaccineSpecies(farmType) {

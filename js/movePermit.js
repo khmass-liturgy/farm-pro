@@ -241,7 +241,7 @@ function onMpFarmChange(force) {
     const breedName = (speciesKey && CONSULT_BREEDS[speciesKey]?.breeds[b.breed]?.name) || b.breed || '';
     if (breedName) set('mp-breed', breedName);
     const age = computeDayAge(b.placementDate);
-    if (age >= 1) set('mp-age-label', b.species === '산란계' ? `${Math.ceil(age / 7)}주령` : `${age}일령`);
+    if (age >= 1) set('mp-age-label', (b.species === '산란계' || b.species === '종계') ? `${Math.ceil(age / 7)}주령` : `${age}일령`);
   }
 }
 
