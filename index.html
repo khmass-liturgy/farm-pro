@@ -767,7 +767,14 @@
         <select id="rx-filter-farm" onchange="renderPrescriptions()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);">
           <option value="">전체 농장</option>
         </select>
+        <select id="rx-filter-period" onchange="renderPrescriptions()" title="발급일 기준" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);">
+          <option value="1" selected>최근 1개월</option>
+          <option value="3">최근 3개월</option>
+          <option value="12">최근 1년</option>
+          <option value="">전체 기간</option>
+        </select>
       </div>
+      <div class="text-muted" id="rx-period-note" style="display:none;margin:-4px 0 12px;font-size:12px"></div>
       <div class="card">
         <div class="card-header">
           <div class="card-title">처방전 발급 목록 <span class="text-muted" style="font-weight:400;font-size:12px">— 줄을 누르면 바로 편집합니다. 인쇄·삭제는 체크박스로 골라 하세요(여러 건 가능)</span></div>
@@ -2195,7 +2202,7 @@
 <script src="js/programs.js?v=20261116a"></script>
 <script src="js/batches.js?v=20261028b"></script>
 <script src="js/medicationLog.js?v=20261116a"></script>
-<script src="js/prescriptions.js?v=20261104a"></script>
+<script src="js/prescriptions.js?v=20261116a"></script>
 <script src="js/preShipment.js?v=20261116b"></script>
 <script src="js/movePermit.js?v=20261116b"></script>
 <script src="js/movePermitBulk.js?v=20261030g"></script>

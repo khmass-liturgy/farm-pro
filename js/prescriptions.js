@@ -186,8 +186,8 @@ async function deleteRxPrescription(id) {
 let rxSelectedIds = new Set();
 
 function toggleRxSelectAll(checked) {
-  const ids = load('prescriptions').map(p => p.id);
-  rxSelectedIds = checked ? new Set(ids) : new Set();
+  // 화면에 보이는 건만 고른다 — 기간·검색으로 감춰진 건까지 선택되면 모르는 채 삭제·인쇄된다.
+  rxSelectedIds = checked ? new Set(rxVisibleList().map(p => p.id)) : new Set();
   renderPrescriptions();
 }
 function toggleRxSelect(id, checked) {
@@ -217,16 +217,41 @@ function printSelectedRxPrescriptions() {
   setTimeout(() => window.print(), 200);
 }
 
-function renderPrescriptions() {
+// 검색어·농장 필터에 맞는 건(기간 필터 적용 전). 최근 발급일이 위로 오게 한다.
+// 저장소는 등록 순(오래된 것 먼저)이라 먼저 뒤집은 뒤 안정 정렬하면 같은 날짜 안에서도
+// 나중에 발급한 것이 위로 온다.
+function rxMatchedList() {
   const q = (document.getElementById('rx-search')?.value || '').toLowerCase();
   const ff = document.getElementById('rx-filter-farm')?.value || '';
-  const list = load('prescriptions').filter(p => {
+  return load('prescriptions').filter(p => {
     const productNames = (p.items || []).map(it => it.productName).join(' ').toLowerCase();
     return (!q || (p.farmName || '').toLowerCase().includes(q) || productNames.includes(q)) &&
       (!ff || p.farmId === ff);
-  // 최근 발급일이 위로 오게 한다. 저장소는 등록 순(오래된 것 먼저)이라 먼저 뒤집은 뒤
-  // 안정 정렬하면 같은 날짜 안에서도 나중에 발급한 것이 위로 온다.
   }).reverse().sort((a, b) => (b.issueDate || '').localeCompare(a.issueDate || ''));
+}
+// 지금 화면에 보이는 건. 처음 열면 최근 1개월(발급일 기준)만 — 발급일이 없는 건은 감추지 않는다.
+// periodFromMonths는 js/preShipment.js에 있다(출하전검사·이동승인서·부검소견서 목록과 함께 쓴다).
+function rxVisibleList() {
+  const from = periodFromMonths(document.getElementById('rx-filter-period')?.value);
+  return rxMatchedList().filter(p => !from || !p.issueDate || p.issueDate >= from);
+}
+function showAllRxPeriod() {
+  const sel = document.getElementById('rx-filter-period');
+  if (sel) sel.value = '';
+  renderPrescriptions();
+}
+
+function renderPrescriptions() {
+  const list = rxVisibleList();
+  const hidden = rxMatchedList().length - list.length;
+  // 기간 때문에 안 보이는 건이 있으면 몇 건인지와 전체 보기 링크를 남긴다.
+  const note = document.getElementById('rx-period-note');
+  if (note) {
+    note.style.display = hidden ? '' : 'none';
+    note.innerHTML = hidden
+      ? `선택한 기간보다 이전 기록 <strong>${hidden}건</strong>은 감춰져 있습니다. <a href="#" onclick="showAllRxPeriod(); return false;">전체 기간 보기</a>`
+      : '';
+  }
   const liveIds = new Set(load('prescriptions').map(p => p.id));
   rxSelectedIds.forEach(id => { if (!liveIds.has(id)) rxSelectedIds.delete(id); });
 
@@ -242,6 +267,13 @@ function renderPrescriptions() {
   const checkAll = document.getElementById('rx-check-all');
   if (!list.length) {
     tbody.innerHTML = ''; empty.style.display = '';
+    const emptyMsg = empty.querySelector('p');
+    if (emptyMsg) {
+      if (!emptyMsg.dataset.default) emptyMsg.dataset.default = emptyMsg.textContent;
+      emptyMsg.textContent = hidden
+        ? '선택한 기간에는 발급된 처방전이 없습니다. 위의 "전체 기간 보기"를 누르면 이전 기록이 나옵니다.'
+        : emptyMsg.dataset.default;
+    }
     if (checkAll) checkAll.checked = false;
     return;
   }
