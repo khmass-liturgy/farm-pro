@@ -66,14 +66,39 @@ function populateNcFarmFilter() {
 
 let ncSelectedIds = new Set();
 
-function renderNecropsyReports() {
+// 검색어·농장 필터에 맞는 건(기간 필터 적용 전).
+function ncMatchedList() {
   const q = (document.getElementById('nc-search')?.value || '').toLowerCase();
   const ff = document.getElementById('nc-filter-farm')?.value || '';
-  const all = load('necropsyReports');
-  const list = ncSorted(all.filter(r =>
+  return ncSorted(load('necropsyReports').filter(r =>
     (!q || [r.farmName, r.owner, r.finalOpinion].some(v => (v || '').toLowerCase().includes(q))) &&
     (!ff || r.farmId === ff)
   ));
+}
+// 지금 화면에 보이는 건. 처음 열면 최근 1개월(방문일 기준)만 — 방문일이 없는 건은 감추지 않는다.
+// periodFromMonths는 js/preShipment.js에 있다(출하전검사·이동승인서 목록과 함께 쓴다).
+function ncVisibleList() {
+  const from = periodFromMonths(document.getElementById('nc-filter-period')?.value);
+  return ncMatchedList().filter(r => !from || !r.visitDate || r.visitDate >= from);
+}
+function showAllNcPeriod() {
+  const sel = document.getElementById('nc-filter-period');
+  if (sel) sel.value = '';
+  renderNecropsyReports();
+}
+
+function renderNecropsyReports() {
+  const all = load('necropsyReports');
+  const list = ncVisibleList();
+  const hidden = ncMatchedList().length - list.length;
+  // 기간 때문에 안 보이는 건이 있으면 몇 건인지와 전체 보기 링크를 남긴다.
+  const note = document.getElementById('nc-period-note');
+  if (note) {
+    note.style.display = hidden ? '' : 'none';
+    note.innerHTML = hidden
+      ? `선택한 기간보다 이전 기록 <strong>${hidden}건</strong>은 감춰져 있습니다. <a href="#" onclick="showAllNcPeriod(); return false;">전체 기간 보기</a>`
+      : '';
+  }
   // 삭제된 항목의 선택 표시가 남지 않도록, 지금 존재하는 id만 유지한다.
   const liveIds = new Set(all.map(r => r.id));
   ncSelectedIds.forEach(id => { if (!liveIds.has(id)) ncSelectedIds.delete(id); });
@@ -89,6 +114,13 @@ function renderNecropsyReports() {
   const checkAll = document.getElementById('nc-check-all');
   if (!list.length) {
     tbody.innerHTML = ''; empty.style.display = '';
+    const emptyMsg = empty.querySelector('p');
+    if (emptyMsg) {
+      if (!emptyMsg.dataset.default) emptyMsg.dataset.default = emptyMsg.textContent;
+      emptyMsg.textContent = hidden
+        ? '선택한 기간에는 작성한 부검소견서가 없습니다. 위의 "전체 기간 보기"를 누르면 이전 기록이 나옵니다.'
+        : emptyMsg.dataset.default;
+    }
     if (checkAll) checkAll.checked = false;
     return;
   }
@@ -110,7 +142,8 @@ function renderNecropsyReports() {
 }
 
 function toggleNcSelectAll(checked) {
-  ncSelectedIds = checked ? new Set(load('necropsyReports').map(r => r.id)) : new Set();
+  // 화면에 보이는 건만 고른다 — 기간·검색으로 감춰진 건까지 선택되면 모르는 채 삭제·인쇄된다.
+  ncSelectedIds = checked ? new Set(ncVisibleList().map(r => r.id)) : new Set();
   renderNecropsyReports();
 }
 function toggleNcSelect(id, checked) {
