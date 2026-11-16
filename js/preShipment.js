@@ -144,18 +144,53 @@ function psSampleSummary(ps) {
   return parts.length ? parts.join(' · ') : '-';
 }
 
-function renderPreShipments() {
+// 목록 기간 필터: 처음 열면 최근 1개월(시료채취일 기준)만 보여 준다. 값은 개월 수, '' = 전체.
+function psPeriodFrom() {
+  const months = Number(document.getElementById('ps-filter-period')?.value || 0);
+  if (!months) return '';
+  const d = new Date();
+  const day = d.getDate();
+  d.setMonth(d.getMonth() - months);
+  if (d.getDate() !== day) d.setDate(0); // 3/31 → 2/31처럼 넘치면 그 달 말일로
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function showAllPsPeriod() {
+  const sel = document.getElementById('ps-filter-period');
+  if (sel) sel.value = '';
+  renderPreShipments();
+}
+// 검색어·농장 필터에 맞는 건(기간 필터 적용 전). 최근 채취일이 위로 오게 정렬한다
+// (같은 날은 출하일, 그다음 등록 순서가 최근인 것 먼저).
+function psMatchedList() {
   const q = (document.getElementById('ps-search')?.value || '').toLowerCase();
   const ff = document.getElementById('ps-filter-farm')?.value || '';
-  const list = load('preShipments').filter(p =>
+  return load('preShipments').filter(p =>
     (!q || (p.farmName || '').toLowerCase().includes(q) || (p.owner || '').toLowerCase().includes(q)) &&
     (!ff || p.farmId === ff)
-  // 최근 채취일이 위로 오게 정렬한다(같은 날은 출하일, 그다음 등록 순서가 최근인 것 먼저).
   ).sort((a, b) =>
     (b.sampledAt || '').localeCompare(a.sampledAt || '') ||
     (b.shipDate || '').localeCompare(a.shipDate || '') ||
     String(b.createdAt || '').localeCompare(String(a.createdAt || ''))
   );
+}
+// 지금 화면에 보이는 건(기간 필터까지 적용). 채취일이 없는 건은 감추지 않는다.
+function psVisibleList() {
+  const from = psPeriodFrom();
+  return psMatchedList().filter(p => !from || !p.sampledAt || p.sampledAt >= from);
+}
+
+function renderPreShipments() {
+  const matched = psMatchedList();
+  const list = psVisibleList();
+  const hidden = matched.length - list.length;
+  // 기간 때문에 안 보이는 건이 있으면 몇 건인지와 전체 보기 링크를 남긴다.
+  const note = document.getElementById('ps-period-note');
+  if (note) {
+    note.style.display = hidden ? '' : 'none';
+    note.innerHTML = hidden
+      ? `선택한 기간보다 이전 기록 <strong>${hidden}건</strong>은 감춰져 있습니다. <a href="#" onclick="showAllPsPeriod(); return false;">전체 기간 보기</a>`
+      : '';
+  }
   // 삭제된 항목의 선택 표시가 남지 않도록, 지금 존재하는 id만 유지한다.
   const liveIds = new Set(load('preShipments').map(p => p.id));
   psSelectedIds.forEach(id => { if (!liveIds.has(id)) psSelectedIds.delete(id); });
@@ -174,6 +209,10 @@ function renderPreShipments() {
   const checkAll = document.getElementById('ps-check-all');
   if (!list.length) {
     tbody.innerHTML = ''; empty.style.display = '';
+    const emptyMsg = empty.querySelector('p');
+    if (emptyMsg) emptyMsg.textContent = hidden
+      ? '선택한 기간에는 출하전검사 서식이 없습니다. 위의 "전체 기간 보기"를 누르면 이전 기록이 나옵니다.'
+      : '작성한 출하전검사 서식이 없습니다. "+ 출하전검사 작성"으로 기록하세요.';
     if (checkAll) checkAll.checked = false;
     return;
   }
@@ -523,8 +562,8 @@ function printPreShipment(id) {
 let psSelectedIds = new Set();
 
 function togglePsSelectAll(checked) {
-  const ids = load('preShipments').map(p => p.id);
-  psSelectedIds = checked ? new Set(ids) : new Set();
+  // 화면에 보이는 건만 고른다 — 기간·검색으로 감춰진 건까지 선택되면 모르는 채 삭제·인쇄된다.
+  psSelectedIds = checked ? new Set(psVisibleList().map(p => p.id)) : new Set();
   renderPreShipments();
 }
 function togglePsSelect(id, checked) {
