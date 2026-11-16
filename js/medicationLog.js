@@ -2,6 +2,21 @@
 function onLogDrugChange() {
   const sel = document.getElementById('ml-drug-sel');
   document.getElementById('ml-drug-custom').style.display = sel.value === '__custom__' ? '' : 'none';
+  fillMlDoseFromDrug();
+}
+// 약품을 고르면 약품 마스터의 「표준 용량/방법」을 투여량 칸에 채운다.
+// 사용자가 직접 적은 내용은 덮어쓰지 않는다 — 칸이 비었거나, 직전에 자동으로 채운 값
+// 그대로일 때만 바꾼다(약품을 바꾸면 따라 바뀌고, 손댄 뒤에는 그대로 둔다).
+let mlAutoDose = '';
+function fillMlDoseFromDrug() {
+  const sel = document.getElementById('ml-drug-sel');
+  const el = document.getElementById('ml-dose-note');
+  if (!sel || !el) return;
+  const cur = el.value.trim();
+  if (cur && cur !== mlAutoDose) return;
+  const dose = (sel.selectedOptions[0]?.dataset.dose || '').trim();
+  el.value = dose;
+  mlAutoDose = dose;
 }
 function onLogVaccineChange() {
   const sel = document.getElementById('ml-vaccine-sel');
@@ -118,6 +133,8 @@ function openMedicationLogModal(batchId, programDay) {
   document.getElementById('ml-vaccine-custom-input').value = (vaccine && !vaccine.vaccineId) ? vaccine.name : '';
 
   document.getElementById('ml-dose-note').value = '';
+  mlAutoDose = '';
+  fillMlDoseFromDrug();
   document.getElementById('ml-note').value = '';
   document.getElementById('ml-plan-summary').textContent = planDay
     ? `📋 계획: ${[dayDrugLabel(planDay), dayVaccineLabel(planDay)].filter(Boolean).join(' / ') || '(계획 없음)'}`
@@ -162,6 +179,7 @@ function openConsultLogModal(id) {
     document.getElementById('ml-vaccine-custom-input').value = (log.vaccineName && !log.vaccineId) ? log.vaccineName : '';
 
     document.getElementById('ml-dose-note').value = log.doseNote || '';
+    mlAutoDose = '';
     document.getElementById('ml-note').value = log.note || '';
 
     mlPhotoState.existing = (log.necropsyPhotos || []).map(path => ({ path, removed: false, url: null }));
@@ -179,6 +197,7 @@ function openConsultLogModal(id) {
     document.getElementById('ml-vaccine-custom').style.display = 'none';
     document.getElementById('ml-vaccine-custom-input').value = '';
     document.getElementById('ml-dose-note').value = '';
+    mlAutoDose = '';
     document.getElementById('ml-note').value = '';
   }
 
