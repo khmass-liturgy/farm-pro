@@ -146,7 +146,11 @@ function psSampleSummary(ps) {
 
 // 목록 기간 필터: 처음 열면 최근 1개월(시료채취일 기준)만 보여 준다. 값은 개월 수, '' = 전체.
 function psPeriodFrom() {
-  const months = Number(document.getElementById('ps-filter-period')?.value || 0);
+  return periodFromMonths(document.getElementById('ps-filter-period')?.value);
+}
+// 오늘에서 months개월 전 날짜(YYYY-MM-DD). 0·빈 값이면 ''(전체). 이동승인서 목록도 함께 쓴다.
+function periodFromMonths(value) {
+  const months = Number(value || 0);
   if (!months) return '';
   const d = new Date();
   const day = d.getDate();

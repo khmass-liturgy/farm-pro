@@ -40,8 +40,8 @@ function mpDocNo(mp) {
 let mpSelectedIds = new Set();
 
 function toggleMpSelectAll(checked) {
-  const ids = load('movePermits').map(m => m.id);
-  mpSelectedIds = checked ? new Set(ids) : new Set();
+  // 화면에 보이는 건만 고른다 — 기간·검색으로 감춰진 건까지 선택되면 모르는 채 삭제·인쇄된다.
+  mpSelectedIds = checked ? new Set(mpVisibleList().map(m => m.id)) : new Set();
   renderMovePermits();
 }
 function toggleMpSelect(id, checked) {
@@ -49,16 +49,40 @@ function toggleMpSelect(id, checked) {
   renderMovePermits();
 }
 
-function renderMovePermits() {
+// 검색어·농장 필터에 맞는 건(기간 필터 적용 전). 최근 발급일이 위로 오게 한다.
+// 저장소는 등록 순(오래된 것 먼저)이라 먼저 뒤집은 뒤 안정 정렬하면 같은 날짜 안에서도
+// 나중에 등록한 것이 위로 온다.
+function mpMatchedList() {
   const q = (document.getElementById('mp-search')?.value || '').toLowerCase();
   const ff = document.getElementById('mp-filter-farm')?.value || '';
-  const list = load('movePermits').filter(m =>
+  return load('movePermits').filter(m =>
     (!q || (m.farmName || '').toLowerCase().includes(q) || (m.carrierName || '').toLowerCase().includes(q) ||
       (m.vehicleNo || '').toLowerCase().includes(q) || (m.shipTo || '').toLowerCase().includes(q)) &&
     (!ff || m.farmId === ff)
-  // 최근 발급일이 위로 오게 한다. 저장소는 등록 순(오래된 것 먼저)이라 먼저 뒤집은 뒤
-  // 안정 정렬하면 같은 날짜 안에서도 나중에 등록한 것이 위로 온다.
   ).reverse().sort((a, b) => (b.issueDate || '').localeCompare(a.issueDate || ''));
+}
+// 지금 화면에 보이는 건. 처음 열면 최근 1개월(발급일 기준)만 — 발급일이 없는 건은 감추지 않는다.
+function mpVisibleList() {
+  const from = periodFromMonths(document.getElementById('mp-filter-period')?.value);
+  return mpMatchedList().filter(m => !from || !m.issueDate || m.issueDate >= from);
+}
+function showAllMpPeriod() {
+  const sel = document.getElementById('mp-filter-period');
+  if (sel) sel.value = '';
+  renderMovePermits();
+}
+
+function renderMovePermits() {
+  const list = mpVisibleList();
+  const hidden = mpMatchedList().length - list.length;
+  // 기간 때문에 안 보이는 건이 있으면 몇 건인지와 전체 보기 링크를 남긴다.
+  const note = document.getElementById('mp-period-note');
+  if (note) {
+    note.style.display = hidden ? '' : 'none';
+    note.innerHTML = hidden
+      ? `선택한 기간보다 이전 기록 <strong>${hidden}건</strong>은 감춰져 있습니다. <a href="#" onclick="showAllMpPeriod(); return false;">전체 기간 보기</a>`
+      : '';
+  }
   const liveIds = new Set(load('movePermits').map(m => m.id));
   mpSelectedIds.forEach(id => { if (!liveIds.has(id)) mpSelectedIds.delete(id); });
 
@@ -80,6 +104,13 @@ function renderMovePermits() {
   const checkAll = document.getElementById('mp-check-all');
   if (!list.length) {
     tbody.innerHTML = ''; empty.style.display = '';
+    const emptyMsg = empty.querySelector('p');
+    if (emptyMsg) {
+      if (!emptyMsg.dataset.default) emptyMsg.dataset.default = emptyMsg.textContent;
+      emptyMsg.textContent = hidden
+        ? '선택한 기간에는 발급한 이동승인서가 없습니다. 위의 "전체 기간 보기"를 누르면 이전 기록이 나옵니다.'
+        : emptyMsg.dataset.default;
+    }
     if (checkAll) checkAll.checked = false;
     return;
   }
