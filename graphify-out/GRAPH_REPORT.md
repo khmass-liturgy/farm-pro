@@ -1,17 +1,17 @@
-# Graph Report - farm-pro  (2026-11-13)
+# Graph Report - farm-pro  (2026-11-17)
 
 ## Corpus Check
-- 40 files · ~91,548 words
+- 40 files · ~92,875 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 4 file(s) not represented in the graph (top: (none) 1, .css 1, .ico 1)
 
 ## Summary
-- 789 nodes · 1451 edges · 40 communities (35 shown, 5 thin omitted)
+- 812 nodes · 1507 edges · 40 communities (35 shown, 5 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c2b9e339`
+- Built from commit: `6bc798a6`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -62,8 +62,8 @@
 6. `sendKakao()` - 11 edges
 7. `vetOfficeInfo()` - 11 edges
 8. `process_telegram_commands()` - 11 edges
-9. `viewProgram()` - 10 edges
-10. `vetMonthStats()` - 10 edges
+9. `openMovePermitModal()` - 10 edges
+10. `renderNecropsyReports()` - 10 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `kakaoSendSelectedPrograms()` --indirect_call--> `buildProgramPrintHtml()`  [INFERRED]
@@ -79,16 +79,16 @@ Cohesion: 0.07
 Nodes (65): addDpDrugSlot(), addDrugSlot(), addFeedSlot(), allowedVaccineSpecies(), applyProgramAutoName(), applyProgramBreedDefault(), buildFeedSection(), collectDpDrugs() (+57 more)
 
 ### Community 1 - "drugSearch.js"
-Cohesion: 0.08
-Nodes (54): attachDrugDetails(), bindDsearch(), CHOSEONG, choseongMatchIndex(), dropExportOnly(), DRUG_FORM_WHITELIST, DRUG_SPECIES, DRUG_SYMPTOM_ALIAS (+46 more)
+Cohesion: 0.07
+Nodes (62): attachDrugDetails(), bindDsearch(), CHOSEONG, choseongMatchIndex(), dropExportOnly(), DRUG_FORM_WHITELIST, DRUG_SPECIES, DRUG_SYMPTOM_ALIAS (+54 more)
 
 ### Community 2 - "preShipment.js"
 Cohesion: 0.08
-Nodes (41): addPsRow(), buildPreShipmentHtml(), buildPsExcelFile(), buildPsFeeSheet(), collectPsRows(), deleteSelectedPreShipments(), editSelectedPreShipment(), kakaoSendSelectedPreShipments() (+33 more)
+Nodes (46): addPsRow(), buildPreShipmentHtml(), buildPsExcelFile(), buildPsFeeSheet(), collectPsRows(), deleteSelectedPreShipments(), editSelectedPreShipment(), kakaoSendSelectedPreShipments() (+38 more)
 
 ### Community 3 - "movePermit.js"
-Cohesion: 0.11
-Nodes (36): buildMovePermitHtml(), collectMpSigns(), deleteSelectedMovePermits(), duplicateMovePermit(), duplicateSelectedMovePermit(), editSelectedMovePermit(), MP_CLINICAL_SIGNS, MP_FORM_TYPES (+28 more)
+Cohesion: 0.10
+Nodes (39): buildMovePermitHtml(), collectMpSigns(), deleteSelectedMovePermits(), duplicateMovePermit(), duplicateSelectedMovePermit(), editSelectedMovePermit(), MP_CLINICAL_SIGNS, MP_FORM_TYPES (+31 more)
 
 ### Community 4 - "movePermitBulk.js"
 Cohesion: 0.11
@@ -99,12 +99,12 @@ Cohesion: 0.07
 Nodes (32): buildVetDiaryHtml(), editSelectedVetEntry(), onVetContentSelChange(), onVetEntryFarmChange(), openVetEntryModal(), populateVetEntryFarms(), printSelectedVetDiary(), renderVetImportPreview() (+24 more)
 
 ### Community 6 - "medicationLog.js"
-Cohesion: 0.13
-Nodes (27): dayAgeOnDate(), deleteMedicationLog(), deleteViewedConsultLog(), editViewedConsultLog(), isConsultLog(), loadConsultViewPhotos(), loadMlExistingPhotoUrls(), mlPhotoState (+19 more)
+Cohesion: 0.12
+Nodes (29): dayAgeOnDate(), deleteMedicationLog(), deleteViewedConsultLog(), editViewedConsultLog(), fillMlDoseFromDrug(), isConsultLog(), loadConsultViewPhotos(), loadMlExistingPhotoUrls() (+21 more)
 
 ### Community 7 - "prescriptions.js"
-Cohesion: 0.12
-Nodes (30): addRxItemSlot(), buildPrescriptionHtml(), collectRxItems(), deleteRxPrescription(), deleteSelectedRxPrescriptions(), editSelectedRxPrescription(), initRxItemSlots(), onRxFarmChange() (+22 more)
+Cohesion: 0.11
+Nodes (33): addRxItemSlot(), buildPrescriptionHtml(), collectRxItems(), deleteRxPrescription(), deleteSelectedRxPrescriptions(), editSelectedRxPrescription(), initRxItemSlots(), onRxFarmChange() (+25 more)
 
 ### Community 8 - "send_daily_age.py"
 Cohesion: 0.12
@@ -207,8 +207,8 @@ Cohesion: 0.60
 Nodes (3): deleteRxProduct(), renderRxProducts(), saveRxProduct()
 
 ### Community 35 - "necropsyReport.js"
-Cohesion: 0.14
-Nodes (29): buildNcExcelFile(), buildNecropsyHtml(), deleteSelectedNecropsies(), editSelectedNecropsy(), kakaoSendSelectedNecropsies(), NC_ISSUER, ncEsc(), ncExcelRange() (+21 more)
+Cohesion: 0.13
+Nodes (32): buildNcExcelFile(), buildNecropsyHtml(), deleteSelectedNecropsies(), editSelectedNecropsy(), kakaoSendSelectedNecropsies(), NC_ISSUER, ncEsc(), ncExcelRange() (+24 more)
 
 ### Community 39 - "print.js"
 Cohesion: 0.83
@@ -216,7 +216,7 @@ Nodes (3): buildProgramPrintHtml(), fitPrintHtmlToOnePage(), printProgram()
 
 ## Knowledge Gaps
 - **3 isolated node(s):** `RFC-2047`, `RFC-2231`, `RFC-822`
-  These have ≤1 connection - possible missing edges. (Counts symbols only; 188 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges. (Counts symbols only; 189 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **5 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
@@ -231,8 +231,8 @@ _Questions this graph is uniquely positioned to answer:_
 - **Why does `buildProgramPrintHtml()` connect `print.js` to `programs.js`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **Should `drugSearch.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.07662337662337662 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06696428571428571 - nodes in this community are weakly interconnected._
 - **Should `preShipment.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.08080808080808081 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07510204081632653 - nodes in this community are weakly interconnected._
 - **Should `movePermit.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.10810810810810811 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10256410256410256 - nodes in this community are weakly interconnected._
