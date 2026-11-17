@@ -4,7 +4,50 @@
 // 휴약기간·포장단위 표시, 수출용 제품 제외를 지원한다. pb는 앱 전체를 render()로 다시
 // 그리지만 여기서는 이 화면(#dsearch-root)만 renderDsearch()로 그린다.
 // 아래 약품/백신/사료첨가제 등록 모달의 QIA 검색(qiaSearchForRegister)도 같은 parseQiaHtml을 쓴다.
-const QIA_BASE = 'https://medi.qia.go.kr';
+// 2026-11-18(수) 21:00부터 QIA 동물용의약품통합정보시스템 도메인이 medi.qia.go.kr → medi.apqa.go.kr로 바뀐다
+// (공지: 옛 주소는 일정 기간 새 주소로 자동 이동, 18:00~21:00 전환 작업 중 접속 중단). 브라우저가 QIA에 직접
+// fetch하므로 리다이렉트·CORS 동작에 기대지 않고 두 주소를 차례로 시도한다 — 전환 시각 전에는 옛 주소부터,
+// 이후에는 새 주소부터. 한 번 응답한 주소는 qiaBaseOk에 기억해 다음 요청부터 먼저 쓴다. (pb와 같은 방식)
+const QIA_NEW_BASE = 'https://medi.apqa.go.kr';
+const QIA_OLD_BASE = 'https://medi.qia.go.kr';
+const QIA_SWITCH_AT = Date.parse('2026-11-18T21:00:00+09:00');
+const QIA_MAINT_FROM = Date.parse('2026-11-18T18:00:00+09:00');
+let qiaBaseOk = '';
+function qiaBases() {
+  const order = Date.now() >= QIA_SWITCH_AT ? [QIA_NEW_BASE, QIA_OLD_BASE] : [QIA_OLD_BASE, QIA_NEW_BASE];
+  return qiaBaseOk ? [qiaBaseOk, ...order.filter(b => b !== qiaBaseOk)] : order;
+}
+// 화면에 보여 줄(새 탭으로 여는) 기본 주소 — 전환 뒤에는 새 주소.
+function qiaPublicBase() { return qiaBaseOk || (Date.now() >= QIA_SWITCH_AT ? QIA_NEW_BASE : QIA_OLD_BASE); }
+// QIA 주소(옛·새 도메인 또는 "/..." 경로) → 경로. QIA 주소가 아니면 null.
+function qiaPath(u) {
+  u = String(u || '').trim();
+  if (u.startsWith('/')) return u;
+  const m = u.match(/^https?:\/\/medi\.(?:qia|apqa)\.go\.kr(\/.*)?$/i);
+  return m ? (m[1] || '/') : null;
+}
+// 링크 표시용: 옛 도메인 링크를 지금 주소로 바꾼다(QIA 주소가 아니면 그대로).
+function qiaUrl(u) { const p = qiaPath(u); return p == null ? u : qiaPublicBase() + p; }
+function qiaInMaintenance() { const t = Date.now(); return t >= QIA_MAINT_FROM - 30 * 60e3 && t < QIA_SWITCH_AT + 3 * 3600e3; }
+// QIA 요청은 모두 이 함수로 — 두 도메인을 차례로 시도하고, 실패하면 마지막 오류를 던진다.
+async function qiaFetch(pathOrUrl, timeoutMs) {
+  const path = qiaPath(pathOrUrl);
+  if (path == null) return fetch(pathOrUrl);
+  let lastErr = null;
+  for (const base of qiaBases()) {
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const tm = ctl ? setTimeout(() => ctl.abort(), timeoutMs || 45000) : null;
+    try {
+      const res = await fetch(base + path, ctl ? { signal: ctl.signal } : undefined);
+      if (res.ok) { qiaBaseOk = base; return res; }
+      lastErr = new Error('QIA 서버 오류 (' + res.status + ')');
+    } catch (e) {
+      lastErr = e && e.name === 'AbortError' ? new Error('QIA 서버 응답 시간 초과') : e;
+    } finally { if (tm) clearTimeout(tm); }
+  }
+  if (qiaInMaintenance()) lastErr = new Error(((lastErr && lastErr.message) || '연결 실패') + ' · QIA가 11월 18일 18~21시 도메인 전환(medi.apqa.go.kr) 작업 중일 수 있습니다');
+  throw lastErr || new Error('QIA 연결 실패');
+}
 
 function dsEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
@@ -175,8 +218,7 @@ function drugFormCategory(r){
 function qiaDetailInfo(link){
   if(qiaDetailCache.has(link)) return qiaDetailCache.get(link);
   const job = (async () => {
-    const res = await fetch(link);
-    if(!res.ok) throw new Error("상세 조회 실패 (" + res.status + ")");
+    const res = await qiaFetch(link);
     const html = await res.text();
     const doc = new DOMParser().parseFromString(html, "text/html");
     const text = ((doc.body && doc.body.textContent) || "").replace(/\s+/g, " ");
@@ -379,7 +421,7 @@ function parseQiaHtml(html){
     const link = tds[1].querySelector("a");
     return {
       제품명: getVal(tds[1]),
-      링크: link ? (QIA_BASE + link.getAttribute("href")) : "",
+      링크: link ? qiaUrl(link.getAttribute("href")) : "",
       제품영문명: getVal(tds[2]),
       업체명: getVal(tds[3]),
       허가일: getVal(tds[6]),
@@ -402,8 +444,7 @@ async function fetchQiaSearch(term, page, field){
   else if(field === "ee") params.set("eeDocData", term); // 효능효과 본문 — 축종별·증상별 검색
   else params.set("ingrMainName", term); // 성분명 — QIA 폼에는 노출 안 되는 비공식 파라미터
   if(drugState.kind) params.set("indutyClassCode", drugState.kind);
-  const res = await fetch(QIA_BASE + "/searchMedicine?" + params.toString());
-  if(!res.ok) throw new Error("QIA 서버 오류 (" + res.status + ")");
+  const res = await qiaFetch("/searchMedicine?" + params.toString());
   return parseQiaHtml(await res.text());
 }
 
@@ -846,7 +887,7 @@ function renderDrugSearchPanel(){
   </div>
 
   <div style="font-size:9px;color:#aaa;margin-top:10px;line-height:1.6">
-    ※ 이 검색은 농림축산검역본부(QIA) 동물용의약품통합정보시스템(medi.qia.go.kr) 데이터를 그때그때 실시간으로 가져와 보여줍니다.
+    ※ 이 검색은 농림축산검역본부(QIA) 동물용의약품통합정보시스템(${Date.now() >= QIA_SWITCH_AT ? "medi.apqa.go.kr" : "medi.qia.go.kr → 11.18 21시부터 medi.apqa.go.kr"}) 데이터를 그때그때 실시간으로 가져와 보여줍니다.
     휴약기간은 각 품목 상세페이지의 "휴약기간" 항목을 그대로 옮긴 것이며, 실제 처방·투약 시에는 반드시 제품 라벨과 QIA 원문을 함께 확인하세요.
   </div>`;
 }
@@ -934,8 +975,7 @@ async function qiaSearchForRegister(fields) {
   box.innerHTML = '<div class="text-muted mb-16">QIA에서 검색 중...</div>';
   try {
     const params = new URLSearchParams({ page: '1', searchDivision: 'detail', itemName: q });
-    const res = await fetch(QIA_BASE + '/searchMedicine?' + params.toString());
-    if (!res.ok) throw new Error('QIA 서버 오류 (' + res.status + ')');
+    const res = await qiaFetch('/searchMedicine?' + params.toString());
     const { rows } = parseQiaHtml(await res.text());
     qiaRegisterSearchRows = rows.slice(0, 8);
     renderQiaRegisterSearchResults();
