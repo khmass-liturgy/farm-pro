@@ -220,6 +220,83 @@ function ensureSelectOption(el, value) {
   el.appendChild(opt);
 }
 
+// ─── 목록 표 칸 폭을 글자 길이에 맞추기 ──────────────────────────────────────
+// 자세한 이유는 css/styles.css의 ".tbl-wrap table" 설명 참고. 목록 표(.tbl-wrap)는 기본으로
+// 칸마다 글자 길이만큼만 쓰고, 그렇게 해도 화면보다 넓어 넘치는 표에만 .tbl-tight를 붙여
+// 긴 칸(주소·내용·비고 등)을 줄바꿈해 화면 안에 들인다. 넘치는지는 데이터(주소 길이 등)와
+// 화면 폭에 따라 달라 CSS만으로는 알 수 없어서 여기서 잰다. 목록을 다시 그릴 때
+// (MutationObserver)와 표 영역 크기가 바뀔 때(창 크기 변경, 숨어 있던 메뉴·모달이 보일 때 —
+// ResizeObserver) 다시 잰다. 기능 파일의 render 함수는 따로 부를 필요가 없다.
+// 한 줄일 때 이 폭(160px)보다 넓은 칸만 "긴 칸"으로 보고 줄바꿈시킨다. 그보다 짧은 칸(날짜·이름·
+// 연락처·배지·버튼)은 넘쳐도 원래 폭 그대로 둔다(전화번호가 하이픈에서 꺾이는 일 등 방지).
+const TABLE_FIT_WRAP_PX = 160;
+// 긴 칸을 줄이는 하한. 긴 칸이 여럿이면(백신 관리처럼 칸이 10개인 표) 160px보다 더 줄여야 화면에
+// 들어갈 때가 있어 96px까지는 내린다. 96px로도 안 들어가는 좁은 화면(폰 등)이면 어차피 좌우 스크롤해야
+// 하므로 억지로 더 가늘게 접지 않고 긴 칸을 160px로 둔다(한 글자씩 세로로 쌓이는 것 방지).
+const TABLE_FIT_WRAP_MIN_PX = 96;
+let tableFitScheduled = false;
+const tableFitWatched = new WeakSet();
+const tableFitResizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(() => scheduleTableFit()) : null;
+
+// 한 프레임에 여러 번 요청돼도 한 번만 잰다.
+function scheduleTableFit() {
+  if (tableFitScheduled) return;
+  tableFitScheduled = true;
+  requestAnimationFrame(() => { tableFitScheduled = false; fitListTables(); });
+}
+
+function fitListTables() {
+  document.querySelectorAll('.tbl-wrap > table').forEach(table => {
+    const wrap = table.parentElement;
+    if (tableFitResizeObserver && !tableFitWatched.has(wrap)) {
+      tableFitWatched.add(wrap);
+      tableFitResizeObserver.observe(wrap);
+    }
+    if (!wrap.clientWidth) return; // 숨어 있는 메뉴·닫힌 모달의 표는 보일 때(ResizeObserver) 잰다
+    fitListTable(table, wrap);
+  });
+}
+
+function fitListTable(table, wrap) {
+  const heads = [...(table.tHead?.rows[0]?.cells || [])];
+  // ① 기본 상태(모든 칸 한 줄, 글자 길이만큼)로 되돌린 뒤 화면 폭에 들어가는지 잰다.
+  table.classList.remove('tbl-tight');
+  heads.forEach(th => {
+    if (th.dataset.fitMin) { th.style.minWidth = ''; delete th.dataset.fitMin; }
+  });
+  const avail = wrap.clientWidth;
+  if (table.getBoundingClientRect().width <= avail + 1) return;
+
+  // ② 넘친다 → 긴 칸만 줄바꿈. 칸마다 머리글(th)에 최소폭을 걸어 폭을 정한다.
+  //    긴 칸끼리는 "가장 긴 칸부터" 줄인다: 모자란 폭을 똑같은 비율로 나누면 주소처럼 조금만 긴 칸도
+  //    몇 px 때문에 두 줄이 되므로, 상한(cap)을 하나 정해 그보다 긴 칸만 cap으로 자르고 짧은 칸은 한 줄로 둔다.
+  //    예) 입력대장: 예찰내용이 아주 길면 예찰내용만 여러 줄이 되고 주소는 한 줄 그대로.
+  const widths = heads.map(th => Math.ceil(th.getBoundingClientRect().width));
+  const isLong = w => w > TABLE_FIT_WRAP_PX;
+  const shortSum = widths.filter(w => !isLong(w)).reduce((a, w) => a + w, 0);
+  const longs = widths.filter(isLong).sort((a, b) => a - b);
+  let budget = avail - shortSum;
+  let cap = Infinity;
+  for (let j = 0; j < longs.length; j++) {
+    const rest = longs.length - j;
+    if (longs[j] * rest >= budget) { cap = Math.floor(budget / rest); break; }
+    budget -= longs[j]; // 이 칸은 cap보다 짧아 한 줄 그대로 들어간다
+  }
+  const applyCap = c => heads.forEach((th, i) => {
+    if (th.style.minWidth && !th.dataset.fitMin) return; // 화면 코드가 직접 최소폭을 준 칸은 건드리지 않는다
+    th.style.minWidth = (isLong(widths[i]) ? Math.min(widths[i], c) : widths[i]) + 'px';
+    th.dataset.fitMin = '1';
+  });
+  table.classList.add('tbl-tight');
+  if (cap < TABLE_FIT_WRAP_MIN_PX) { applyCap(TABLE_FIT_WRAP_PX); return; }
+  applyCap(cap);
+  // 띄어쓰기 없는 긴 낱말(농장명 등)은 cap보다 좁게 꺾이지 않아 그래도 넘칠 수 있다.
+  // 어차피 좌우 스크롤해야 한다면 긴 칸을 160px보다 가늘게 접을 이유가 없으니 160px로 되돌린다.
+  if (cap < TABLE_FIT_WRAP_PX && table.getBoundingClientRect().width > avail + 1) applyCap(TABLE_FIT_WRAP_PX);
+}
+
+new MutationObserver(() => scheduleTableFit()).observe(document.body, { childList: true, subtree: true });
+
 // ─── 새로고침 (동시 편집 대비 수동 재조회) ─────────────────────────────────
 async function manualRefresh() {
   try { await refreshAllStores(); } catch (e) { alert('새로고침 실패: ' + e.message); return; }

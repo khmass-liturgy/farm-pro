@@ -1,17 +1,17 @@
-# Graph Report - farm-pro  (2026-11-17)
+# Graph Report - farm-pro  (2026-11-20)
 
 ## Corpus Check
-- 40 files · ~92,875 words
+- 40 files · ~93,429 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 4 file(s) not represented in the graph (top: (none) 1, .css 1, .ico 1)
 
 ## Summary
-- 812 nodes · 1507 edges · 40 communities (35 shown, 5 thin omitted)
+- 816 nodes · 1513 edges · 40 communities (35 shown, 5 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6bc798a6`
+- Built from commit: `68b0082a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -62,8 +62,8 @@
 6. `sendKakao()` - 11 edges
 7. `vetOfficeInfo()` - 11 edges
 8. `process_telegram_commands()` - 11 edges
-9. `openMovePermitModal()` - 10 edges
-10. `renderNecropsyReports()` - 10 edges
+9. `viewProgram()` - 10 edges
+10. `vetMonthStats()` - 10 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `kakaoSendSelectedPrograms()` --indirect_call--> `buildProgramPrintHtml()`  [INFERRED]
@@ -119,8 +119,8 @@ Cohesion: 0.18
 Nodes (28): closeKakaoReady(), fillKakaoFromProgram(), kakaoCardTitle(), kakaoCoverTitleLines(), kakaoErrorMessage(), kakaoFarmLines(), kakaoFarmText(), kakaoFeedPayload() (+20 more)
 
 ### Community 11 - "app.js"
-Cohesion: 0.14
-Nodes (15): boot(), COLLAPSIBLE_SECTIONS, DEFAULT_OPEN_SECTIONS, initSidebarSections(), loadClosedSections(), loadOpenSections(), manualRefresh(), PAGE_ACTIONS (+7 more)
+Cohesion: 0.12
+Nodes (19): boot(), COLLAPSIBLE_SECTIONS, DEFAULT_OPEN_SECTIONS, fitListTable(), fitListTables(), initSidebarSections(), loadClosedSections(), loadOpenSections() (+11 more)
 
 ### Community 12 - "rodentControl.js"
 Cohesion: 0.16
@@ -216,7 +216,7 @@ Nodes (3): buildProgramPrintHtml(), fitPrintHtmlToOnePage(), printProgram()
 
 ## Knowledge Gaps
 - **3 isolated node(s):** `RFC-2047`, `RFC-2231`, `RFC-822`
-  These have ≤1 connection - possible missing edges. (Counts symbols only; 189 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges. (Counts symbols only; 190 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **5 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
