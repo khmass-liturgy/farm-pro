@@ -8,7 +8,7 @@ function openFarmModal(id) {
   editingId.farm = id || null;
   const farm = id ? load('farms').find(f => f.id === id) : null;
   document.getElementById('modal-farm-title').textContent = id ? '농장 편집' : '농장 등록';
-  ['name','owner','type','address','phone','houses','focus','notes','owner-birth','barn-range'].forEach(k => {
+  ['name','owner','type','count','address','phone','houses','focus','notes','owner-birth','barn-range'].forEach(k => {
     const el = document.getElementById('f-'+k);
     if (el) el.value = farm ? (farm[k.replace('-','_')] || '') : '';
   });
@@ -60,10 +60,82 @@ async function deleteFarm(id) {
 function filteredFarms() {
   const q = (document.getElementById('farm-search')?.value||'').toLowerCase();
   const ft = document.getElementById('farm-filter-type')?.value||'';
-  return load('farms').filter(f =>
+  const list = load('farms').filter(f =>
     (!q || f.name.includes(q) || f.address.includes(q) || f.owner.includes(q)) &&
     (!ft || f.type === ft)
   );
+  return sortFarms(list);
+}
+
+// ─── 목록 정렬 ─────────────────────────────────────────────────────────────
+// 머리글(농장명·농장주·축종)을 누르면 오름차순 → 다시 누르면 내림차순. 다른 머리글을 누르면 그 열 오름차순.
+// 같은 값끼리는 농장명 오름차순으로 묶어 순서가 흔들리지 않게 한다. 고른 정렬은 브라우저에 기억해 둔다.
+let farmSort = (() => {
+  try { const v = JSON.parse(localStorage.getItem('farmSort') || 'null'); if (v && v.key) return v; } catch (e) {}
+  return { key: '', dir: 'asc' };
+})();
+function setFarmSort(key) {
+  farmSort = farmSort.key === key
+    ? { key, dir: farmSort.dir === 'asc' ? 'desc' : 'asc' }
+    : { key, dir: 'asc' };
+  try { localStorage.setItem('farmSort', JSON.stringify(farmSort)); } catch (e) {}
+  renderFarms();
+}
+function sortFarms(list) {
+  const { key, dir } = farmSort;
+  if (!key) return list;
+  const cmp = (a, b) => String(a || '').localeCompare(String(b || ''), 'ko', { numeric: true });
+  const sign = dir === 'desc' ? -1 : 1;
+  return [...list].sort((a, b) => sign * cmp(a[key], b[key]) || cmp(a.name, b.name));
+}
+function updateFarmSortHeaders() {
+  document.querySelectorAll('#page-farms th.th-sort').forEach(th => {
+    const on = th.dataset.sort === farmSort.key;
+    th.classList.toggle('sort-asc', on && farmSort.dir === 'asc');
+    th.classList.toggle('sort-desc', on && farmSort.dir === 'desc');
+  });
+}
+
+// ─── 상단 요약(등록 농장 수·전체 수수·육계·산란계) ─────────────────────────────
+// 검색·필터와 상관없이 등록된 전체 농장 기준이다.
+// 농장에 입추수수를 안 적은 경우(예전 데이터 등) 그 농장의 사육중 입추 기록 수수 합으로 대신 센다.
+function farmHeadCount(farm, activeBatches) {
+  const n = Number(farm.count);
+  if (farm.count !== '' && farm.count != null && Number.isFinite(n) && n > 0) return { n, from: 'farm' };
+  const sum = activeBatches.filter(b => b.farmId === farm.id)
+    .reduce((s, b) => s + (Number(b.birdCount) || 0), 0);
+  return sum > 0 ? { n: sum, from: 'batch' } : { n: 0, from: 'none' };
+}
+function renderFarmStats() {
+  const el = document.getElementById('farm-stats');
+  if (!el) return;
+  const farms = load('farms');
+  const active = load('batches').filter(b => b.status === 'active');
+  const agg = (list) => list.reduce((a, f) => {
+    const h = farmHeadCount(f, active);
+    a.count++; a.birds += h.n;
+    if (h.from === 'batch') a.fromBatch++;
+    if (h.from === 'none') a.missing++;
+    return a;
+  }, { count: 0, birds: 0, fromBatch: 0, missing: 0 });
+  const all = agg(farms);
+  const broiler = agg(farms.filter(f => f.type === '육계'));
+  const layer = agg(farms.filter(f => f.type === '산란계'));
+  const others = all.count - broiler.count - layer.count;
+  const fmt = n => n.toLocaleString();
+  const note = a => [
+    a.fromBatch ? `입추기록 반영 ${a.fromBatch}곳` : '',
+    a.missing ? `수수 미입력 ${a.missing}곳` : '',
+  ].filter(Boolean).join(' · ');
+  const card = (label, value, unit, sub, title) =>
+    `<div class="stat-card"${title ? ` title="${title}"` : ''}><div class="stat-label">${label}</div><div class="stat-value">${value}<span style="font-size:14px;font-weight:600;margin-left:3px">${unit}</span></div><div class="stat-sub">${sub || '&nbsp;'}</div></div>`;
+  const missTitle = '농장 편집에서 입추수수를 입력하면 정확해집니다. 비어 있으면 사육중 입추 기록의 수수를 대신 셉니다.';
+  el.innerHTML = [
+    card('등록 전체 농장', fmt(all.count), '곳', `육계 ${broiler.count} · 산란계 ${layer.count}${others ? ` · 기타 ${others}` : ''}`),
+    card('전체 수수', fmt(all.birds), '수', note(all) || '등록 농장 입추수수 합계', missTitle),
+    card('육계', fmt(broiler.count), '곳', `${fmt(broiler.birds)}수${note(broiler) ? ' · ' + note(broiler) : ''}`, missTitle),
+    card('산란계', fmt(layer.count), '곳', `${fmt(layer.birds)}수${note(layer) ? ' · ' + note(layer) : ''}`, missTitle),
+  ].join('');
 }
 
 // 목록 왼쪽 체크박스로 고른 농장을 도구줄 「💛 카톡 발송」으로 한꺼번에 보낸다(출하전검사 등 목록과 같은 방식).
@@ -84,6 +156,8 @@ function kakaoSendSelectedFarms() {
 }
 
 function renderFarms() {
+  renderFarmStats();
+  updateFarmSortHeaders();
   const liveIds = new Set(load('farms').map(f => f.id));
   farmSelectedIds.forEach(id => { if (!liveIds.has(id)) farmSelectedIds.delete(id); });
   const kakaoBtn = document.getElementById('farm-kakao-btn');
@@ -98,6 +172,14 @@ function renderFarms() {
   if (!farms.length) { tbody.innerHTML=''; empty.style.display=''; if (checkAll) checkAll.checked = false; return; }
   empty.style.display='none';
   if (checkAll) checkAll.checked = farms.every(f => farmSelectedIds.has(f.id));
+  const activeBatches = load('batches').filter(b => b.status === 'active');
+  // 입추수수 칸: 농장에 적은 값이 없으면 상단 요약과 같은 기준(사육중 입추 기록 합)으로 보여주고 출처를 표시한다.
+  const countCell = f => {
+    const h = farmHeadCount(f, activeBatches);
+    if (h.from === 'farm') return h.n.toLocaleString() + '수';
+    if (h.from === 'batch') return `${h.n.toLocaleString()}수 <span class="text-muted" style="font-size:11px" title="농장 정보에 입추수수가 비어 있어 사육중 입추 기록의 수수를 표시합니다">(입추기록)</span>`;
+    return '-';
+  };
   tbody.innerHTML = farms.map(f => `
     <tr>
       <td style="text-align:center"><input type="checkbox" ${farmSelectedIds.has(f.id) ? 'checked' : ''} onchange="toggleFarmSelect('${f.id}', this.checked)"></td>
@@ -106,7 +188,7 @@ function renderFarms() {
       <td><span class="badge ${badgeMap[f.type]||'badge-blue'}">${f.type}</span></td>
       <td style="color:var(--text-secondary)">${f.address}</td>
       <td>${f.phone||'-'}</td>
-      <td>${f.count ? Number(f.count).toLocaleString()+'수' : '-'}</td>
+      <td>${countCell(f)}</td>
       <td><div class="flex-gap">
         <button class="btn btn-outline btn-sm" onclick="openFarmModal('${f.id}')">편집</button>
         <button class="btn btn-danger btn-sm" onclick="deleteFarm('${f.id}')">삭제</button>

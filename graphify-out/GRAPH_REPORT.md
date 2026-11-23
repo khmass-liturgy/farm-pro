@@ -1,17 +1,17 @@
-# Graph Report - farm-pro  (2026-11-17)
+# Graph Report - farm-pro  (2026-11-23)
 
 ## Corpus Check
-- 40 files · ~92,875 words
+- 40 files · ~93,463 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 4 file(s) not represented in the graph (top: (none) 1, .css 1, .ico 1)
 
 ## Summary
-- 812 nodes · 1507 edges · 40 communities (35 shown, 5 thin omitted)
+- 818 nodes · 1519 edges · 40 communities (35 shown, 5 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6bc798a6`
+- Built from commit: `68b0082a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -62,8 +62,8 @@
 6. `sendKakao()` - 11 edges
 7. `vetOfficeInfo()` - 11 edges
 8. `process_telegram_commands()` - 11 edges
-9. `openMovePermitModal()` - 10 edges
-10. `renderNecropsyReports()` - 10 edges
+9. `renderFarms()` - 10 edges
+10. `viewProgram()` - 10 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `kakaoSendSelectedPrograms()` --indirect_call--> `buildProgramPrintHtml()`  [INFERRED]
@@ -171,8 +171,8 @@ Cohesion: 0.21
 Nodes (10): deleteRow(), describeDbError(), editingId, insertRow(), refreshAllStores(), refreshOne(), sb, STORE (+2 more)
 
 ### Community 24 - "farms.js"
-Cohesion: 0.29
-Nodes (9): deleteFarm(), exportFarmsExcel(), farmBreedNameFor(), farmSelectedIds, filteredFarms(), renderFarms(), saveFarm(), toggleFarmSelect() (+1 more)
+Cohesion: 0.20
+Nodes (15): deleteFarm(), exportFarmsExcel(), farmBreedNameFor(), farmHeadCount(), farmSelectedIds, farmSort, filteredFarms(), renderFarms() (+7 more)
 
 ### Community 25 - "server.js"
 Cohesion: 0.31
@@ -216,7 +216,7 @@ Nodes (3): buildProgramPrintHtml(), fitPrintHtmlToOnePage(), printProgram()
 
 ## Knowledge Gaps
 - **3 isolated node(s):** `RFC-2047`, `RFC-2231`, `RFC-822`
-  These have ≤1 connection - possible missing edges. (Counts symbols only; 189 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges. (Counts symbols only; 190 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **5 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
