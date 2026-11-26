@@ -1075,27 +1075,71 @@ function kakaoSendSelectedPrograms() {
   });
 }
 
+// ─── 투약 프로그램 보이는 순서: 입추 순서 ──────────────────────────────────
+// 예전에는 프로그램을 "등록한 순서(최근 등록이 위)"로 보여줘서, 나중에 만든 프로그램이 입추는 더
+// 빨라도 위로 올라오는 등 입추 순서와 어긋났다. 이제 입추일 기준으로 줄 세운다.
+// 기본은 먼저 입추한 것이 위(입추 빠른 순)이고, 목록 위 정렬 선택으로 "입추 최근 순"으로 바꿀 수 있다
+// (고른 순서는 브라우저에 기억 — 농장 목록 정렬과 같은 방식).
+// 프로그램에 입추일이 없으면(예전에 입추일 없이 만든 프로그램) 이 프로그램으로 등록된 입추 기록의
+// 입추일로 대신하고, 그것도 없으면 어느 순서든 맨 뒤에 둔다(카드에 "입추일 미입력"으로 안내).
+const PROG_SORT_STORAGE_KEY = 'progSort';
+function progSortDir() {
+  try { return localStorage.getItem(PROG_SORT_STORAGE_KEY) === 'desc' ? 'desc' : 'asc'; } catch (e) { return 'asc'; }
+}
+function setProgSortDir(dir) {
+  try { localStorage.setItem(PROG_SORT_STORAGE_KEY, dir === 'desc' ? 'desc' : 'asc'); } catch (e) {}
+  renderPrograms();
+}
+
+// 프로그램 id → 그 프로그램으로 등록된 입추 기록 중 가장 이른 입추일
+function programBatchDateMap() {
+  const map = new Map();
+  load('batches').forEach(b => {
+    if (!b.programId || !b.placementDate) return;
+    const cur = map.get(b.programId);
+    if (!cur || b.placementDate < cur) map.set(b.programId, b.placementDate);
+  });
+  return map;
+}
+
+// { date, fromBatch } — fromBatch는 프로그램에 입추일이 없어 입추 기록에서 가져온 값인지
+function programPlacementInfo(p, batchDates = programBatchDateMap()) {
+  if (p.placementDate) return { date: p.placementDate, fromBatch: false };
+  const d = batchDates.get(p.id);
+  return d ? { date: d, fromBatch: true } : { date: '', fromBatch: false };
+}
+
+// 투약 프로그램 화면 목록·카톡 발송, 입추 등록 창과 투약 일정의 프로그램 선택 목록이 같은 순서를 쓴다.
+// 새 배열을 돌려주므로 STORE 원본 순서는 건드리지 않는다.
+function sortProgramsByPlacement(list, dir = progSortDir()) {
+  const batchDates = programBatchDateMap();
+  const sign = dir === 'desc' ? -1 : 1;
+  const dateOf = p => programPlacementInfo(p, batchDates).date;
+  return list.slice().sort((a, b) => {
+    const da = dateOf(a), db = dateOf(b);
+    if (!da !== !db) return da ? -1 : 1;           // 입추일 없는 프로그램은 항상 맨 뒤
+    if (da !== db) return sign * da.localeCompare(db);
+    // 같은 날 입추면 농장 이름순, 그다음 등록한 순서
+    return (a.farmName || '').localeCompare(b.farmName || '', 'ko') ||
+      (a.createdAt || '').localeCompare(b.createdAt || '');
+  });
+}
+
 function filteredPrograms() {
   const q = (document.getElementById('prog-search')?.value||'').toLowerCase();
   const ff = document.getElementById('prog-filter-farm')?.value||'';
-  return load('programs').filter(p =>
+  return sortProgramsByPlacement(load('programs').filter(p =>
     (!q || p.name.toLowerCase().includes(q) || (p.farmName||'').toLowerCase().includes(q)) &&
     (!ff || p.farmId === ff)
-  ).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  ));
 }
 
 function renderPrograms() {
-  const q = (document.getElementById('prog-search')?.value||'').toLowerCase();
-  const ff = document.getElementById('prog-filter-farm')?.value||'';
-  let progs = load('programs').filter(p =>
-    (!q || p.name.toLowerCase().includes(q) || (p.farmName||'').toLowerCase().includes(q)) &&
-    (!ff || p.farmId === ff)
-  );
-  // 최근에 등록한 프로그램을 맨 위에 놓는다. STORE는 created_at 오름차순(오래된 것부터)이라
-  // 그대로 그리면 방금 만든 프로그램이 목록 맨 아래로 밀려 한참 스크롤해야 한다.
-  // filter()가 새 배열을 돌려주므로 여기서 정렬해도 STORE 원본 순서는 건드리지 않는다.
-  // created_at이 없는 데이터(구버전 백업 복원분 등)는 맨 뒤로 보낸다.
-  progs.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  const sortSel = document.getElementById('prog-sort');
+  if (sortSel) sortSel.value = progSortDir();
+  // 카톡 발송(kakaoSendSelectedPrograms)도 filteredPrograms()를 쓰므로 화면에 보이는 순서 그대로 보낸다.
+  const progs = filteredPrograms();
+  const batchDates = programBatchDateMap();
   const liveIds = new Set(load('programs').map(p => p.id));
   progSelectedIds.forEach(id => { if (!liveIds.has(id)) progSelectedIds.delete(id); });
   const kakaoBtn = document.getElementById('prog-kakao-btn');
@@ -1113,6 +1157,7 @@ function renderPrograms() {
     const drugDays = p.days.filter(d=>d.drugs&&d.drugs.length).length;
     const vaccDays = p.days.filter(d=>d.vaccine).length;
     const showEnv = programHasEnv(p);
+    const placement = programPlacementInfo(p, batchDates);
     return `
     <div class="card mb-16">
       <div class="card-header">
@@ -1132,6 +1177,9 @@ function renderPrograms() {
         </div>
       </div>
       <div class="flex-gap" style="margin-bottom:12px;gap:16px">
+        ${placement.date
+          ? `<span><span style="color:var(--text-secondary);font-size:12px">입추일 </span><strong>${placement.date}</strong>${placement.fromBatch ? ' <span class="text-muted" title="프로그램에 입추일이 없어 이 프로그램으로 등록된 입추 기록의 입추일을 보여줍니다">(입추 기록)</span>' : ''}</span>`
+          : `<span class="text-muted" title="입추일이 없는 프로그램은 목록 맨 뒤에 놓입니다">입추일 미입력 — 편집에서 입추일을 넣으면 입추 순서에 맞춰 들어갑니다</span>`}
         <span><span style="color:var(--text-secondary);font-size:12px">사육기간 </span><strong>${p.duration}일령</strong></span>
         ${p.houses ? `<span><span style="color:var(--text-secondary);font-size:12px">동수 </span><strong>${programBatchHouseLabel(p.houses)}</strong></span>` : ''}
         ${p.birdCount ? `<span><span style="color:var(--text-secondary);font-size:12px">마릿수 </span><strong>${Number(p.birdCount).toLocaleString()}수</strong></span>` : ''}

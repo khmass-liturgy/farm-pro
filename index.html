@@ -341,6 +341,11 @@
         <select id="prog-filter-farm" onchange="renderPrograms()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);">
           <option value="">전체 농장</option>
         </select>
+        <!-- 보이는 순서: 입추일 기준(js/programs.js sortProgramsByPlacement). 고른 값은 브라우저에 기억 -->
+        <select id="prog-sort" onchange="setProgSortDir(this.value)" title="투약 프로그램 보이는 순서" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);">
+          <option value="asc">입추 빠른 순</option>
+          <option value="desc">입추 최근 순</option>
+        </select>
       </div>
       <!-- 공통 도구줄: 카드 체크박스로 고른 프로그램을 인쇄 서식 이미지로 카톡 발송(js/programs.js kakaoSendSelectedPrograms) -->
       <div class="flex-gap" style="margin-bottom:14px;align-items:center;flex-wrap:wrap">
@@ -2200,8 +2205,8 @@
 <script src="js/masterdata.js?v=20261015a"></script>
 <script src="js/rxProducts.js?v=20261015a"></script>
 <script src="js/drugSearch.js?v=20261117a"></script>
-<script src="js/programs.js?v=20261116a"></script>
-<script src="js/batches.js?v=20261028b"></script>
+<script src="js/programs.js?v=20261126a"></script>
+<script src="js/batches.js?v=20261126a"></script>
 <script src="js/medicationLog.js?v=20261116a"></script>
 <script src="js/prescriptions.js?v=20261116a"></script>
 <script src="js/preShipment.js?v=20261116b"></script>
@@ -2212,7 +2217,7 @@
 <script src="js/vetReport.js?v=20261104a"></script>
 <script src="js/clinicalAssessment.js?v=20261015a"></script>
 <script src="js/rodentControl.js?v=20261015a"></script>
-<script src="js/schedule.js?v=20261110b"></script>
+<script src="js/schedule.js?v=20261126a"></script>
 <script src="js/dashboard.js?v=20261116a"></script>
 <script src="js/reports.js?v=20261015a"></script>
 <script src="js/print.js?v=20261111b"></script>

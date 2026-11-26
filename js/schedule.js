@@ -113,7 +113,8 @@ function jumpToFarmSchedule(farmId) {
 
 function loadScheduleForFarm() {
   const farmId = document.getElementById('sched-farm-select').value;
-  const progs = load('programs').filter(p => p.farmId === farmId);
+  // 투약 프로그램 화면과 같은 입추 순서(js/programs.js sortProgramsByPlacement)
+  const progs = sortProgramsByPlacement(load('programs').filter(p => p.farmId === farmId));
   const sel = document.getElementById('sched-prog-select');
   sel.innerHTML = '<option value="">투약 프로그램 선택</option>' + progs.map(p =>
     `<option value="${p.id}">${p.name}</option>`

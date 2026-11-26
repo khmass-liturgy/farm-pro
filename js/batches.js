@@ -24,7 +24,8 @@ function computeBatchDisplayStatus(b) {
 }
 
 function populateProgramSelectForFarm(selectId, farmId, val) {
-  const programs = load('programs').filter(p => p.farmId === farmId);
+  // 투약 프로그램 화면과 같은 입추 순서(js/programs.js sortProgramsByPlacement)
+  const programs = sortProgramsByPlacement(load('programs').filter(p => p.farmId === farmId));
   const sel = document.getElementById(selectId);
   if (!sel) return;
   sel.innerHTML = '<option value="">투약 프로그램 선택 (선택)</option>' + programs.map(p =>
