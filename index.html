@@ -8,7 +8,7 @@
 <link rel="icon" href="img/favicon.ico?v=20261031c">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20261031b">
 <link rel="manifest" href="manifest.webmanifest?v=20261031b">
-<link rel="stylesheet" href="css/styles.css?v=20261120a">
+<link rel="stylesheet" href="css/styles.css?v=20261126a">
 </head>
 <body>
 
@@ -297,6 +297,7 @@
 
     <!-- 농장 관리 -->
     <div id="page-farms" class="page">
+      <div class="grid-4 mb-16 farm-stats" id="farm-stats"></div>
       <div class="search-bar">
         <input class="search-input" id="farm-search" placeholder="🔍  농장명, 주소, 농장주 검색..." oninput="renderFarms()">
         <select id="farm-filter-type" onchange="renderFarms()" style="padding:8px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; font-family:inherit; background:var(--bg-card);">
@@ -320,7 +321,7 @@
             <thead>
               <tr>
                 <th style="text-align:center"><input type="checkbox" id="farm-check-all" onchange="toggleFarmSelectAll(this.checked)" title="전체 선택"></th>
-                <th>농장명</th><th>농장주</th><th>축종</th><th>주소</th><th>연락처</th><th>입추수수</th><th>관리</th>
+                <th class="th-sort" data-sort="name" onclick="setFarmSort('name')" title="클릭하면 오름차순/내림차순 정렬">농장명<span class="sort-ind"></span></th><th class="th-sort" data-sort="owner" onclick="setFarmSort('owner')" title="클릭하면 오름차순/내림차순 정렬">농장주<span class="sort-ind"></span></th><th class="th-sort" data-sort="type" onclick="setFarmSort('type')" title="클릭하면 오름차순/내림차순 정렬">축종<span class="sort-ind"></span></th><th>주소</th><th>연락처</th><th>입추수수</th><th>관리</th>
               </tr>
             </thead>
             <tbody id="farm-tbody"></tbody>
@@ -2192,7 +2193,7 @@
 <script src="js/auth.js?v=20261015a"></script>
 <script src="js/googleDrive.js?v=20261030e"></script>
 <script src="js/breedStandards.js?v=20261028b"></script>
-<script src="js/farms.js?v=20261116a"></script>
+<script src="js/farms.js?v=20261123a"></script>
 <script src="js/sms.js?v=20261015a"></script>
 <script src="js/kakao.js?v=20261111c"></script>
 <script src="js/pbPremium.js?v=20261110a"></script>

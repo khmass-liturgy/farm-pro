@@ -324,6 +324,16 @@ table tr:hover td { background: var(--bg); }
 .stat-label { font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; }
 .stat-value { font-size: 28px; font-weight: 700; color: var(--text-primary); }
 .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+/* 농장 등록/관리 상단 요약 카드 — 좁은 화면에서는 2칸씩 */
+@media (max-width: 768px) { .farm-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* 클릭해서 정렬하는 표 머리글(농장 목록의 농장명·농장주·축종) */
+.th-sort { cursor: pointer; user-select: none; }
+.th-sort:hover { text-decoration: underline; }
+.th-sort .sort-ind { margin-left: 4px; font-size: 10px; opacity: 0.45; }
+.th-sort .sort-ind::after { content: '⇅'; }
+.th-sort.sort-asc .sort-ind, .th-sort.sort-desc .sort-ind { opacity: 1; }
+.th-sort.sort-asc .sort-ind::after { content: '▲'; }
+.th-sort.sort-desc .sort-ind::after { content: '▼'; }
 
 /* 투약일정 뷰 */
 .schedule-grid {

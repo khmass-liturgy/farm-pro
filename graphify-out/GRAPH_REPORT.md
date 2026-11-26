@@ -1,12 +1,12 @@
-# Graph Report - farm-pro  (2026-11-20)
+# Graph Report - farm-pro  (2026-11-23)
 
 ## Corpus Check
-- 40 files · ~93,429 words
+- 40 files · ~93,463 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 4 file(s) not represented in the graph (top: (none) 1, .css 1, .ico 1)
 
 ## Summary
-- 816 nodes · 1513 edges · 40 communities (35 shown, 5 thin omitted)
+- 818 nodes · 1519 edges · 40 communities (35 shown, 5 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
@@ -62,8 +62,8 @@
 6. `sendKakao()` - 11 edges
 7. `vetOfficeInfo()` - 11 edges
 8. `process_telegram_commands()` - 11 edges
-9. `viewProgram()` - 10 edges
-10. `vetMonthStats()` - 10 edges
+9. `renderFarms()` - 10 edges
+10. `viewProgram()` - 10 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `kakaoSendSelectedPrograms()` --indirect_call--> `buildProgramPrintHtml()`  [INFERRED]
@@ -119,8 +119,8 @@ Cohesion: 0.18
 Nodes (28): closeKakaoReady(), fillKakaoFromProgram(), kakaoCardTitle(), kakaoCoverTitleLines(), kakaoErrorMessage(), kakaoFarmLines(), kakaoFarmText(), kakaoFeedPayload() (+20 more)
 
 ### Community 11 - "app.js"
-Cohesion: 0.12
-Nodes (19): boot(), COLLAPSIBLE_SECTIONS, DEFAULT_OPEN_SECTIONS, fitListTable(), fitListTables(), initSidebarSections(), loadClosedSections(), loadOpenSections() (+11 more)
+Cohesion: 0.14
+Nodes (15): boot(), COLLAPSIBLE_SECTIONS, DEFAULT_OPEN_SECTIONS, initSidebarSections(), loadClosedSections(), loadOpenSections(), manualRefresh(), PAGE_ACTIONS (+7 more)
 
 ### Community 12 - "rodentControl.js"
 Cohesion: 0.16
@@ -171,8 +171,8 @@ Cohesion: 0.21
 Nodes (10): deleteRow(), describeDbError(), editingId, insertRow(), refreshAllStores(), refreshOne(), sb, STORE (+2 more)
 
 ### Community 24 - "farms.js"
-Cohesion: 0.29
-Nodes (9): deleteFarm(), exportFarmsExcel(), farmBreedNameFor(), farmSelectedIds, filteredFarms(), renderFarms(), saveFarm(), toggleFarmSelect() (+1 more)
+Cohesion: 0.20
+Nodes (15): deleteFarm(), exportFarmsExcel(), farmBreedNameFor(), farmHeadCount(), farmSelectedIds, farmSort, filteredFarms(), renderFarms() (+7 more)
 
 ### Community 25 - "server.js"
 Cohesion: 0.31
