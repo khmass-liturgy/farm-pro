@@ -1076,18 +1076,19 @@ function kakaoSendSelectedPrograms() {
 }
 
 // ─── 목록 순서: 일령별 ──────────────────────────────────────────────────────
-// 초기 화면은 "지금 몇 일령인가" 순으로 보여준다(대시보드 「농장별 일령」과 같이 일령 많은 순이 기본).
+// 초기 화면은 "지금 몇 일령인가" 순으로 보여준다. 기본은 어린 일령부터(일령 적은 순) — 사용자 요청.
+// 기억 키를 progSort2로 바꿔, 예전 기본값(일령 많은 순)이 기억된 브라우저도 새 기본값으로 시작하게 했다.
 // 일령은 프로그램의 입추일로 계산하고, 입추일이 비어 있는 예전 프로그램은 이 프로그램에 연결된
 // 입추(사육배치) 기록의 입추일(사육중인 것 우선, 그중 최근)로 대신한다.
 // 입추일을 어디서도 못 찾으면 맨 아래 「입추일 미입력」 묶음에 두고 어떻게 채우는지 안내한다.
-const PROG_SORT_OPTIONS = ['age-desc', 'age-asc', 'recent'];
+const PROG_SORT_OPTIONS = ['age-asc', 'age-desc', 'recent'];
 let progSort = (() => {
-  try { const v = localStorage.getItem('progSort'); if (PROG_SORT_OPTIONS.includes(v)) return v; } catch (e) {}
-  return 'age-desc';
+  try { const v = localStorage.getItem('progSort2'); if (PROG_SORT_OPTIONS.includes(v)) return v; } catch (e) {}
+  return 'age-asc';
 })();
 function setProgSort(v) {
-  progSort = PROG_SORT_OPTIONS.includes(v) ? v : 'age-desc';
-  try { localStorage.setItem('progSort', progSort); } catch (e) {}
+  progSort = PROG_SORT_OPTIONS.includes(v) ? v : 'age-asc';
+  try { localStorage.setItem('progSort2', progSort); } catch (e) {}
   renderPrograms();
 }
 function programAgeInfo(p, batches = load('batches')) {
@@ -1121,7 +1122,7 @@ function filteredPrograms() {
   // 최근 등록순: STORE는 created_at 오름차순이라 그대로 두면 방금 만든 프로그램이 맨 아래로 밀린다.
   // created_at이 없는 데이터(구버전 백업 복원분 등)는 맨 뒤로 간다.
   if (progSort === 'recent') return list.sort(recent);
-  // 일령순: 사육중 → 입추 예정 → 종료 → 입추일 미입력 묶음 순서, 묶음 안에서는 일령(입추 예정은 입추일 가까운 순).
+  // 일령순: 사육중 → 입추 예정 → 종료 → 입추일 미입력 묶음 순서, 묶음 안에서는 일령(기본 어린 일령부터, 입추 예정은 입추일 가까운 순).
   const batches = load('batches');
   const info = new Map(list.map(p => [p.id, programAgeInfo(p, batches)]));
   const rank = Object.fromEntries(PROG_AGE_GROUPS.map((g, i) => [g.state, i]));
