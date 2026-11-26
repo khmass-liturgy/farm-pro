@@ -424,6 +424,10 @@ table tr:hover td { background: var(--bg); }
 .day-plan-row.future { opacity: 0.55; }
 .day-plan-row:last-child { border-bottom: none; }
 .program-day-row.today { background: var(--accent-light); }
+/* 투약 프로그램 목록(일령순) — 사육중/입추 예정/종료/입추일 미입력 묶음 제목, 카드 표의 오늘 일령 줄 */
+.prog-group-head { margin: 6px 0 10px; padding: 6px 2px; font-size: 14px; border-bottom: 2px solid var(--border); }
+.prog-group-head span { font-size: 12px; font-weight: 400; }
+.schedule-table tr.prog-today-row td { background: var(--accent-light) !important; font-weight: 600; }
 .program-day-row.upcoming { background: var(--amber-bg); }
 .progress-bar-track { background: var(--bg); border-radius: 20px; height: 8px; overflow: hidden; }
 .progress-bar-fill { background: var(--accent); height: 100%; border-radius: 20px; }

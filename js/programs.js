@@ -1075,27 +1075,71 @@ function kakaoSendSelectedPrograms() {
   });
 }
 
+// ─── 목록 순서: 일령별 ──────────────────────────────────────────────────────
+// 초기 화면은 "지금 몇 일령인가" 순으로 보여준다(대시보드 「농장별 일령」과 같이 일령 많은 순이 기본).
+// 일령은 프로그램의 입추일로 계산하고, 입추일이 비어 있는 예전 프로그램은 이 프로그램에 연결된
+// 입추(사육배치) 기록의 입추일(사육중인 것 우선, 그중 최근)로 대신한다.
+// 입추일을 어디서도 못 찾으면 맨 아래 「입추일 미입력」 묶음에 두고 어떻게 채우는지 안내한다.
+const PROG_SORT_OPTIONS = ['age-desc', 'age-asc', 'recent'];
+let progSort = (() => {
+  try { const v = localStorage.getItem('progSort'); if (PROG_SORT_OPTIONS.includes(v)) return v; } catch (e) {}
+  return 'age-desc';
+})();
+function setProgSort(v) {
+  progSort = PROG_SORT_OPTIONS.includes(v) ? v : 'age-desc';
+  try { localStorage.setItem('progSort', progSort); } catch (e) {}
+  renderPrograms();
+}
+function programAgeInfo(p, batches = load('batches')) {
+  let date = p.placementDate || '', from = date ? 'program' : '';
+  if (!date) {
+    const linked = batches.filter(b => b.programId === p.id && b.placementDate)
+      .sort((a, b) => ((b.status === 'active') - (a.status === 'active')) || b.placementDate.localeCompare(a.placementDate))[0];
+    if (linked) { date = linked.placementDate; from = 'batch'; }
+  }
+  if (!date) return { date: '', from: '', age: null, state: 'nodate' };
+  const age = computeDayAge(date); // js/batches.js — 입추일 = 1일령
+  const duration = Number(p.duration) || 0;
+  const state = age < 1 ? 'upcoming' : (duration && age > duration ? 'ended' : 'active');
+  return { date, from, age, state };
+}
+const PROG_AGE_GROUPS = [
+  { state: 'active', label: '🐣 사육중', hint: '오늘 일령 기준' },
+  { state: 'upcoming', label: '📅 입추 예정', hint: '입추일이 아직 오지 않음' },
+  { state: 'ended', label: '✅ 사육기간 종료', hint: '오늘 일령이 사육기간을 넘음' },
+  { state: 'nodate', label: '❔ 입추일 미입력', hint: '편집에서 입추일을 넣으면 일령 순으로 정렬됩니다' },
+];
+
 function filteredPrograms() {
   const q = (document.getElementById('prog-search')?.value||'').toLowerCase();
   const ff = document.getElementById('prog-filter-farm')?.value||'';
-  return load('programs').filter(p =>
-    (!q || p.name.toLowerCase().includes(q) || (p.farmName||'').toLowerCase().includes(q)) &&
-    (!ff || p.farmId === ff)
-  ).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-}
-
-function renderPrograms() {
-  const q = (document.getElementById('prog-search')?.value||'').toLowerCase();
-  const ff = document.getElementById('prog-filter-farm')?.value||'';
-  let progs = load('programs').filter(p =>
+  const recent = (a, b) => (b.createdAt || '').localeCompare(a.createdAt || '');
+  const list = load('programs').filter(p =>
     (!q || p.name.toLowerCase().includes(q) || (p.farmName||'').toLowerCase().includes(q)) &&
     (!ff || p.farmId === ff)
   );
-  // 최근에 등록한 프로그램을 맨 위에 놓는다. STORE는 created_at 오름차순(오래된 것부터)이라
-  // 그대로 그리면 방금 만든 프로그램이 목록 맨 아래로 밀려 한참 스크롤해야 한다.
-  // filter()가 새 배열을 돌려주므로 여기서 정렬해도 STORE 원본 순서는 건드리지 않는다.
-  // created_at이 없는 데이터(구버전 백업 복원분 등)는 맨 뒤로 보낸다.
-  progs.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  // 최근 등록순: STORE는 created_at 오름차순이라 그대로 두면 방금 만든 프로그램이 맨 아래로 밀린다.
+  // created_at이 없는 데이터(구버전 백업 복원분 등)는 맨 뒤로 간다.
+  if (progSort === 'recent') return list.sort(recent);
+  // 일령순: 사육중 → 입추 예정 → 종료 → 입추일 미입력 묶음 순서, 묶음 안에서는 일령(입추 예정은 입추일 가까운 순).
+  const batches = load('batches');
+  const info = new Map(list.map(p => [p.id, programAgeInfo(p, batches)]));
+  const rank = Object.fromEntries(PROG_AGE_GROUPS.map((g, i) => [g.state, i]));
+  const dir = progSort === 'age-asc' ? 1 : -1;
+  return list.sort((a, b) => {
+    const A = info.get(a.id), B = info.get(b.id);
+    if (rank[A.state] !== rank[B.state]) return rank[A.state] - rank[B.state];
+    if (A.state === 'nodate') return recent(a, b);
+    if (A.state === 'upcoming') return B.age - A.age; // 입추일이 가까운 것(일령 값이 큰 것) 먼저
+    return dir * (A.age - B.age) || recent(a, b);
+  });
+}
+
+function renderPrograms() {
+  const sortSel = document.getElementById('prog-sort');
+  if (sortSel) sortSel.value = progSort;
+  const progs = filteredPrograms();
+  const batches = load('batches');
   const liveIds = new Set(load('programs').map(p => p.id));
   progSelectedIds.forEach(id => { if (!liveIds.has(id)) progSelectedIds.delete(id); });
   const kakaoBtn = document.getElementById('prog-kakao-btn');
@@ -1109,18 +1153,34 @@ function renderPrograms() {
     container.innerHTML = `<div class="empty-state"><div class="icon-big">📋</div><p>등록된 투약 프로그램이 없습니다. 프로그램을 추가해주세요.</p></div>`;
     return;
   }
+  const byAge = progSort !== 'recent';
+  const groupCount = {};
+  if (byAge) progs.forEach(p => { const st = programAgeInfo(p, batches).state; groupCount[st] = (groupCount[st] || 0) + 1; });
+  let lastGroup = null;
   container.innerHTML = progs.map(p => {
     const drugDays = p.days.filter(d=>d.drugs&&d.drugs.length).length;
     const vaccDays = p.days.filter(d=>d.vaccine).length;
     const showEnv = programHasEnv(p);
-    return `
+    const ai = programAgeInfo(p, batches);
+    let groupHead = '';
+    if (byAge && ai.state !== lastGroup) {
+      lastGroup = ai.state;
+      const g = PROG_AGE_GROUPS.find(x => x.state === ai.state);
+      groupHead = `<div class="prog-group-head"><strong>${g.label}</strong> <span>${groupCount[ai.state]}개</span> <span class="text-muted">— ${g.hint}</span></div>`;
+    }
+    const ageBadge = ai.state === 'active' ? `<span class="badge badge-blue" style="margin-left:6px;font-size:12px">오늘 ${ai.age}일령</span>`
+      : ai.state === 'upcoming' ? `<span class="badge badge-amber" style="margin-left:6px">입추 ${1 - ai.age}일 전</span>`
+      : ai.state === 'ended' ? `<span class="badge badge-purple" style="margin-left:6px">종료 (${ai.age}일령째)</span>`
+      : `<span class="badge" style="margin-left:6px;background:var(--bg);color:var(--text-muted)">입추일 없음</span>`;
+    const ageFromBatch = ai.from === 'batch' ? `<span class="text-muted" style="font-size:11px" title="프로그램에 입추일이 비어 있어 연결된 입추 기록의 입추일로 계산했습니다"> · 입추일 ${ai.date}(입추기록)</span>` : '';
+    return `${groupHead}
     <div class="card mb-16">
       <div class="card-header">
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
           <input type="checkbox" style="width:auto;margin-top:3px" ${progSelectedIds.has(p.id) ? 'checked' : ''} onchange="toggleProgSelect('${p.id}', this.checked)" title="카톡 발송할 프로그램으로 선택">
           <div>
-            <div class="card-title">${p.name}</div>
-            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">🏘️ ${p.farmName}${p.focus?' · '+p.focus:''}</div>
+            <div class="card-title">${p.name}${ageBadge}</div>
+            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">🏘️ ${p.farmName}${p.focus?' · '+p.focus:''}${ageFromBatch}</div>
           </div>
         </label>
         <div class="flex-gap">
@@ -1149,8 +1209,8 @@ function renderPrograms() {
             <th style="padding:7px 10px;border-bottom:1px solid var(--border)">비고</th>
           </tr></thead>
           <tbody>${p.days.map(d=>`
-            <tr>
-              <td style="text-align:center;font-weight:700;color:var(--accent);background:var(--bg);padding:5px 8px">${d.day}</td>
+            <tr${ai.state === 'active' && d.day === ai.age ? ' class="prog-today-row" title="오늘"' : ''}>
+              <td style="text-align:center;font-weight:700;color:var(--accent);background:var(--bg);padding:5px 8px">${d.day}${ai.state === 'active' && d.day === ai.age ? ' ◀' : ''}</td>
               <td style="text-align:center;color:var(--text-secondary);font-size:11px;padding:5px 8px">${programDayDateShort(p.placementDate, d.day)}</td>
               <td style="padding:5px 8px">${(d.drugs&&d.drugs.length)?dayDrugPillsHtml(d):''}</td>
               <td style="padding:5px 8px">${d.vaccine?dayVaccinePillHtml(d):''}</td>

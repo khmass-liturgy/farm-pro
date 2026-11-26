@@ -1,17 +1,17 @@
 # Graph Report - farm-pro  (2026-11-26)
 
 ## Corpus Check
-- 40 files · ~93,571 words
+- 40 files · ~94,103 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 4 file(s) not represented in the graph (top: (none) 1, .css 1, .ico 1)
 
 ## Summary
-- 820 nodes · 1521 edges · 40 communities (35 shown, 5 thin omitted)
+- 825 nodes · 1530 edges · 40 communities (35 shown, 5 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `9c0f6315`
+- Built from commit: `ed6e7796`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -54,16 +54,16 @@
 - print.js
 
 ## God Nodes (most connected - your core abstractions)
-1. `vetDefaultYm()` - 15 edges
-2. `renderPrograms()` - 12 edges
+1. `renderPrograms()` - 15 edges
+2. `vetDefaultYm()` - 15 edges
 3. `kakaoSendFarms()` - 12 edges
 4. `renderDrugSearchPanel()` - 11 edges
 5. `kakaoSendPrintPages()` - 11 edges
 6. `sendKakao()` - 11 edges
 7. `vetOfficeInfo()` - 11 edges
 8. `process_telegram_commands()` - 11 edges
-9. `renderFarms()` - 10 edges
-10. `viewProgram()` - 10 edges
+9. `viewProgram()` - 10 edges
+10. `vetMonthStats()` - 10 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `kakaoSendSelectedPrograms()` --indirect_call--> `buildProgramPrintHtml()`  [INFERRED]
@@ -75,8 +75,8 @@
 ## Communities (40 total, 5 thin omitted)
 
 ### Community 0 - "programs.js"
-Cohesion: 0.07
-Nodes (65): addDpDrugSlot(), addDrugSlot(), addFeedSlot(), allowedVaccineSpecies(), applyProgramAutoName(), applyProgramBreedDefault(), buildFeedSection(), collectDpDrugs() (+57 more)
+Cohesion: 0.06
+Nodes (70): addDpDrugSlot(), addDrugSlot(), addFeedSlot(), allowedVaccineSpecies(), applyProgramAutoName(), applyProgramBreedDefault(), buildFeedSection(), collectDpDrugs() (+62 more)
 
 ### Community 1 - "drugSearch.js"
 Cohesion: 0.07
@@ -216,7 +216,7 @@ Nodes (3): buildProgramPrintHtml(), fitPrintHtmlToOnePage(), printProgram()
 
 ## Knowledge Gaps
 - **3 isolated node(s):** `RFC-2047`, `RFC-2231`, `RFC-822`
-  These have ≤1 connection - possible missing edges. (Counts symbols only; 192 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges. (Counts symbols only; 195 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **5 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
@@ -227,7 +227,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **What connects `RFC-2047`, `RFC-2231`, `RFC-822` to the rest of the system?**
   _3 weakly-connected nodes found - possible missing edges._
 - **Should `programs.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.06540825285338016 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06012176560121765 - nodes in this community are weakly interconnected._
 - **Why does `buildProgramPrintHtml()` connect `print.js` to `programs.js`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **Should `drugSearch.js` be split into smaller, more focused modules?**
