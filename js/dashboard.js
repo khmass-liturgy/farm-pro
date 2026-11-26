@@ -133,8 +133,9 @@ function renderDashboard() {
   const thisMonth = new Date().toISOString().slice(0,7);
   const logsThisMonth = logs.filter(l => (l.logDate||'').startsWith(thisMonth)).length;
 
+  renderFarmStats('dash-farm-stats', true); // js/farms.js — 농장 등록/관리 화면 맨 위와 같은 요약 카드
+  // 등록 농장 수는 바로 위 요약 카드에 있으므로 이 줄에서는 뺐다(3칸).
   document.getElementById('dash-stats').innerHTML = [
-    `<div class="stat-card"><div class="stat-label">등록 농장</div><div class="stat-value">${farms.length}</div><div class="stat-sub">개 농장</div></div>`,
     `<div class="stat-card"><div class="stat-label">투약 프로그램</div><div class="stat-value">${programs.length}</div><div class="stat-sub">개 프로그램</div></div>`,
     `<div class="stat-card"><div class="stat-label">사육중인 입추</div><div class="stat-value">${activeBatches}</div><div class="stat-sub">개 배치</div></div>`,
     `<div class="stat-card"><div class="stat-label">이번달 투약 기록</div><div class="stat-value">${logsThisMonth}</div><div class="stat-sub">건</div></div>`,

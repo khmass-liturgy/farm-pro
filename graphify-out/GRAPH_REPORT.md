@@ -1,17 +1,17 @@
-# Graph Report - farm-pro  (2026-11-23)
+# Graph Report - farm-pro  (2026-11-26)
 
 ## Corpus Check
-- 40 files · ~93,463 words
+- 40 files · ~93,571 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 4 file(s) not represented in the graph (top: (none) 1, .css 1, .ico 1)
 
 ## Summary
-- 818 nodes · 1519 edges · 40 communities (35 shown, 5 thin omitted)
+- 820 nodes · 1521 edges · 40 communities (35 shown, 5 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `68b0082a`
+- Built from commit: `9c0f6315`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -171,8 +171,8 @@ Cohesion: 0.21
 Nodes (10): deleteRow(), describeDbError(), editingId, insertRow(), refreshAllStores(), refreshOne(), sb, STORE (+2 more)
 
 ### Community 24 - "farms.js"
-Cohesion: 0.20
-Nodes (15): deleteFarm(), exportFarmsExcel(), farmBreedNameFor(), farmHeadCount(), farmSelectedIds, farmSort, filteredFarms(), renderFarms() (+7 more)
+Cohesion: 0.17
+Nodes (16): deleteFarm(), exportFarmsExcel(), FARM_SORT_DEFAULT, farmBreedNameFor(), farmHeadCount(), farmSelectedIds, farmSort, filteredFarms() (+8 more)
 
 ### Community 25 - "server.js"
 Cohesion: 0.31
@@ -216,7 +216,7 @@ Nodes (3): buildProgramPrintHtml(), fitPrintHtmlToOnePage(), printProgram()
 
 ## Knowledge Gaps
 - **3 isolated node(s):** `RFC-2047`, `RFC-2231`, `RFC-822`
-  These have ≤1 connection - possible missing edges. (Counts symbols only; 190 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges. (Counts symbols only; 192 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **5 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions

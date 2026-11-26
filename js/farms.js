@@ -70,9 +70,11 @@ function filteredFarms() {
 // ─── 목록 정렬 ─────────────────────────────────────────────────────────────
 // 머리글(농장명·농장주·축종)을 누르면 오름차순 → 다시 누르면 내림차순. 다른 머리글을 누르면 그 열 오름차순.
 // 같은 값끼리는 농장명 오름차순으로 묶어 순서가 흔들리지 않게 한다. 고른 정렬은 브라우저에 기억해 둔다.
+// 처음(고른 적 없을 때)에는 농장명 오름차순 — 등록 순서 그대로 나오면 "정렬이 안 된" 것으로 보이기 때문.
+const FARM_SORT_DEFAULT = { key: 'name', dir: 'asc' };
 let farmSort = (() => {
-  try { const v = JSON.parse(localStorage.getItem('farmSort') || 'null'); if (v && v.key) return v; } catch (e) {}
-  return { key: '', dir: 'asc' };
+  try { const v = JSON.parse(localStorage.getItem('farmSort') || 'null'); if (v && ['name','owner','type'].includes(v.key)) return v; } catch (e) {}
+  return { ...FARM_SORT_DEFAULT };
 })();
 function setFarmSort(key) {
   farmSort = farmSort.key === key
@@ -97,6 +99,7 @@ function updateFarmSortHeaders() {
 }
 
 // ─── 상단 요약(등록 농장 수·전체 수수·육계·산란계) ─────────────────────────────
+// 농장 등록/관리 화면 맨 위(#farm-stats)와 대시보드 맨 위(#dash-farm-stats)가 같은 함수로 그린다.
 // 검색·필터와 상관없이 등록된 전체 농장 기준이다.
 // 농장에 입추수수를 안 적은 경우(예전 데이터 등) 그 농장의 사육중 입추 기록 수수 합으로 대신 센다.
 function farmHeadCount(farm, activeBatches) {
@@ -106,8 +109,8 @@ function farmHeadCount(farm, activeBatches) {
     .reduce((s, b) => s + (Number(b.birdCount) || 0), 0);
   return sum > 0 ? { n: sum, from: 'batch' } : { n: 0, from: 'none' };
 }
-function renderFarmStats() {
-  const el = document.getElementById('farm-stats');
+function renderFarmStats(elId = 'farm-stats', linkToFarms = false) {
+  const el = document.getElementById(elId);
   if (!el) return;
   const farms = load('farms');
   const active = load('batches').filter(b => b.status === 'active');
@@ -127,15 +130,22 @@ function renderFarmStats() {
     a.fromBatch ? `입추기록 반영 ${a.fromBatch}곳` : '',
     a.missing ? `수수 미입력 ${a.missing}곳` : '',
   ].filter(Boolean).join(' · ');
-  const card = (label, value, unit, sub, title) =>
-    `<div class="stat-card"${title ? ` title="${title}"` : ''}><div class="stat-label">${label}</div><div class="stat-value">${value}<span style="font-size:14px;font-weight:600;margin-left:3px">${unit}</span></div><div class="stat-sub">${sub || '&nbsp;'}</div></div>`;
+  // 대시보드에서는 카드를 누르면 농장 등록/관리로 이동한다(산란계 카드는 산란계만 걸러서).
+  const go = type => linkToFarms ? ` style="cursor:pointer" onclick="openFarmsFiltered('${type}')"` : '';
+  const card = (label, value, unit, sub, title, type = '') =>
+    `<div class="stat-card"${go(type)}${title ? ` title="${title}"` : ''}><div class="stat-label">${label}</div><div class="stat-value">${value}<span style="font-size:14px;font-weight:600;margin-left:3px">${unit}</span></div><div class="stat-sub">${sub || '&nbsp;'}</div></div>`;
   const missTitle = '농장 편집에서 입추수수를 입력하면 정확해집니다. 비어 있으면 사육중 입추 기록의 수수를 대신 셉니다.';
   el.innerHTML = [
     card('등록 전체 농장', fmt(all.count), '곳', `육계 ${broiler.count} · 산란계 ${layer.count}${others ? ` · 기타 ${others}` : ''}`),
     card('전체 수수', fmt(all.birds), '수', note(all) || '등록 농장 입추수수 합계', missTitle),
-    card('육계', fmt(broiler.count), '곳', `${fmt(broiler.birds)}수${note(broiler) ? ' · ' + note(broiler) : ''}`, missTitle),
-    card('산란계', fmt(layer.count), '곳', `${fmt(layer.birds)}수${note(layer) ? ' · ' + note(layer) : ''}`, missTitle),
+    card('육계', fmt(broiler.count), '곳', `${fmt(broiler.birds)}수${note(broiler) ? ' · ' + note(broiler) : ''}`, missTitle, '육계'),
+    card('산란계', fmt(layer.count), '곳', `${fmt(layer.birds)}수${note(layer) ? ' · ' + note(layer) : ''}`, missTitle, '산란계'),
   ].join('');
+}
+function openFarmsFiltered(type) {
+  const sel = document.getElementById('farm-filter-type');
+  if (sel) sel.value = type || '';
+  showPage('farms');
 }
 
 // 목록 왼쪽 체크박스로 고른 농장을 도구줄 「💛 카톡 발송」으로 한꺼번에 보낸다(출하전검사 등 목록과 같은 방식).
