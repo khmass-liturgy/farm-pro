@@ -97,10 +97,10 @@
     "semantic_hash": "92c85809889bfe8eafa65dc0e8428c52"
   },
   "js/kakao.js": {
-    "mtime": 1795135844.7081308,
-    "seen": 1795440365.268364,
-    "ast_hash": "915970804b00ef6a7350594415b96cb5",
-    "semantic_hash": "915970804b00ef6a7350594415b96cb5"
+    "mtime": 1795740117.515171,
+    "seen": 1795740167.5938802,
+    "ast_hash": "d30ded2b03ba44dd7cf82fc4d86205d3",
+    "semantic_hash": ""
   },
   "js/masterdata.js": {
     "mtime": 1795135844.7086189,
@@ -229,9 +229,9 @@
     "semantic_hash": ""
   },
   "index.html": {
-    "mtime": 1795669347.529396,
-    "seen": 1795669356.78984,
-    "ast_hash": "000abe19d288158142c5e7c36f6e8e0c",
+    "mtime": 1795740117.51289,
+    "seen": 1795740167.5942469,
+    "ast_hash": "8a84065f5aebc00b6421071451d2f696",
     "semantic_hash": ""
   },
   "kakao-view.html": {
@@ -241,9 +241,9 @@
     "semantic_hash": ""
   },
   "login.html": {
-    "mtime": 1795669294.0823083,
-    "seen": 1795669320.880821,
-    "ast_hash": "84926ebb5ca5962f074a6a770d7b7346",
+    "mtime": 1795740117.5137267,
+    "seen": 1795740167.5942636,
+    "ast_hash": "476a24c6606c9224d933c10812edd897",
     "semantic_hash": ""
   },
   "sms-relay/README.md": {

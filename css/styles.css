@@ -425,6 +425,10 @@ table tr:hover td { background: var(--bg); }
 .day-plan-row:last-child { border-bottom: none; }
 .program-day-row.today { background: var(--accent-light); }
 /* 투약 프로그램 목록(일령순) — 사육중/입추 예정/종료/입추일 미입력 묶음 제목, 카드 표의 오늘 일령 줄 */
+/* 카카오 서식 발송 미리보기 — 공유창 "요청 실패" 안내, 이미지별 복사 버튼 */
+.kakao-ready-help { font-size: 12px; line-height: 1.7; color: var(--text-secondary); background: var(--amber-bg); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 4px; }
+.kakao-ready-help strong { color: var(--amber); }
+.kakao-thumb { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 0 0 auto; }
 .prog-group-head { margin: 6px 0 10px; padding: 6px 2px; font-size: 14px; border-bottom: 2px solid var(--border); }
 .prog-group-head span { font-size: 12px; font-weight: 400; }
 .schedule-table tr.prog-today-row td { background: var(--accent-light) !important; font-weight: 600; }

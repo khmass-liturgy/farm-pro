@@ -362,17 +362,25 @@ async function kakaoRenderPrintPages(htmlList, onProgress) {
   return blobs;
 }
 
-let kakaoReady = null;   // 준비를 마치고 "카카오톡 창 열기"를 기다리는 전송: { payload, thumbUrls }
+let kakaoReady = null;   // 준비를 마치고 "카카오톡 창 열기"를 기다리는 전송: { payload, thumbUrls, blobs, title }
 
-function showKakaoReady({ title, count, thumbUrls, payload, desc }) {
+// blobs: 미리보기 이미지 원본(PNG). 카카오 공유창이 받는 사람 쪽 차단으로 「요청 실패 — 이 앱의 메시지를 받지 않는
+// 친구가 포함되어 있어요」를 내면 앱에서는 풀 방법이 없어서(카카오가 받는 사람 설정으로 막는 것), 같은 이미지를
+// 일반 사진으로 보낼 수 있게 저장·복사·공유(휴대폰) 버튼을 함께 둔다. 사진 전송은 이 앱의 메시지가 아니라 막히지 않는다.
+function showKakaoReady({ title, count, thumbUrls, payload, desc, blobs = [] }) {
   closeKakaoReady();   // 앞에 열려 있던 것이 있으면 정리
-  kakaoReady = { payload, thumbUrls };
+  kakaoReady = { payload, thumbUrls, blobs, title };
   document.getElementById('kakao-ready-title').textContent = title;
   document.getElementById('kakao-ready-desc').textContent = desc ||
     `서식 ${count}장을 인쇄 모양 그대로 이미지로 만들어 카카오 서버에 올렸습니다. 아래 "카카오톡 창 열기"를 누르면 카카오톡 창이 열리니 ` +
     '거기서 받을 친구·채팅방을 고르세요. 이미지를 누르면 크게 볼 수 있습니다.';
+  const canCopy = !!(navigator.clipboard && window.ClipboardItem) && blobs.length > 0;
   document.getElementById('kakao-ready-thumbs').innerHTML = thumbUrls.map((u, i) =>
-    `<a href="${u}" target="_blank" rel="noopener" title="${i + 1}번째 서식 크게 보기"><img src="${u}" alt="${i + 1}번째 서식" style="height:220px;width:auto;display:block;border:1px solid var(--border);border-radius:4px;box-shadow:var(--shadow)"></a>`).join('');
+    `<div class="kakao-thumb"><a href="${u}" target="_blank" rel="noopener" title="${i + 1}번째 서식 크게 보기"><img src="${u}" alt="${i + 1}번째 서식" style="height:220px;width:auto;display:block;border:1px solid var(--border);border-radius:4px;box-shadow:var(--shadow)"></a>` +
+    (canCopy ? `<button class="btn btn-outline btn-sm" onclick="kakaoCopyReadyImage(${i}, this)" title="이 이미지를 복사합니다 — PC 카카오톡 대화창에 Ctrl+V로 붙여넣어 보내세요">📋 복사</button>` : '') +
+    `</div>`).join('');
+  const shareBtn = document.getElementById('kakao-ready-share-btn');
+  if (shareBtn) shareBtn.style.display = kakaoReadyFiles().length && kakaoCanShareFiles(kakaoReadyFiles()) ? '' : 'none';
   openModal('modal-kakao-ready');
 }
 
@@ -382,6 +390,46 @@ function openKakaoShare() {
   if (!kakaoReady) return;
   try { window.Kakao.Share.sendDefault(kakaoReady.payload); }
   catch (e) { alert('카카오톡 창을 열지 못했습니다: ' + kakaoErrorMessage(e)); }
+}
+
+// ─── 카카오 공유가 막혔을 때: 같은 이미지를 사진으로 보내는 길 ─────────────────────
+function kakaoReadyFiles() {
+  if (!kakaoReady || !kakaoReady.blobs.length) return [];
+  const base = String(kakaoReady.title || '서식').replace(/[\\/:*?"<>|]+/g, '_').trim() || '서식';
+  const n = kakaoReady.blobs.length;
+  return kakaoReady.blobs.map((b, i) => new File([b], n > 1 ? `${base}_${i + 1}.png` : `${base}.png`, { type: 'image/png' }));
+}
+function kakaoCanShareFiles(files) {
+  try { return !!(navigator.canShare && navigator.share && navigator.canShare({ files })); } catch (e) { return false; }
+}
+// PNG 파일로 내려받기. 여러 장이면 브라우저가 "여러 파일 다운로드 허용"을 한 번 물을 수 있다.
+function kakaoSaveReadyImages() {
+  const files = kakaoReadyFiles();
+  if (!files.length) { alert('저장할 이미지가 없습니다.'); return; }
+  files.forEach((f, i) => setTimeout(() => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(f); a.download = f.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  }, i * 400));
+}
+// 휴대폰(및 지원하는 PC 브라우저)의 공유 메뉴 — 카카오톡을 고르면 일반 사진으로 보내진다.
+async function kakaoShareReadyImages() {
+  const files = kakaoReadyFiles();
+  if (!kakaoCanShareFiles(files)) { alert('이 브라우저에서는 이미지 공유를 쓸 수 없습니다. 「이미지 저장」 후 카카오톡에서 보내주세요.'); return; }
+  try { await navigator.share({ files, title: kakaoReady.title }); }
+  catch (e) { if (e && e.name !== 'AbortError') alert('공유하지 못했습니다: ' + kakaoErrorMessage(e)); }
+}
+// 이미지 한 장을 클립보드로 — PC 카카오톡 대화창에 Ctrl+V로 붙여넣는다.
+async function kakaoCopyReadyImage(i, btn) {
+  const blob = kakaoReady?.blobs[i];
+  if (!blob) return;
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    if (btn) { const t = btn.textContent; btn.textContent = '✅ 복사됨'; setTimeout(() => { btn.textContent = t; }, 1800); }
+  } catch (e) {
+    alert('이미지를 복사하지 못했습니다. 「이미지 저장」을 이용해주세요. (' + kakaoErrorMessage(e) + ')');
+  }
 }
 
 function closeKakaoReady() {
@@ -425,7 +473,7 @@ async function kakaoSendPrintPages({ htmls, title, btn, isEnabled }) {
     if (viewUrl.length > KAKAO_MAX_LINK_LENGTH) throw new Error('보낼 서식이 많아 카드 링크가 너무 길어졌습니다. 건수를 줄여 보내주세요.');
     showKakaoReady({
       title, count: pages.length,
-      thumbUrls: pages.map(b => URL.createObjectURL(b)),
+      thumbUrls: pages.map(b => URL.createObjectURL(b)), blobs: pages,
       payload: kakaoFeedPayload({ title, description: `서식 ${pages.length}장 · ${today} · 대한동물병원`, cover: cv, viewUrl, buttonTitle: '서식 크게 보기' }),
     });
   } catch (e) {
@@ -507,7 +555,7 @@ async function kakaoSendFarms(farms, btn) {
     if (btn) btn.textContent = '카카오에 올리는 중...';
     const [img, cv] = await Promise.all([kakaoUploadPng(Kakao, body, 'farms.png'), kakaoUploadPng(Kakao, cover, 'cover.png')]);
     showKakaoReady({
-      title, count: 1, thumbUrls: [URL.createObjectURL(body)],
+      title, count: 1, thumbUrls: [URL.createObjectURL(body)], blobs: [body],
       desc: `체크한 농장 ${farms.length}곳의 정보를 한 장의 이미지로 만들어 카카오 서버에 올렸습니다. 아래 "카카오톡 창 열기"를 누르면 ` +
         '카카오톡 창이 열리니 거기서 받을 친구·채팅방을 고르세요. 이미지를 누르면 크게 볼 수 있습니다.',
       payload: kakaoFeedPayload({ title, description: `${farms.map(f => f.name).join(', ').slice(0, 60)} · ${today}`, cover: cv, viewUrl: kakaoViewUrl([img.url]), buttonTitle: '농장 정보 크게 보기' }),

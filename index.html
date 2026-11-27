@@ -8,7 +8,7 @@
 <link rel="icon" href="img/favicon.ico?v=20261031c">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20261031b">
 <link rel="manifest" href="manifest.webmanifest?v=20261031b">
-<link rel="stylesheet" href="css/styles.css?v=20261126b">
+<link rel="stylesheet" href="css/styles.css?v=20261127a">
 </head>
 <body>
 
@@ -1106,8 +1106,17 @@
     </div>
     <div style="font-size:12px; line-height:1.7; color:var(--text-secondary); background:var(--accent-light); border-radius:var(--radius-sm); padding:10px 12px;" id="kakao-ready-desc"></div>
     <div id="kakao-ready-thumbs" style="display:flex; gap:10px; overflow-x:auto; padding:12px 2px;"></div>
-    <div class="modal-footer">
+    <!-- 카카오 공유창의 "이 앱의 메시지를 받지 않는 친구가 포함되어 있어요"(요청 실패) 안내 + 우회 방법(js/kakao.js) -->
+    <div class="kakao-ready-help">
+      <strong>⚠️ 카카오톡 창에 「요청 실패 — 이 앱의 메시지를 받지 않는 친구가 포함되어 있어요」가 뜨면</strong><br>
+      고른 받는 사람(또는 채팅방의 누군가)이 이 앱이 보내는 카카오톡 공유 메시지를 받지 않게 해 둔 것입니다. 앱 쪽에서 풀 수 없으니
+      그 사람을 빼고 다시 보내거나, 아래 <b>이미지 저장</b>·<b>복사</b>·<b>이미지로 공유</b>로 서식 이미지를 일반 사진처럼 직접 보내세요
+      (사진은 차단 대상이 아닙니다). PC 카카오톡은 이미지 아래 「복사」를 누르고 대화창에 <b>Ctrl+V</b>로 붙여넣으면 됩니다.
+    </div>
+    <div class="modal-footer" style="flex-wrap:wrap">
       <button class="btn btn-outline" onclick="closeKakaoReady()">닫기</button>
+      <button class="btn btn-outline" onclick="kakaoSaveReadyImages()" title="서식 이미지를 PNG 파일로 내려받습니다 — 카카오톡 대화창에 끌어다 놓아 보낼 수 있습니다">📥 이미지 저장</button>
+      <button class="btn btn-outline" id="kakao-ready-share-btn" onclick="kakaoShareReadyImages()" style="display:none" title="휴대폰 공유 메뉴에서 카카오톡을 골라 사진으로 보냅니다">📤 이미지로 공유</button>
       <button class="btn btn-kakao" id="kakao-ready-btn" onclick="openKakaoShare()">카카오톡 창 열기</button>
     </div>
   </div>
@@ -2201,7 +2210,7 @@
 <script src="js/breedStandards.js?v=20261028b"></script>
 <script src="js/farms.js?v=20261126a"></script>
 <script src="js/sms.js?v=20261015a"></script>
-<script src="js/kakao.js?v=20261111c"></script>
+<script src="js/kakao.js?v=20261127a"></script>
 <script src="js/pbPremium.js?v=20261110a"></script>
 <script src="js/masterdata.js?v=20261015a"></script>
 <script src="js/rxProducts.js?v=20261015a"></script>
